@@ -1,0 +1,509 @@
+# Design Document
+
+## Katalyst Lexicon as a Website and Internal Software Product
+
+## 1. Summary
+
+Katalyst needs a canonical, organization-wide vocabulary that reduces ambiguity, accelerates decision-making, and enforces consistent language across strategy, planning, delivery, and culture.
+
+This document defines the product requirements and implementation plan for **Katalyst Lexicon**, delivered as:
+
+* **V1:** an internal web app (responsive) with editorial workflows and search
+
+The Lexicon is a **source of truth**. No other artifact may redefine a term.
+
+---
+
+## 2. Goals
+
+### 2.1 Primary goals
+
+1. Provide a single place to define and lookup canonical terms.
+2. Prevent drift by enforcing governance, versioning, and deprecation.
+3. Embed the language into daily systems (CRM, templates, training, onboarding).
+4. Enable fast retrieval: search, filtering, cross-links, synonyms, and tags.
+5. Make changes safe: proposals, review, approval, publishing, and audit history.
+
+### 2.2 Secondary goals
+
+1. Provide a client-facing subset (optional) without exposing internal-only terms.
+2. Enable AI assistance for drafting, mapping synonyms, and detecting collisions.
+3. Measure adoption and areas of confusion via analytics.
+
+### 2.3 Non-goals
+
+1. Building a full knowledge base or SOP platform.
+2. Replacing existing project management systems.
+3. Creating a public glossary for marketing as the primary objective.
+
+---
+
+## 3. Problem Statement
+
+Katalyst is a multi-discipline organization combining strategy, design, manufacturing, and rollout execution. Overlapping language leads to:
+
+* Misalignment on scope and “done” criteria
+* Confusing handoffs and weak ownership
+* Rework and project delays
+* CRM inconsistency and reporting errors
+* Training that does not scale
+
+A controlled vocabulary with governance solves these problems by providing canonical meanings and enforcement mechanisms.
+
+---
+
+## 4. Users and Use Cases
+
+### 4.1 Primary user groups
+
+* Leadership: approves canonical terms, enforces language
+* Client Services / PMs: daily planning, scope definition, handoffs
+* Design: deliverable definitions and naming
+* Production / Supply Chain: definitions for constraints, lead times, handoffs
+* Finance: billing, revenue recognition, job costing terms
+* Sales / Strategy: offer language, qualification, scope terms
+* New hires: onboarding and vocabulary mastery
+
+### 4.2 Core use cases
+
+1. Look up a term quickly during a meeting.
+2. Confirm which term is canonical vs deprecated.
+3. Propose a new term or edit.
+4. Review and approve proposed changes.
+5. Link terms in templates and CRM fields.
+6. Create a curated, client-safe subset.
+7. Track confusion hotspots and adoption.
+
+---
+
+## 5. Information Architecture
+
+### 5.1 Taxonomy (recommended)
+
+Terms are organized by domain:
+
+* Organizational and Structural
+* Planning and Execution
+* Commercial and Client
+* Financial and Performance
+* Cultural and Philosophical
+* Design and Delivery Methodology
+* System-Specific (Zoho, templates, etc.)
+
+### 5.2 Term relationships
+
+* **Synonym**: alternate wording mapping to canonical term
+* **Related**: conceptually adjacent term
+* **Parent/Child**: hierarchical (Program > Project > Phase > etc.)
+* **Replaces / Replaced by**: for deprecated terms
+
+### 5.3 Term entry template (canonical)
+
+Each term must include:
+
+* Term name (canonical)
+* Category (domain)
+* Definition (non-circular)
+* Why it exists (problem solved)
+* Used when (inclusion rules)
+* Not used when (exclusion rules)
+* Synonyms / legacy language (optional)
+* Examples (good usage, bad usage)
+* Status: Draft | Canonical | Deprecated
+* Visibility: Internal | Client-safe | Public
+* Owner (steward)
+* Version + changelog
+
+---
+
+## 6. Functional Requirements
+
+### 6.1 Term management
+
+* Create term (draft)
+* Edit term (with versioning)
+* Publish term (becomes canonical)
+* Deprecate term (requires replacement guidance)
+* Restore term version
+
+### 6.2 Search and discovery
+
+* Full-text search (term name + definition + examples)
+* Filters: category, status, visibility, owner, tags
+* Sort: relevance, alphabetical, recent updates
+* “Did you mean” and synonym resolution
+
+### 6.3 Browsing
+
+* Category landing pages
+* Hierarchy views (tree for structural terms)
+* Relationship graph view (optional V2)
+
+### 6.4 Governance workflow
+
+Roles:
+
+* Viewer: read-only
+* Contributor: propose edits/new terms
+* Editor: refine proposals, request changes
+* Approver: ratify and publish
+* Admin: permissions, system config
+
+Workflow states:
+
+* Draft
+* Proposed
+* In review
+* Changes requested
+* Approved
+* Published (Canonical)
+* Deprecated
+
+### 6.5 Audit and versioning
+
+* Every change produces a new version
+* Version diff view (field-by-field)
+* Audit log: who changed what, when, why
+* Required “change note” for edits
+
+### 6.6 Embedding and referencing
+
+* Stable term URLs (per term)
+* Copy link / copy “short definition”
+* Embed widget or snippet for internal tools (V2)
+
+### 6.7 Client-safe subset
+
+* Visibility flags enforce what can be shared externally
+* Optional public site view that only shows Client-safe/Public terms
+
+### 6.8 Training and adoption (V2)
+
+* Term quizzes and onboarding modules
+* “New this week” digest
+* Analytics dashboard
+
+---
+
+## 7. Non-Functional Requirements
+
+### 7.1 Performance
+
+* Search results < 300ms for typical queries
+* Page loads fast on mobile during meetings
+
+### 7.2 Security
+
+* SSO preferred (Google Workspace or similar)
+* RBAC enforced server-side
+* Client-safe view cannot leak internal content
+
+### 7.3 Reliability
+
+* Daily backups
+* Rollback capability to previous versions
+
+### 7.4 Accessibility
+
+* WCAG-friendly navigation and contrast
+
+---
+
+## 8. Data Model
+
+### 8.1 Entities
+
+**Term**
+
+* id (uuid)
+* canonical_name
+* slug
+* category
+* definition
+* why_exists
+* used_when
+* not_used_when
+* examples_good (list)
+* examples_bad (list)
+* synonyms (list)
+* tags (list)
+* status
+* visibility
+* owner_user_id
+* created_at / updated_at
+
+**TermVersion**
+
+* id
+* term_id
+* version_number
+* snapshot_json
+* change_note
+* changed_by
+* changed_at
+
+**Relationship**
+
+* id
+* term_id
+* related_term_id
+* type (synonym_of, related_to, parent_of, replaces)
+
+**WorkflowItem**
+
+* id
+* term_id
+* state
+* assigned_to
+* reviewers
+* comments (thread)
+
+**User / Role**
+
+* id
+* name
+* email
+* role
+
+---
+
+## 9. UX and UI Specifications
+
+### 9.1 Core screens
+
+1. Home
+
+   * Search bar
+   * Recently updated terms
+   * Canonical hierarchy quick links
+
+2. Term detail page
+
+   * Status badge (Canonical/Deprecated)
+   * Definition
+   * Inclusion/exclusion
+   * Examples
+   * Relationships
+   * Changelog
+   * Propose edit CTA
+
+3. Category directory
+
+   * Filters
+   * Term list
+
+4. Propose term/edit
+
+   * Guided form
+   * Required fields
+   * Suggested duplicates
+
+5. Review queue (Editors/Approvers)
+
+   * In review list
+   * Diff view
+   * Approve / request changes
+
+6. Admin settings
+
+   * Roles
+   * Categories
+   * Visibility rules
+
+### 9.2 Interaction design rules
+
+* Always show canonical term first
+* Deprecated terms redirect to replacement
+* Synonym searches resolve to canonical term
+
+---
+
+## 10. Adoption and Enforcement
+
+### 10.1 Enforcement mechanisms
+
+* CRM picklists and field names reference canonical terms
+* Templates link to term pages
+* Meeting norms: language correction is expected
+* Leadership modeling
+
+### 10.2 Rollout plan
+
+* Phase 1: lock hierarchy terms (Program, Project, Phase, etc.)
+* Phase 2: planning terms (conditions of satisfaction, constraints, owner)
+* Phase 3: commercial offer language
+* Phase 4: culture and methodology
+
+---
+
+## 11. AI Assistance (Optional)
+
+### 11.1 Drafting support
+
+* Suggest definitions from internal notes
+* Suggest inclusion/exclusion criteria
+* Generate examples and anti-examples
+
+### 11.2 Collision detection
+
+* Flag near-duplicate terms
+* Detect circular definitions
+* Detect inconsistent usage across templates and documents
+
+### 11.3 Controlled usage
+
+* AI cannot publish
+* AI suggestions must be accepted by Editor/Approver
+
+---
+
+## 12. Technical Architecture
+
+### 12.1 Recommended stack (pragmatic)
+
+* Frontend: Next.js (React), Tailwind
+* Backend: Node/Express or Next API routes
+* Database: Postgres
+* Search: Postgres full-text search initially; upgrade to Meilisearch/Elastic if needed
+* Auth: Google Workspace SSO (OAuth) or Clerk
+* Hosting: Vercel + managed Postgres (Neon/Supabase)
+
+### 12.2 Alternatives
+
+* Rapid V1 on Airtable/Notion with strict governance rules
+
+  * Faster to ship, weaker enforcement
+* Zoho Creator app
+
+  * Native to Zoho ecosystem, may reduce integration effort
+
+Recommendation: If Zoho is already the operational spine, strongly consider **Zoho Creator** for V1 and migrate later only if needed.
+
+---
+
+## 13. Integrations (V2)
+
+* Zoho CRM: term references, field tooltips, data validation
+* Google Drive: template annotations and term linking
+* Slack: term lookup and “new term” notifications
+* Internal GPT: canonical term retrieval as the first step in drafting
+
+---
+
+## 14. Metrics
+
+### 14.1 Adoption
+
+* Monthly active users
+* Searches per user
+* Top searched terms
+
+### 14.2 Quality
+
+* Number of deprecated terms
+* Edit churn rate per term
+* Time to approve proposals
+
+### 14.3 Confusion
+
+* Searches with no results
+* Terms with highest proposal volume
+* Most viewed deprecated terms
+
+---
+
+## 15. Risks and Mitigations
+
+1. Becomes a dead document
+
+   * Mitigation: governance + enforcement through systems
+
+2. Over-engineering early
+
+   * Mitigation: ship V1 with tight scope
+
+3. Political conflict over language
+
+   * Mitigation: approver role clarity and decision rights
+
+4. Drift between internal and client-safe language
+
+   * Mitigation: visibility flag discipline and separate views
+
+---
+
+## 16. MVP Scope (V1)
+
+Must-have:
+
+* Term CRUD with workflow
+* Search and filters
+* Canonical vs deprecated handling
+* Versioning and audit log
+* Roles: viewer, contributor, editor, approver, admin
+* Client-safe visibility
+
+Nice-to-have:
+
+* Relationship graph
+* Training quizzes
+* Slack bot
+
+---
+
+## 17. Implementation Plan
+
+### Sprint 0: Foundation
+
+* Finalize taxonomy
+* Define roles and governance
+* Seed initial terms (hierarchy)
+
+### Sprint 1: Core app
+
+* Auth + RBAC
+* Term model
+* Term detail + browse
+
+### Sprint 2: Workflow + versioning
+
+* Proposals
+* Review queue
+* Diff + audit log
+
+### Sprint 3: Visibility + client-safe view
+
+* Visibility flags
+* External subset view
+
+### Sprint 4: Adoption tooling
+
+* Weekly digest
+* Analytics basics
+
+---
+
+## 18. Open Questions
+
+1. Where should V1 live: Zoho Creator vs standalone web app?
+2. Who are the Approvers: CEO only, or CEO + executive team?
+3. What is the publication cadence: continuous or weekly batch?
+4. Do we want a public-facing subset at all?
+
+---
+
+## 19. Appendix
+
+### A. Governance Decision Rights (suggested)
+
+* Contributor: proposes
+* Editor: ensures quality and consistency
+* Approver: decides canonical term and resolves collisions
+
+### B. Term Definition Quality Checklist
+
+* Definition is not circular
+* Includes boundaries
+* Includes a use-case example
+* Includes a misuse example
+* Includes replacement guidance if deprecated
