@@ -1,0 +1,174 @@
+import { Layout } from "@/components/Layout";
+import { MOCK_TERMS } from "@/lib/mockData";
+import { useRoute } from "wouter";
+import { StatusBadge } from "@/components/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History } from "lucide-react";
+import { Link } from "wouter";
+import { cn } from "@/lib/utils";
+import NotFound from "./not-found";
+
+export default function TermDetail() {
+  const [match, params] = useRoute("/term/:id");
+  
+  if (!match) return <NotFound />;
+  
+  const term = MOCK_TERMS.find(t => t.id === params.id);
+  if (!term) return <NotFound />;
+
+  const isDeprecated = term.status === 'Deprecated';
+
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto px-6 py-8 md:py-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        {/* Breadcrumb / Back */}
+        <div className="mb-8">
+          <Link href="/browse">
+            <div className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Browse
+            </div>
+          </Link>
+        </div>
+
+        {/* Header */}
+        <div className="space-y-6 border-b pb-8">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-accent">
+                  {term.category}
+                </span>
+                <span className="text-xs text-muted-foreground px-2 py-0.5 border rounded-full">
+                  v{term.version}.0
+                </span>
+              </div>
+              <h1 className={cn(
+                "text-4xl md:text-5xl font-serif text-primary tracking-tight",
+                isDeprecated && "line-through decoration-destructive/30 text-muted-foreground"
+              )}>
+                {term.name}
+              </h1>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+               <StatusBadge status={term.status} className="text-sm px-3 py-1" />
+               <Button variant="outline" size="icon" title="Edit Term">
+                 <Edit className="h-4 w-4" />
+               </Button>
+               <Button variant="outline" size="icon" title="Share">
+                 <Share2 className="h-4 w-4" />
+               </Button>
+            </div>
+          </div>
+
+          {isDeprecated && (
+            <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-destructive">This term is Deprecated</h4>
+                <p className="text-sm text-destructive/80 mt-1">
+                  It should no longer be used in official documents or communication. 
+                  Please check for a replacement or consult the governance guidelines.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="prose prose-lg max-w-none text-foreground/90 leading-relaxed font-serif">
+            <p>{term.definition}</p>
+          </div>
+        </div>
+
+        {/* Core Metadata Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-8 border-b">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-1 p-1.5 bg-blue-50 text-blue-600 rounded-md">
+                <Info className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wider mb-1">Why it exists</h3>
+                <p className="text-base">{term.why_exists}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+             {term.synonyms.length > 0 && (
+              <div>
+                <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wider mb-2">Synonyms / Also Known As</h3>
+                <div className="flex flex-wrap gap-2">
+                  {term.synonyms.map(syn => (
+                    <span key={syn} className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                      {syn}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Usage Rules */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-8 border-b">
+          <div className="space-y-4">
+            <h3 className="font-medium text-lg flex items-center gap-2 text-green-700 dark:text-green-400">
+              <CheckCircle2 className="h-5 w-5" />
+              When to use
+            </h3>
+            <p className="text-muted-foreground">{term.used_when}</p>
+            
+            {term.examples_good.length > 0 && (
+              <ul className="space-y-3 mt-4">
+                {term.examples_good.map((ex, i) => (
+                  <li key={i} className="bg-green-50 dark:bg-green-900/10 p-3 rounded-md text-sm border-l-4 border-green-500">
+                    "{ex}"
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-medium text-lg flex items-center gap-2 text-red-700 dark:text-red-400">
+              <AlertTriangle className="h-5 w-5" />
+              When NOT to use
+            </h3>
+            <p className="text-muted-foreground">{term.not_used_when}</p>
+            
+            {term.examples_bad.length > 0 && (
+              <ul className="space-y-3 mt-4">
+                {term.examples_bad.map((ex, i) => (
+                  <li key={i} className="bg-red-50 dark:bg-red-900/10 p-3 rounded-md text-sm border-l-4 border-red-500 text-muted-foreground line-through decoration-red-400/50">
+                    "{ex}"
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Footer Metadata */}
+        <div className="py-8 flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center gap-6">
+            <div>
+              <span className="font-medium text-foreground">Owner:</span> {term.owner}
+            </div>
+            <div>
+              <span className="font-medium text-foreground">Last Updated:</span> {term.updated_at}
+            </div>
+            <div>
+              <span className="font-medium text-foreground">Visibility:</span> {term.visibility}
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" className="gap-2">
+            <History className="h-4 w-4" />
+            View History
+          </Button>
+        </div>
+
+      </div>
+    </Layout>
+  );
+}
