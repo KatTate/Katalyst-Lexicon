@@ -46,93 +46,115 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  --font-sans: 'Inter', sans-serif;
-  --font-serif: 'Playfair Display', serif;
+  /* KATALYST TYPOGRAPHY */
+  --font-sans: 'Roboto', sans-serif;
+  --font-header: 'Montserrat', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
   
   --radius: 0.5rem;
+
+  /* KATALYST SPECIFIC COLORS */
+  --color-kat-green: hsl(88 67% 45%);
+  --color-kat-charcoal: hsl(86 4% 31%);
+  --color-kat-black: hsl(27 6% 23%);
+  --color-kat-gray: hsl(235 11% 84%);
+  --color-kat-graylight: hsl(220 14% 96%);
+  --color-kat-warning: hsl(55 68% 63%);
+  --color-kat-basque: hsl(65 71% 25%);
+  --color-kat-edamame: hsl(89 15% 59%);
+  --color-kat-wheat: hsl(40 36% 77%);
+  --color-kat-zeus: hsl(42 10% 61%);
+  --color-kat-gauntlet: hsl(300 1% 54%);
+  --color-kat-mystical: hsl(270 4% 65%);
 }
 
-/* SWISS AUTHORITY THEME */
+/* KATALYST THEME MAPPING */
 :root {
-  /* Paper White & Deep Navy */
-  --background: 40 20% 99%; 
-  --foreground: 222 47% 11%;
+  /* Core Brand Colors Converted to HSL */
+  /* Green: #78BF26 -> 88 67% 45% */
+  /* Charcoal: #50534C -> 86 4% 31% */
+  /* Black: #3D3936 -> 27 6% 23% */
+  /* Gray Light: #F5F6F8 -> 220 14% 96% */
+  
+  --background: 220 14% 96%; /* kat-graylight */
+  --foreground: 86 4% 31%; /* kat-charcoal */
 
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 86 4% 31%; /* kat-charcoal */
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 86 4% 31%;
 
-  --primary: 222 47% 11%; /* Deep Navy */
+  --primary: 88 67% 45%; /* kat-green */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 35 30% 92%; /* Light Beige/Paper */
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 235 11% 84%; /* kat-gray (used for light backgrounds/borders) */
+  --secondary-foreground: 86 4% 31%;
 
-  --muted: 210 20% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 220 14% 93%; /* slightly darker than background */
+  --muted-foreground: 300 1% 54%; /* kat-gauntlet */
 
-  --accent: 35 70% 50%; /* Golden Bronze for highlights */
-  --accent-foreground: 0 0% 100%;
+  --accent: 40 36% 77%; /* kat-wheat */
+  --accent-foreground: 27 6% 23%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 84% 60%; /* std-red */
   --destructive-foreground: 0 0% 98%;
 
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
-  --ring: 222 47% 11%;
+  --border: 235 11% 84%; /* kat-gray */
+  --input: 235 11% 84%;
+  --ring: 88 67% 45%;
 
-  --sidebar: 40 20% 98%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-primary: 222 47% 11%;
+  /* Sidebar uses the new palette */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 86 4% 31%;
+  --sidebar-primary: 88 67% 45%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 35 30% 90%;
-  --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 222 47% 11%;
+  --sidebar-accent: 220 14% 96%; /* kat-graylight */
+  --sidebar-accent-foreground: 88 67% 45%;
+  --sidebar-border: 235 11% 84%;
+  --sidebar-ring: 88 67% 45%;
   
-  --radius: 0rem; /* Sharp corners for Swiss Style */
+  --radius: 0.5rem; 
 }
 
 .dark {
-  /* Inverted Swiss */
-  --background: 222 47% 8%;
-  --foreground: 40 20% 95%;
+  /* Inverted Palette for Dark Mode (Derived from brand colors but adapted) */
+  --background: 27 6% 20%; /* Darker than kat-black */
+  --foreground: 220 14% 96%; /* kat-graylight */
 
-  --card: 222 47% 10%;
-  --card-foreground: 40 20% 95%;
+  --card: 27 6% 23%; /* kat-black */
+  --card-foreground: 220 14% 96%;
 
-  --popover: 222 47% 10%;
-  --popover-foreground: 40 20% 95%;
+  --popover: 27 6% 23%;
+  --popover-foreground: 220 14% 96%;
 
-  --primary: 40 20% 95%;
-  --primary-foreground: 222 47% 11%;
+  --primary: 88 67% 45%; /* kat-green (stays same) */
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 222 40% 15%;
-  --secondary-foreground: 40 20% 95%;
+  --secondary: 86 4% 31%; /* kat-charcoal */
+  --secondary-foreground: 220 14% 96%;
 
-  --muted: 222 40% 15%;
-  --muted-foreground: 215 20% 65%;
+  --muted: 86 4% 31%;
+  --muted-foreground: 235 11% 84%; /* kat-gray */
 
-  --accent: 35 70% 50%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 65 71% 25%; /* kat-basque */
+  --accent-foreground: 220 14% 96%;
 
   --destructive: 0 62% 30%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 222 40% 20%;
-  --input: 222 40% 20%;
-  --ring: 215 20% 65%;
+  --border: 86 4% 31%;
+  --input: 86 4% 31%;
+  --ring: 88 67% 45%;
 
-  --sidebar: 222 47% 7%;
-  --sidebar-foreground: 40 20% 95%;
-  --sidebar-primary: 35 70% 50%;
+  --sidebar: 27 6% 23%;
+  --sidebar-foreground: 220 14% 96%;
+  --sidebar-primary: 88 67% 45%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 222 40% 15%;
-  --sidebar-accent-foreground: 40 20% 95%;
-  --sidebar-border: 222 40% 20%;
-  --sidebar-ring: 215 20% 65%;
+  --sidebar-accent: 86 4% 31%;
+  --sidebar-accent-foreground: 88 67% 45%;
+  --sidebar-border: 86 4% 31%;
+  --sidebar-ring: 88 67% 45%;
 }
 
 @layer base {
@@ -143,6 +165,20 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif font-medium tracking-tight;
+    @apply font-header font-bold text-kat-black tracking-tight;
+  }
+  
+  /* Apply specific overrides from the design doc */
+  .text-intro {
+    @apply text-lg text-kat-charcoal;
+  }
+  .text-supporting {
+    @apply text-sm text-kat-charcoal;
+  }
+  .text-metadata {
+    @apply text-xs text-kat-charcoal/60;
+  }
+  .kpi-value {
+    @apply text-3xl font-bold font-sans;
   }
 }

@@ -8,6 +8,7 @@ import Home from "@/pages/Home";
 import Browse from "@/pages/Browse";
 import TermDetail from "@/pages/TermDetail";
 import ProposeTerm from "@/pages/ProposeTerm";
+import DesignSystem from "@/pages/DesignSystem";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/browse" component={Browse} />
       <Route path="/propose" component={ProposeTerm} />
       <Route path="/term/:id" component={TermDetail} />
+      <Route path="/design" component={DesignSystem} />
       <Route component={NotFound} />
     </Switch>
   );

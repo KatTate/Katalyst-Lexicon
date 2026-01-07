@@ -1,9 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Search, Book, Grid, Plus, Settings, Menu } from "lucide-react";
+import { Search, Book, Grid, Plus, Settings, Menu, Palette } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CATEGORIES } from "@/lib/mockData";
 
 interface LayoutProps {
@@ -24,12 +23,12 @@ export function Layout({ children }: LayoutProps) {
     return (
       <Link href={href}>
         <div className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer group",
+          "flex items-center gap-3 px-3 py-2 rounded-md transition-all cursor-pointer group font-sans text-sm font-medium",
           isActive 
-            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
-            : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            ? "bg-primary/10 text-primary border-l-4 border-primary pl-2" 
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}>
-          <Icon className="h-4 w-4" />
+          <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
           <span>{label}</span>
         </div>
       </Link>
@@ -37,7 +36,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex font-sans">
+    <div className="min-h-screen bg-background flex font-sans text-foreground">
       {/* Sidebar */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-50 w-72 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static shadow-xl lg:shadow-none",
@@ -45,11 +44,11 @@ export function Layout({ children }: LayoutProps) {
       )}>
         <div className="p-6 border-b border-sidebar-border">
           <Link href="/">
-            <h1 className="font-serif text-2xl font-semibold tracking-tight text-sidebar-primary cursor-pointer">
-              Katalyst <span className="text-sidebar-foreground font-light">Lexicon</span>
+            <h1 className="font-header text-2xl font-bold tracking-tight text-sidebar-foreground cursor-pointer">
+              Katalyst <span className="text-primary">Lexicon</span>
             </h1>
           </Link>
-          <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-medium">
+          <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wide font-bold">
             Internal V1.0
           </p>
         </div>
@@ -57,7 +56,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex-1 overflow-y-auto py-6 px-4">
           <nav className="space-y-1">
             <Link href="/propose">
-              <Button className="w-full justify-start gap-2 mb-6 shadow-sm hover:shadow-md transition-all" variant="default">
+              <Button className="w-full justify-start gap-2 mb-6 shadow-sm hover:shadow-md transition-all font-bold bg-primary text-white hover:bg-primary/90" variant="default">
                 <Plus className="h-4 w-4" />
                 Propose Term
               </Button>
@@ -65,34 +64,35 @@ export function Layout({ children }: LayoutProps) {
 
             <NavItem href="/" icon={Search} label="Search & Discover" />
             <NavItem href="/browse" icon={Grid} label="Browse Categories" />
+            <NavItem href="/design" icon={Palette} label="Design System" />
             
-            <div className="pt-6 pb-2">
-              <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            <div className="pt-8 pb-2">
+              <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Categories
               </p>
               {CATEGORIES.slice(0, 5).map(cat => (
                 <Link key={cat} href={`/browse?category=${encodeURIComponent(cat)}`}>
-                  <div className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground cursor-pointer transition-colors truncate hover:translate-x-1 duration-200">
+                  <div className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md cursor-pointer transition-colors truncate">
                     {cat}
                   </div>
                 </Link>
               ))}
               <Link href="/browse">
-                <div className="px-3 py-1.5 text-sm text-primary hover:underline cursor-pointer">
-                  View all...
+                <div className="px-3 py-2 text-sm text-primary font-medium hover:underline cursor-pointer mt-1">
+                  View all categories...
                 </div>
               </Link>
             </div>
           </nav>
         </div>
 
-        <div className="p-4 border-t border-sidebar-border bg-sidebar/50">
-          <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent/50 cursor-pointer transition-colors">
-            <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-serif font-bold text-sm">
+        <div className="p-4 border-t border-sidebar-border bg-sidebar-accent/30">
+          <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent cursor-pointer transition-colors">
+            <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-header font-bold text-sm shadow-sm">
               SJ
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Sarah Jenkins</p>
+              <p className="text-sm font-bold text-sidebar-foreground truncate">Sarah Jenkins</p>
               <p className="text-xs text-muted-foreground truncate">Editor</p>
             </div>
             <Settings className="h-4 w-4 text-muted-foreground" />
@@ -101,10 +101,10 @@ export function Layout({ children }: LayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 bg-background lg:bg-background/50 relative">
+      <main className="flex-1 flex flex-col min-w-0 bg-background relative">
         {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between p-4 border-b bg-background sticky top-0 z-30">
-          <h1 className="font-serif text-xl font-semibold">Katalyst Lexicon</h1>
+        <div className="lg:hidden flex items-center justify-between p-4 border-b bg-sidebar sticky top-0 z-30">
+          <h1 className="font-header text-xl font-bold text-sidebar-foreground">Katalyst Lexicon</h1>
           <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             <Menu className="h-5 w-5" />
           </Button>

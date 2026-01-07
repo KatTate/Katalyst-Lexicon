@@ -25,10 +25,10 @@ export default function Home() {
         
         {/* Hero Section */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <h1 className="text-4xl md:text-5xl font-serif text-primary tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-header font-bold text-kat-black tracking-tight">
             The Canonical Source of Truth
           </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed">
+          <p className="text-lg text-muted-foreground leading-relaxed font-sans max-w-xl mx-auto">
             Search the Lexicon to find organization-wide definitions, standards, and language. 
             Reduce ambiguity and move faster.
           </p>
@@ -38,21 +38,21 @@ export default function Home() {
               <Search className="h-5 w-5 text-muted-foreground" />
             </div>
             <Input 
-              className="pl-11 h-14 text-lg bg-card shadow-sm border-border/60 rounded-xl focus-visible:ring-primary/20 focus-visible:border-primary"
+              className="pl-11 h-14 text-lg bg-white shadow-sm border-border rounded-xl focus-visible:ring-primary focus-visible:border-primary font-sans"
               placeholder="Search for a term, concept, or acronym..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             {search && (
-               <div className="absolute right-3 top-3.5 text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
+               <div className="absolute right-3 top-3.5 text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded">
                  {filteredTerms.length} results
                </div>
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground pt-2">
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground pt-2 font-medium">
             <span className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-accent" />
+              <Sparkles className="h-3.5 w-3.5 text-kat-wheat" />
               <span>AI-assisted search active</span>
             </span>
           </div>
@@ -61,8 +61,8 @@ export default function Home() {
         {/* Search Results (if active) */}
         {search ? (
           <div className="space-y-6 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between pb-2 border-b">
-              <h2 className="text-lg font-medium">Search Results</h2>
+            <div className="flex items-center justify-between pb-2 border-b border-border">
+              <h2 className="text-2xl font-header font-bold text-kat-black">Search Results</h2>
             </div>
             {filteredTerms.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -71,10 +71,10 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-20 bg-muted/30 rounded-lg border border-dashed">
+              <div className="text-center py-20 bg-muted/30 rounded-lg border border-dashed border-border">
                 <p className="text-muted-foreground">No terms found for "{search}"</p>
                 <Link href="/propose">
-                  <Button variant="link" className="mt-2 text-primary">Propose a new term?</Button>
+                  <Button variant="link" className="mt-2 text-primary font-bold">Propose a new term?</Button>
                 </Link>
               </div>
             )}
@@ -87,9 +87,9 @@ export default function Home() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  <h2 className="text-xl font-serif">Recently Updated</h2>
+                  <h2 className="text-2xl font-header font-bold text-kat-black">Recently Updated</h2>
                 </div>
-                <Button variant="ghost" size="sm" className="text-muted-foreground">View all updates</Button>
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary font-medium">View all updates</Button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {recentTerms.map(term => (
@@ -98,17 +98,17 @@ export default function Home() {
               </div>
             </section>
 
-            <section className="bg-primary/5 rounded-2xl p-8 md:p-12 border border-primary/10">
+            <section className="bg-white rounded-2xl p-8 md:p-12 border border-border shadow-sm">
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="space-y-4 max-w-xl">
-                  <h2 className="text-2xl font-serif text-primary">Contribute to the Lexicon</h2>
-                  <p className="text-muted-foreground">
+                  <h2 className="text-2xl font-header font-bold text-kat-black">Contribute to the Lexicon</h2>
+                  <p className="text-muted-foreground text-lg">
                     Spot an ambiguity? Need to define a new project phase? 
                     Submit a draft term for review by the governance committee.
                   </p>
                 </div>
                 <Link href="/propose">
-                  <Button size="lg" className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all">
+                  <Button size="lg" className="shrink-0 bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all font-bold">
                     <Plus className="mr-2 h-4 w-4" />
                     Propose New Term
                   </Button>
