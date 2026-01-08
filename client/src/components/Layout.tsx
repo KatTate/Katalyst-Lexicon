@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Search, Book, Grid, Plus, Settings, Menu, Palette } from "lucide-react";
+import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES } from "@/lib/mockData";
@@ -13,23 +13,29 @@ export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  const NavItem = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => {
+  const NavItem = ({ href, icon: Icon, label, badge }: { href: string; icon: any; label: string; badge?: number }) => {
     const isActive = location === href;
     return (
       <Link href={href}>
         <div className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md transition-all cursor-pointer group font-sans text-sm font-medium",
+          "flex items-center justify-between px-3 py-2 rounded-md transition-all cursor-pointer group font-sans text-sm font-medium",
           isActive 
             ? "bg-primary/10 text-primary border-l-4 border-primary pl-2" 
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}>
-          <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
-          <span>{label}</span>
+          <div className="flex items-center gap-3">
+            <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+            <span>{label}</span>
+          </div>
+          {badge !== undefined && badge > 0 && (
+            <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              {badge}
+            </span>
+          )}
         </div>
       </Link>
     );
@@ -64,13 +70,28 @@ export function Layout({ children }: LayoutProps) {
 
             <NavItem href="/" icon={Search} label="Search & Discover" />
             <NavItem href="/browse" icon={Grid} label="Browse Categories" />
-            <NavItem href="/design" icon={Palette} label="Design System" />
             
             <div className="pt-8 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
-                Categories
+                Approver Tools
               </p>
-              {CATEGORIES.slice(0, 5).map(cat => (
+              <NavItem href="/review" icon={ClipboardCheck} label="Review Queue" badge={3} />
+            </div>
+
+            <div className="pt-6 pb-2">
+              <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
+                Administration
+              </p>
+              <NavItem href="/categories" icon={FolderCog} label="Manage Categories" />
+              <NavItem href="/settings" icon={Settings} label="System Settings" />
+              <NavItem href="/design" icon={Palette} label="Design System" />
+            </div>
+            
+            <div className="pt-6 pb-2">
+              <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
+                Quick Links
+              </p>
+              {CATEGORIES.slice(0, 4).map(cat => (
                 <Link key={cat} href={`/browse?category=${encodeURIComponent(cat)}`}>
                   <div className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md cursor-pointer transition-colors truncate">
                     {cat}
@@ -93,7 +114,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-sidebar-foreground truncate">Sarah Jenkins</p>
-              <p className="text-xs text-muted-foreground truncate">Editor</p>
+              <p className="text-xs text-muted-foreground truncate">Admin</p>
             </div>
             <Settings className="h-4 w-4 text-muted-foreground" />
           </div>
