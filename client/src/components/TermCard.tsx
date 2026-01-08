@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Term } from "@/lib/mockData";
+import { Term } from "@/lib/api";
 import { StatusBadge } from "./StatusBadge";
 import { CornerDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ export function TermCard({ term }: { term: Term }) {
       <div className={cn(
         "group block p-6 bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-200 rounded-lg cursor-pointer h-full flex flex-col relative",
         isDeprecated && "opacity-75 bg-muted/30"
-      )}>
+      )} data-testid={`card-term-${term.id}`}>
         <div className="flex items-start justify-between mb-4">
           <div className="space-y-1">
             <h3 className={cn(
@@ -32,7 +32,7 @@ export function TermCard({ term }: { term: Term }) {
           {term.definition}
         </p>
 
-        {term.synonyms.length > 0 && (
+        {term.synonyms && term.synonyms.length > 0 && (
           <div className="mt-auto pt-4 border-t border-border/40 flex flex-wrap gap-2">
             <CornerDownRight className="h-3.5 w-3.5 text-muted-foreground/70 mt-0.5" />
             {term.synonyms.slice(0, 2).map(syn => (

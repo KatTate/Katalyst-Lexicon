@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES } from "@/lib/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { Category, Proposal } from "@/lib/api";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,18 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  const { data: proposals = [] } = useQuery<Proposal[]>({
+    queryKey: ["/api/proposals"],
+  });
+
+  const pendingProposalsCount = proposals.filter(p => 
+    p.status === "pending" || p.status === "in_review" || p.status === "changes_requested"
+  ).length;
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -26,7 +39,7 @@ export function Layout({ children }: LayoutProps) {
           isActive 
             ? "bg-primary/10 text-primary border-l-4 border-primary pl-2" 
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
-        )}>
+        )} data-testid={`nav-${href.replace("/", "") || "home"}`}>
           <div className="flex items-center gap-3">
             <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
             <span>{label}</span>
@@ -50,7 +63,7 @@ export function Layout({ children }: LayoutProps) {
       )}>
         <div className="p-6 border-b border-sidebar-border">
           <Link href="/">
-            <h1 className="font-header text-2xl font-bold tracking-tight text-sidebar-foreground cursor-pointer">
+            <h1 className="font-header text-2xl font-bold tracking-tight text-sidebar-foreground cursor-pointer" data-testid="link-logo">
               Katalyst <span className="text-primary">Lexicon</span>
             </h1>
           </Link>
@@ -62,7 +75,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex-1 overflow-y-auto py-6 px-4">
           <nav className="space-y-1">
             <Link href="/propose">
-              <Button className="w-full justify-start gap-2 mb-6 shadow-sm hover:shadow-md transition-all font-bold bg-primary text-white hover:bg-primary/90" variant="default">
+              <Button className="w-full justify-start gap-2 mb-6 shadow-sm hover:shadow-md transition-all font-bold bg-primary text-white hover:bg-primary/90" variant="default" data-testid="nav-propose-term">
                 <Plus className="h-4 w-4" />
                 Propose Term
               </Button>
@@ -75,7 +88,7 @@ export function Layout({ children }: LayoutProps) {
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Approver Tools
               </p>
-              <NavItem href="/review" icon={ClipboardCheck} label="Review Queue" badge={3} />
+              <NavItem href="/review" icon={ClipboardCheck} label="Review Queue" badge={pendingProposalsCount} />
             </div>
 
             <div className="pt-6 pb-2">
@@ -91,15 +104,15 @@ export function Layout({ children }: LayoutProps) {
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Quick Links
               </p>
-              {CATEGORIES.slice(0, 4).map(cat => (
-                <Link key={cat} href={`/browse?category=${encodeURIComponent(cat)}`}>
-                  <div className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md cursor-pointer transition-colors truncate">
-                    {cat}
+              {categories.slice(0, 4).map(cat => (
+                <Link key={cat.id} href={`/browse?category=${encodeURIComponent(cat.name)}`}>
+                  <div className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md cursor-pointer transition-colors truncate" data-testid={`quicklink-${cat.id}`}>
+                    {cat.name}
                   </div>
                 </Link>
               ))}
               <Link href="/browse">
-                <div className="px-3 py-2 text-sm text-primary font-medium hover:underline cursor-pointer mt-1">
+                <div className="px-3 py-2 text-sm text-primary font-medium hover:underline cursor-pointer mt-1" data-testid="link-view-all-categories">
                   View all categories...
                 </div>
               </Link>
@@ -126,7 +139,7 @@ export function Layout({ children }: LayoutProps) {
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b bg-sidebar sticky top-0 z-30">
           <h1 className="font-header text-xl font-bold text-sidebar-foreground">Katalyst Lexicon</h1>
-          <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} data-testid="button-mobile-menu">
             <Menu className="h-5 w-5" />
           </Button>
         </div>

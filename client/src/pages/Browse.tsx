@@ -1,18 +1,30 @@
+import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { MOCK_TERMS, CATEGORIES } from "@/lib/mockData";
 import { TermCard } from "@/components/TermCard";
-import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { Loader2 } from "lucide-react";
+import { Term, Category } from "@/lib/api";
 
 export default function Browse() {
-  const [location] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const activeCategory = searchParams.get("category");
 
+  const { data: terms = [], isLoading: termsLoading } = useQuery<Term[]>({
+    queryKey: ["/api/terms"],
+  });
+
+  const { data: categories = [], isLoading: catsLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
   const filteredTerms = activeCategory 
-    ? MOCK_TERMS.filter(t => t.category === activeCategory)
-    : MOCK_TERMS;
+    ? terms.filter(t => t.category === activeCategory)
+    : terms;
+
+  const getTermCount = (catName: string) => terms.filter(t => t.category === catName).length;
+
+  const isLoading = termsLoading || catsLoading;
 
   return (
     <Layout>
@@ -31,24 +43,24 @@ export default function Browse() {
                   !activeCategory 
                     ? "bg-primary text-primary-foreground font-medium shadow-sm" 
                     : "text-foreground hover:bg-muted"
-                )}>
+                )} data-testid="link-all-terms">
                   All Terms
                 </div>
               </Link>
-              {CATEGORIES.map(cat => (
-                <Link key={cat} href={`/browse?category=${encodeURIComponent(cat)}`}>
+              {categories.map(cat => (
+                <Link key={cat.id} href={`/browse?category=${encodeURIComponent(cat.name)}`}>
                   <div className={cn(
                     "px-3 py-2 rounded-md text-sm cursor-pointer transition-colors flex justify-between items-center group",
-                    activeCategory === cat 
+                    activeCategory === cat.name 
                       ? "bg-white border border-border font-medium text-primary shadow-sm" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}>
-                    <span>{cat}</span>
+                  )} data-testid={`link-category-${cat.id}`}>
+                    <span>{cat.name}</span>
                     <span className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded-full bg-muted-foreground/10 group-hover:bg-muted-foreground/20",
-                      activeCategory === cat && "bg-primary/10 text-primary"
+                      activeCategory === cat.name && "bg-primary/10 text-primary"
                     )}>
-                      {MOCK_TERMS.filter(t => t.category === cat).length}
+                      {getTermCount(cat.name)}
                     </span>
                   </div>
                 </Link>
@@ -61,7 +73,7 @@ export default function Browse() {
         <div className="flex-1 p-6 md:p-12">
           <div className="max-w-5xl mx-auto space-y-8">
             <div className="space-y-2 border-b pb-6">
-              <h1 className="text-3xl font-serif text-primary">
+              <h1 className="text-3xl font-header text-primary">
                 {activeCategory || "All Terms"}
               </h1>
               <p className="text-muted-foreground">
@@ -71,13 +83,19 @@ export default function Browse() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              {filteredTerms.map(term => (
-                <TermCard key={term.id} term={term} />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                {filteredTerms.map(term => (
+                  <TermCard key={term.id} term={term} />
+                ))}
+              </div>
+            )}
 
-            {filteredTerms.length === 0 && (
+            {!isLoading && filteredTerms.length === 0 && (
               <div className="py-20 text-center text-muted-foreground">
                 No terms found in this category yet.
               </div>

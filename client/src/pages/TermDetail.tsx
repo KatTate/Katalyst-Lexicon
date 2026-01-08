@@ -1,20 +1,86 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { MOCK_TERMS } from "@/lib/mockData";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History } from "lucide-react";
+import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import NotFound from "./not-found";
+import { api, Term } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
 
 export default function TermDetail() {
   const [match, params] = useRoute("/term/:id");
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [editOpen, setEditOpen] = useState(false);
+  
+  const { data: term, isLoading, error } = useQuery<Term>({
+    queryKey: ["/api/terms", params?.id],
+    queryFn: () => api.terms.get(params?.id || ""),
+    enabled: !!params?.id,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<Term>) => api.terms.update(params?.id || "", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/terms"] });
+      toast({ title: "Term Updated", description: "Your changes have been saved." });
+      setEditOpen(false);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update term.", variant: "destructive" });
+    },
+  });
+
+  const [editForm, setEditForm] = useState({
+    definition: "",
+    whyExists: "",
+    usedWhen: "",
+    notUsedWhen: "",
+  });
+
+  const handleEditOpen = () => {
+    if (term) {
+      setEditForm({
+        definition: term.definition,
+        whyExists: term.whyExists,
+        usedWhen: term.usedWhen,
+        notUsedWhen: term.notUsedWhen,
+      });
+    }
+    setEditOpen(true);
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast({ title: "Link Copied", description: "Term link copied to clipboard." });
+    } catch {
+      toast({ title: "Share", description: "Could not copy link to clipboard." });
+    }
+  };
   
   if (!match) return <NotFound />;
   
-  const term = MOCK_TERMS.find(t => t.id === params.id);
-  if (!term) return <NotFound />;
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !term) return <NotFound />;
 
   const isDeprecated = term.status === 'Deprecated';
 
@@ -25,7 +91,7 @@ export default function TermDetail() {
         {/* Breadcrumb / Back */}
         <div className="mb-8">
           <Link href="/browse">
-            <div className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+            <div className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer" data-testid="link-back-browse">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Browse
             </div>
@@ -47,16 +113,73 @@ export default function TermDetail() {
               <h1 className={cn(
                 "text-4xl md:text-5xl font-header font-bold text-kat-black tracking-tight",
                 isDeprecated && "line-through decoration-destructive/30 text-muted-foreground"
-              )}>
+              )} data-testid="text-term-name">
                 {term.name}
               </h1>
             </div>
             <div className="flex items-center gap-3 shrink-0">
                <StatusBadge status={term.status} className="text-sm px-3 py-1" />
-               <Button variant="outline" size="icon" title="Edit Term" className="hover:bg-muted">
-                 <Edit className="h-4 w-4" />
-               </Button>
-               <Button variant="outline" size="icon" title="Share" className="hover:bg-muted">
+               <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                 <DialogTrigger asChild>
+                   <Button variant="outline" size="icon" title="Edit Term" className="hover:bg-muted" onClick={handleEditOpen} data-testid="button-edit-term">
+                     <Edit className="h-4 w-4" />
+                   </Button>
+                 </DialogTrigger>
+                 <DialogContent className="max-w-2xl">
+                   <DialogHeader>
+                     <DialogTitle className="font-header font-bold">Edit Term</DialogTitle>
+                     <DialogDescription>Make changes to this term's definition and usage rules.</DialogDescription>
+                   </DialogHeader>
+                   <div className="space-y-4 py-4">
+                     <div className="space-y-2">
+                       <Label>Definition</Label>
+                       <Textarea 
+                         value={editForm.definition}
+                         onChange={(e) => setEditForm(f => ({...f, definition: e.target.value}))}
+                         rows={3}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Why it exists</Label>
+                       <Input 
+                         value={editForm.whyExists}
+                         onChange={(e) => setEditForm(f => ({...f, whyExists: e.target.value}))}
+                       />
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                         <Label>Used When</Label>
+                         <Textarea 
+                           value={editForm.usedWhen}
+                           onChange={(e) => setEditForm(f => ({...f, usedWhen: e.target.value}))}
+                           rows={2}
+                         />
+                       </div>
+                       <div className="space-y-2">
+                         <Label>Not Used When</Label>
+                         <Textarea 
+                           value={editForm.notUsedWhen}
+                           onChange={(e) => setEditForm(f => ({...f, notUsedWhen: e.target.value}))}
+                           rows={2}
+                         />
+                       </div>
+                     </div>
+                   </div>
+                   <DialogFooter>
+                     <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+                     <Button 
+                       className="bg-primary text-white font-bold" 
+                       onClick={() => updateMutation.mutate(editForm)}
+                       disabled={updateMutation.isPending}
+                       data-testid="button-save-edit"
+                     >
+                       {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                       Save Changes
+                     </Button>
+                   </DialogFooter>
+                 </DialogContent>
+               </Dialog>
+               <Button variant="outline" size="icon" title="Share" className="hover:bg-muted" onClick={handleShare} data-testid="button-share-term">
                  <Share2 className="h-4 w-4" />
                </Button>
             </div>
@@ -76,7 +199,7 @@ export default function TermDetail() {
           )}
 
           <div className="prose prose-lg max-w-none text-kat-charcoal leading-relaxed font-sans">
-            <p className="text-lg">{term.definition}</p>
+            <p className="text-lg" data-testid="text-term-definition">{term.definition}</p>
           </div>
         </div>
 
@@ -89,13 +212,13 @@ export default function TermDetail() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-1">Why it exists</h3>
-                <p className="text-base text-kat-charcoal">{term.why_exists}</p>
+                <p className="text-base text-kat-charcoal">{term.whyExists}</p>
               </div>
             </div>
           </div>
           
           <div className="space-y-4">
-             {term.synonyms.length > 0 && (
+             {term.synonyms && term.synonyms.length > 0 && (
               <div>
                 <h3 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Synonyms / Also Known As</h3>
                 <div className="flex flex-wrap gap-2">
@@ -117,11 +240,11 @@ export default function TermDetail() {
               <CheckCircle2 className="h-5 w-5" />
               When to use
             </h3>
-            <p className="text-kat-charcoal">{term.used_when}</p>
+            <p className="text-kat-charcoal">{term.usedWhen}</p>
             
-            {term.examples_good.length > 0 && (
+            {term.examplesGood && term.examplesGood.length > 0 && (
               <ul className="space-y-3 mt-4">
-                {term.examples_good.map((ex, i) => (
+                {term.examplesGood.map((ex, i) => (
                   <li key={i} className="bg-green-50/50 p-4 rounded-md text-sm border-l-4 border-kat-green text-kat-charcoal italic">
                     "{ex}"
                   </li>
@@ -135,11 +258,11 @@ export default function TermDetail() {
               <AlertTriangle className="h-5 w-5" />
               When NOT to use
             </h3>
-            <p className="text-kat-charcoal">{term.not_used_when}</p>
+            <p className="text-kat-charcoal">{term.notUsedWhen}</p>
             
-            {term.examples_bad.length > 0 && (
+            {term.examplesBad && term.examplesBad.length > 0 && (
               <ul className="space-y-3 mt-4">
-                {term.examples_bad.map((ex, i) => (
+                {term.examplesBad.map((ex, i) => (
                   <li key={i} className="bg-red-50/50 p-4 rounded-md text-sm border-l-4 border-destructive text-kat-charcoal/80 line-through decoration-destructive/30 italic">
                     "{ex}"
                   </li>
@@ -156,13 +279,13 @@ export default function TermDetail() {
               <span className="font-bold text-foreground">Owner:</span> {term.owner}
             </div>
             <div>
-              <span className="font-bold text-foreground">Last Updated:</span> {term.updated_at}
+              <span className="font-bold text-foreground">Last Updated:</span> {new Date(term.updatedAt).toLocaleDateString()}
             </div>
             <div>
               <span className="font-bold text-foreground">Visibility:</span> {term.visibility}
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="gap-2 hover:bg-white hover:shadow-sm">
+          <Button variant="ghost" size="sm" className="gap-2 hover:bg-white hover:shadow-sm" data-testid="button-view-history">
             <History className="h-4 w-4" />
             View History
           </Button>

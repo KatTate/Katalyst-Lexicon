@@ -1,22 +1,27 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Sparkles, TrendingUp } from "lucide-react";
-import { MOCK_TERMS } from "@/lib/mockData";
+import { Search, Plus, Sparkles, TrendingUp, Loader2 } from "lucide-react";
 import { TermCard } from "@/components/TermCard";
 import { Link } from "wouter";
+import { api, Term } from "@/lib/api";
 
 export default function Home() {
   const [search, setSearch] = useState("");
   
-  const filteredTerms = MOCK_TERMS.filter(t => 
+  const { data: terms = [], isLoading } = useQuery<Term[]>({
+    queryKey: ["/api/terms"],
+  });
+  
+  const filteredTerms = terms.filter(t => 
     t.name.toLowerCase().includes(search.toLowerCase()) || 
     t.definition.toLowerCase().includes(search.toLowerCase())
   );
 
-  const recentTerms = [...MOCK_TERMS].sort((a, b) => 
-    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  const recentTerms = [...terms].sort((a, b) => 
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   ).slice(0, 3);
 
   return (
@@ -38,6 +43,7 @@ export default function Home() {
               <Search className="h-5 w-5 text-muted-foreground" />
             </div>
             <Input 
+              data-testid="input-search"
               className="pl-11 h-14 text-lg bg-white shadow-sm border-border rounded-xl focus-visible:ring-primary focus-visible:border-primary font-sans"
               placeholder="Search for a term, concept, or acronym..."
               value={search}
@@ -58,8 +64,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Search Results (if active) */}
-        {search ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : search ? (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <h2 className="text-2xl font-header font-bold text-kat-black">Search Results</h2>
@@ -74,13 +83,12 @@ export default function Home() {
               <div className="text-center py-20 bg-muted/30 rounded-lg border border-dashed border-border">
                 <p className="text-muted-foreground">No terms found for "{search}"</p>
                 <Link href="/propose">
-                  <Button variant="link" className="mt-2 text-primary font-bold">Propose a new term?</Button>
+                  <Button variant="link" className="mt-2 text-primary font-bold" data-testid="link-propose-from-empty">Propose a new term?</Button>
                 </Link>
               </div>
             )}
           </div>
         ) : (
-          /* Default Dashboard View */
           <div className="space-y-16 animate-in fade-in delay-150 duration-700">
             
             <section>
@@ -89,7 +97,9 @@ export default function Home() {
                   <TrendingUp className="h-5 w-5 text-primary" />
                   <h2 className="text-2xl font-header font-bold text-kat-black">Recently Updated</h2>
                 </div>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary font-medium">View all updates</Button>
+                <Link href="/browse">
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary font-medium" data-testid="button-view-all-updates">View all updates</Button>
+                </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {recentTerms.map(term => (
@@ -108,7 +118,7 @@ export default function Home() {
                   </p>
                 </div>
                 <Link href="/propose">
-                  <Button size="lg" className="shrink-0 bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all font-bold">
+                  <Button size="lg" className="shrink-0 bg-primary text-white hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all font-bold" data-testid="button-propose-term">
                     <Plus className="mr-2 h-4 w-4" />
                     Propose New Term
                   </Button>

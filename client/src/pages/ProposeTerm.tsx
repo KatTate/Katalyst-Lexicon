@@ -1,3 +1,4 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,10 +8,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { CATEGORIES } from "@/lib/mockData";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { api, Category } from "@/lib/api";
 
 const formSchema = z.object({
   name: z.string().min(2, "Term name must be at least 2 characters"),
@@ -24,6 +25,11 @@ const formSchema = z.object({
 export default function ProposeTerm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,13 +42,39 @@ export default function ProposeTerm() {
     },
   });
 
+  const createProposal = useMutation({
+    mutationFn: (values: z.infer<typeof formSchema>) => 
+      api.proposals.create({
+        termName: values.name,
+        category: values.category,
+        type: "new",
+        status: "pending",
+        submittedBy: "Current User",
+        changesSummary: `New term proposal: ${values.name}`,
+        definition: values.definition,
+        whyExists: values.why_exists,
+        usedWhen: values.used_when || "",
+        notUsedWhen: values.not_used_when || "",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
+      toast({
+        title: "Proposal Submitted",
+        description: "Your term has been submitted for review by the governance committee.",
+      });
+      setTimeout(() => setLocation("/"), 1500);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to submit proposal. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Proposal Submitted",
-      description: "Your term has been submitted for review by the governance committee.",
-    });
-    setTimeout(() => setLocation("/"), 1500);
+    createProposal.mutate(values);
   }
 
   return (
@@ -50,12 +82,12 @@ export default function ProposeTerm() {
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-8">
           <Link href="/">
-            <div className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-6">
+            <div className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-6" data-testid="link-back-home">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Cancel and go back
             </div>
           </Link>
-          <h1 className="text-3xl font-serif text-primary">Propose a New Term</h1>
+          <h1 className="text-3xl font-header text-primary">Propose a New Term</h1>
           <p className="text-muted-foreground mt-2">
             Submit a new term for the Katalyst Lexicon. All proposals are reviewed by domain stewards before being canonized.
           </p>
@@ -73,7 +105,7 @@ export default function ProposeTerm() {
                     <FormItem>
                       <FormLabel>Term Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Phase Gate" {...field} />
+                        <Input placeholder="e.g. Phase Gate" {...field} data-testid="input-term-name" />
                       </FormControl>
                       <FormDescription>
                         Use the most common name. Synonyms can be added later.
@@ -91,13 +123,13 @@ export default function ProposeTerm() {
                       <FormLabel>Domain / Category</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger data-testid="select-category">
                             <SelectValue placeholder="Select a domain" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {CATEGORIES.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -117,7 +149,8 @@ export default function ProposeTerm() {
                       <Textarea 
                         placeholder="Write a clear, non-circular definition..." 
                         className="min-h-[120px] resize-none"
-                        {...field} 
+                        {...field}
+                        data-testid="input-definition"
                       />
                     </FormControl>
                     <FormDescription>
@@ -138,7 +171,7 @@ export default function ProposeTerm() {
                     <FormItem>
                       <FormLabel>Why does this exist?</FormLabel>
                       <FormControl>
-                        <Input placeholder="To prevent ambiguity about..." {...field} />
+                        <Input placeholder="To prevent ambiguity about..." {...field} data-testid="input-why-exists" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -156,7 +189,8 @@ export default function ProposeTerm() {
                           <Textarea 
                             placeholder="e.g. Discussing project milestones..." 
                             className="h-20 resize-none"
-                            {...field} 
+                            {...field}
+                            data-testid="input-used-when"
                           />
                         </FormControl>
                         <FormMessage />
@@ -174,7 +208,8 @@ export default function ProposeTerm() {
                           <Textarea 
                             placeholder="e.g. Referring to general goals..." 
                             className="h-20 resize-none"
-                            {...field} 
+                            {...field}
+                            data-testid="input-not-used-when"
                           />
                         </FormControl>
                         <FormMessage />
@@ -185,8 +220,18 @@ export default function ProposeTerm() {
               </div>
 
               <div className="flex justify-end pt-4">
-                <Button type="submit" size="lg" className="w-full md:w-auto">
-                  <Save className="mr-2 h-4 w-4" />
+                <Button 
+                  type="submit" 
+                  size="lg" 
+                  className="w-full md:w-auto"
+                  disabled={createProposal.isPending}
+                  data-testid="button-submit-proposal"
+                >
+                  {createProposal.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
                   Submit Proposal
                 </Button>
               </div>
