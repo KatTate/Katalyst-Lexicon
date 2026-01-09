@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { Loader2 } from "lucide-react";
 import { Term, Category } from "@/lib/api";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function Browse() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -31,39 +32,71 @@ export default function Browse() {
       <div className="flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
         
         {/* Category Sidebar (Inner) */}
-        <div className="w-full md:w-64 border-b md:border-b-0 md:border-r bg-muted/10 p-6 space-y-8">
+        <div className="w-full md:w-72 border-b md:border-b-0 md:border-r bg-muted/10 p-6 space-y-8">
           <div>
             <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
-              Domains
+              Categories
             </h2>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Link href="/browse">
                 <div className={cn(
-                  "px-3 py-2 rounded-md text-sm cursor-pointer transition-colors",
+                  "px-3 py-3 rounded-md cursor-pointer transition-colors",
                   !activeCategory 
-                    ? "bg-primary text-primary-foreground font-medium shadow-sm" 
+                    ? "bg-primary text-primary-foreground shadow-sm" 
                     : "text-foreground hover:bg-muted"
                 )} data-testid="link-all-terms">
-                  All Terms
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-sm">All Terms</span>
+                    <span className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded-full",
+                      !activeCategory ? "bg-white/20" : "bg-muted-foreground/10"
+                    )}>
+                      {terms.length}
+                    </span>
+                  </div>
+                  <p className={cn(
+                    "text-xs mt-1",
+                    !activeCategory ? "text-primary-foreground/80" : "text-muted-foreground"
+                  )}>
+                    Browse the complete vocabulary
+                  </p>
                 </div>
               </Link>
               {categories.map(cat => (
-                <Link key={cat.id} href={`/browse?category=${encodeURIComponent(cat.name)}`}>
-                  <div className={cn(
-                    "px-3 py-2 rounded-md text-sm cursor-pointer transition-colors flex justify-between items-center group",
-                    activeCategory === cat.name 
-                      ? "bg-white border border-border font-medium text-primary shadow-sm" 
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )} data-testid={`link-category-${cat.id}`}>
-                    <span>{cat.name}</span>
-                    <span className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-full bg-muted-foreground/10 group-hover:bg-muted-foreground/20",
-                      activeCategory === cat.name && "bg-primary/10 text-primary"
-                    )}>
-                      {getTermCount(cat.name)}
-                    </span>
-                  </div>
-                </Link>
+                <Tooltip key={cat.id}>
+                  <TooltipTrigger asChild>
+                    <Link href={`/browse?category=${encodeURIComponent(cat.name)}`}>
+                      <div className={cn(
+                        "px-3 py-3 rounded-md cursor-pointer transition-colors group",
+                        activeCategory === cat.name 
+                          ? "bg-white border border-border text-primary shadow-sm" 
+                          : "hover:bg-muted"
+                      )} data-testid={`link-category-${cat.id}`}>
+                        <div className="flex justify-between items-center">
+                          <span className={cn(
+                            "font-medium text-sm",
+                            activeCategory === cat.name ? "text-primary" : "text-foreground"
+                          )}>{cat.name}</span>
+                          <span className={cn(
+                            "text-[10px] px-1.5 py-0.5 rounded-full bg-muted-foreground/10 group-hover:bg-muted-foreground/20",
+                            activeCategory === cat.name && "bg-primary/10 text-primary"
+                          )}>
+                            {getTermCount(cat.name)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {cat.description 
+                            ? cat.description.replace(/^Definitions and vocabulary related to\s*/i, '').replace(/\.$/, '')
+                            : `Terms related to ${cat.name.toLowerCase()}`}
+                        </p>
+                      </div>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p className="font-medium">{cat.name}</p>
+                    <p className="text-xs text-muted-foreground">{cat.description || `Terms related to ${cat.name.toLowerCase()}`}</p>
+                  </TooltipContent>
+                </Tooltip>
               ))}
             </div>
           </div>
@@ -78,8 +111,8 @@ export default function Browse() {
               </h1>
               <p className="text-muted-foreground">
                 {activeCategory 
-                  ? `Canonical definitions for ${activeCategory} domain.` 
-                  : "Browsing the complete organization vocabulary."}
+                  ? categories.find(c => c.name === activeCategory)?.description || `Terms in the ${activeCategory} category.`
+                  : "Browse the complete organization vocabulary across all categories."}
               </p>
             </div>
 
