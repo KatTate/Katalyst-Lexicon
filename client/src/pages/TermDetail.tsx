@@ -3,11 +3,11 @@ import { Layout } from "@/components/Layout";
 import { useRoute, useLocation } from "wouter";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History, Loader2 } from "lucide-react";
+import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History, Loader2, BookOpen } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import NotFound from "./not-found";
-import { api, Term } from "@/lib/api";
+import { api, Term, Principle } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,12 @@ export default function TermDetail() {
   const { data: term, isLoading, error } = useQuery<Term>({
     queryKey: ["/api/terms", params?.id],
     queryFn: () => api.terms.get(params?.id || ""),
+    enabled: !!params?.id,
+  });
+
+  const { data: governingPrinciples = [] } = useQuery<Principle[]>({
+    queryKey: ["/api/terms", params?.id, "principles"],
+    queryFn: () => api.terms.getPrinciples(params?.id || ""),
     enabled: !!params?.id,
   });
 
@@ -271,6 +277,29 @@ export default function TermDetail() {
             )}
           </div>
         </div>
+
+        {/* Governing Principles */}
+        {governingPrinciples.length > 0 && (
+          <div className="py-8 border-b border-border">
+            <h3 className="font-bold text-lg flex items-center gap-2 text-kat-charcoal mb-4">
+              <BookOpen className="h-5 w-5 text-primary" />
+              Governing Principles
+            </h3>
+            <div className="space-y-3">
+              {governingPrinciples.map(principle => (
+                <Link key={principle.id} href={`/principle/${principle.slug}`}>
+                  <div 
+                    className="bg-primary/5 border border-primary/20 p-4 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer"
+                    data-testid={`link-principle-${principle.id}`}
+                  >
+                    <h4 className="font-bold text-primary">{principle.title}</h4>
+                    <p className="text-sm text-muted-foreground mt-1">{principle.summary}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Footer Metadata */}
         <div className="py-8 flex items-center justify-between text-sm text-muted-foreground bg-muted/20 px-6 rounded-lg mt-8 border border-border">

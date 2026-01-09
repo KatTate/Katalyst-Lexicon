@@ -12,6 +12,8 @@ import DesignSystem from "@/pages/DesignSystem";
 import ReviewQueue from "@/pages/ReviewQueue";
 import ManageCategories from "@/pages/ManageCategories";
 import Settings from "@/pages/Settings";
+import BrowsePrinciples from "@/pages/BrowsePrinciples";
+import PrincipleDetail from "@/pages/PrincipleDetail";
 
 function Router() {
   return (
@@ -24,6 +26,8 @@ function Router() {
       <Route path="/review" component={ReviewQueue} />
       <Route path="/categories" component={ManageCategories} />
       <Route path="/settings" component={Settings} />
+      <Route path="/principles" component={BrowsePrinciples} />
+      <Route path="/principle/:slug" component={PrincipleDetail} />
       <Route component={NotFound} />
     </Switch>
   );

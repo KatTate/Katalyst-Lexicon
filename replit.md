@@ -36,6 +36,8 @@ Preferred communication style: Simple, everyday language.
 - **Terms**: Core vocabulary entries with name, definition, category, status (Draft/In Review/Canonical/Deprecated), visibility levels, synonyms, and versioning
 - **Categories**: Organizational groupings for terms with color coding and sort order
 - **Proposals**: Editorial workflow for new term submissions and edits with approval states
+- **Principles**: Longer-form philosophies and manifestos (title, slug, summary, body with markdown, status, visibility, tags) that can link to multiple related terms via the principleTermLinks join table
+- **PrincipleTermLinks**: Join table connecting principles to related terms (bidirectional relationship)
 - **Users**: Role-based access (Viewer/Contributor/Editor/Approver/Admin)
 - **Settings**: Key-value configuration store
 

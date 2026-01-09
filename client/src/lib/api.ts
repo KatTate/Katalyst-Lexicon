@@ -58,6 +58,21 @@ export interface Setting {
   value: boolean;
 }
 
+export interface Principle {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  body: string;
+  status: "Draft" | "Published" | "Archived";
+  visibility: "Internal" | "Client-Safe" | "Public";
+  owner: string;
+  tags: string[];
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 async function fetchJson<T>(method: string, url: string, data?: unknown): Promise<T> {
   const res = await apiRequest(method, url, data);
   if (method === "DELETE") {
@@ -71,6 +86,7 @@ export const api = {
     getAll: () => fetchJson<Term[]>("GET", "/api/terms"),
     get: (id: string) => fetchJson<Term>("GET", `/api/terms/${id}`),
     getByCategory: (category: string) => fetchJson<Term[]>("GET", `/api/terms/category/${encodeURIComponent(category)}`),
+    getPrinciples: (id: string) => fetchJson<Principle[]>("GET", `/api/terms/${id}/principles`),
     create: (data: Partial<Term>) => fetchJson<Term>("POST", "/api/terms", data),
     update: (id: string, data: Partial<Term>) => fetchJson<Term>("PATCH", `/api/terms/${id}`, data),
     delete: (id: string) => fetchJson<void>("DELETE", `/api/terms/${id}`),
@@ -104,5 +120,13 @@ export const api = {
     getAll: () => fetchJson<Setting[]>("GET", "/api/settings"),
     save: (key: string, value: boolean) => fetchJson<Setting>("POST", "/api/settings", { key, value }),
     saveBatch: (settingsData: {key: string; value: boolean}[]) => fetchJson<Setting[]>("POST", "/api/settings/batch", { settings: settingsData }),
+  },
+  principles: {
+    getAll: () => fetchJson<Principle[]>("GET", "/api/principles"),
+    get: (idOrSlug: string) => fetchJson<Principle>("GET", `/api/principles/${idOrSlug}`),
+    getTerms: (id: string) => fetchJson<Term[]>("GET", `/api/principles/${id}/terms`),
+    create: (data: Partial<Principle>) => fetchJson<Principle>("POST", "/api/principles", data),
+    update: (id: string, data: Partial<Principle>) => fetchJson<Principle>("PATCH", `/api/principles/${id}`, data),
+    delete: (id: string) => fetchJson<void>("DELETE", `/api/principles/${id}`),
   },
 };

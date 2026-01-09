@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog } from "lucide-react";
+import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog, BookOpen } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -85,6 +85,13 @@ export function Layout({ children }: LayoutProps) {
             <NavItem href="/browse" icon={Grid} label="Browse Categories" />
             
             <div className="pt-8 pb-2">
+              <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
+                Knowledge Base
+              </p>
+              <NavItem href="/principles" icon={BookOpen} label="Principles" />
+            </div>
+
+            <div className="pt-6 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Approver Tools
               </p>
