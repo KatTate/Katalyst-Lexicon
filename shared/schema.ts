@@ -8,6 +8,7 @@ export const visibilityEnum = pgEnum("visibility", ["Internal", "Client-Safe", "
 export const userRoleEnum = pgEnum("user_role", ["Viewer", "Contributor", "Editor", "Approver", "Admin"]);
 export const proposalStatusEnum = pgEnum("proposal_status", ["pending", "in_review", "changes_requested", "approved", "rejected"]);
 export const proposalTypeEnum = pgEnum("proposal_type", ["new", "edit"]);
+export const principleStatusEnum = pgEnum("principle_status", ["Draft", "Published", "Archived"]);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -67,11 +68,34 @@ export const settings = pgTable("settings", {
   value: boolean("value").notNull().default(false),
 });
 
+export const principles = pgTable("principles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  summary: text("summary").notNull(),
+  body: text("body").notNull(),
+  status: principleStatusEnum("status").notNull().default("Draft"),
+  visibility: visibilityEnum("visibility").notNull().default("Internal"),
+  owner: text("owner").notNull(),
+  tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const principleTermLinks = pgTable("principle_term_links", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  principleId: varchar("principle_id").notNull(),
+  termId: varchar("term_id").notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertTermSchema = createInsertSchema(terms).omit({ id: true, updatedAt: true });
 export const insertProposalSchema = createInsertSchema(proposals).omit({ id: true, submittedAt: true });
 export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
+export const insertPrincipleSchema = createInsertSchema(principles).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPrincipleTermLinkSchema = createInsertSchema(principleTermLinks).omit({ id: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -83,3 +107,7 @@ export type InsertProposal = z.infer<typeof insertProposalSchema>;
 export type Proposal = typeof proposals.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type Setting = typeof settings.$inferSelect;
+export type InsertPrinciple = z.infer<typeof insertPrincipleSchema>;
+export type Principle = typeof principles.$inferSelect;
+export type InsertPrincipleTermLink = z.infer<typeof insertPrincipleTermLinkSchema>;
+export type PrincipleTermLink = typeof principleTermLinks.$inferSelect;

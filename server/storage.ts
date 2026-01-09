@@ -4,10 +4,12 @@ import {
   type Term, type InsertTerm,
   type Proposal, type InsertProposal,
   type Setting, type InsertSetting,
-  users, categories, terms, proposals, settings 
+  type Principle, type InsertPrinciple,
+  type PrincipleTermLink, type InsertPrincipleTermLink,
+  users, categories, terms, proposals, settings, principles, principleTermLinks
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, desc, asc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -40,6 +42,20 @@ export interface IStorage {
   getSettings(): Promise<Setting[]>;
   getSetting(key: string): Promise<Setting | undefined>;
   upsertSetting(setting: InsertSetting): Promise<Setting>;
+
+  getPrinciples(): Promise<Principle[]>;
+  getPrinciple(id: string): Promise<Principle | undefined>;
+  getPrincipleBySlug(slug: string): Promise<Principle | undefined>;
+  createPrinciple(principle: InsertPrinciple): Promise<Principle>;
+  updatePrinciple(id: string, principle: Partial<InsertPrinciple>): Promise<Principle | undefined>;
+  deletePrinciple(id: string): Promise<boolean>;
+
+  getPrincipleTermLinks(principleId: string): Promise<PrincipleTermLink[]>;
+  getTermPrincipleLinks(termId: string): Promise<PrincipleTermLink[]>;
+  linkPrincipleToTerm(principleId: string, termId: string): Promise<PrincipleTermLink>;
+  unlinkPrincipleFromTerm(principleId: string, termId: string): Promise<boolean>;
+  getTermsForPrinciple(principleId: string): Promise<Term[]>;
+  getPrinciplesForTerm(termId: string): Promise<Principle[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -181,6 +197,80 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(settings).values(setting).returning();
     return created;
+  }
+
+  async getPrinciples(): Promise<Principle[]> {
+    return db.select().from(principles).orderBy(asc(principles.sortOrder));
+  }
+
+  async getPrinciple(id: string): Promise<Principle | undefined> {
+    const [principle] = await db.select().from(principles).where(eq(principles.id, id));
+    return principle;
+  }
+
+  async getPrincipleBySlug(slug: string): Promise<Principle | undefined> {
+    const [principle] = await db.select().from(principles).where(eq(principles.slug, slug));
+    return principle;
+  }
+
+  async createPrinciple(principle: InsertPrinciple): Promise<Principle> {
+    const existingPrinciples = await this.getPrinciples();
+    const maxSortOrder = existingPrinciples.length > 0 
+      ? Math.max(...existingPrinciples.map(p => p.sortOrder)) 
+      : -1;
+    const [created] = await db.insert(principles).values({
+      ...principle,
+      sortOrder: maxSortOrder + 1
+    }).returning();
+    return created;
+  }
+
+  async updatePrinciple(id: string, principle: Partial<InsertPrinciple>): Promise<Principle | undefined> {
+    const [updated] = await db.update(principles).set({
+      ...principle,
+      updatedAt: new Date()
+    }).where(eq(principles.id, id)).returning();
+    return updated;
+  }
+
+  async deletePrinciple(id: string): Promise<boolean> {
+    await db.delete(principleTermLinks).where(eq(principleTermLinks.principleId, id));
+    const result = await db.delete(principles).where(eq(principles.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getPrincipleTermLinks(principleId: string): Promise<PrincipleTermLink[]> {
+    return db.select().from(principleTermLinks).where(eq(principleTermLinks.principleId, principleId));
+  }
+
+  async getTermPrincipleLinks(termId: string): Promise<PrincipleTermLink[]> {
+    return db.select().from(principleTermLinks).where(eq(principleTermLinks.termId, termId));
+  }
+
+  async linkPrincipleToTerm(principleId: string, termId: string): Promise<PrincipleTermLink> {
+    const [created] = await db.insert(principleTermLinks).values({ principleId, termId }).returning();
+    return created;
+  }
+
+  async unlinkPrincipleFromTerm(principleId: string, termId: string): Promise<boolean> {
+    const result = await db.delete(principleTermLinks)
+      .where(eq(principleTermLinks.principleId, principleId))
+      .where(eq(principleTermLinks.termId, termId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getTermsForPrinciple(principleId: string): Promise<Term[]> {
+    const links = await this.getPrincipleTermLinks(principleId);
+    if (links.length === 0) return [];
+    const termIds = links.map(l => l.termId);
+    return db.select().from(terms).where(inArray(terms.id, termIds));
+  }
+
+  async getPrinciplesForTerm(termId: string): Promise<Principle[]> {
+    const links = await this.getTermPrincipleLinks(termId);
+    if (links.length === 0) return [];
+    const principleIds = links.map(l => l.principleId);
+    return db.select().from(principles).where(inArray(principles.id, principleIds));
   }
 }
 
