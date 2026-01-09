@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { categories, terms, users, proposals, settings } from "@shared/schema";
+import { categories, terms, users, proposals, settings, principles } from "@shared/schema";
 
 const SEED_CATEGORIES = [
   { name: "Organizational", description: "Definitions and vocabulary related to organizational structure.", color: "bg-primary", sortOrder: 0 },
@@ -149,6 +149,78 @@ const SEED_SETTINGS = [
   { key: "enable_public_glossary", value: false },
 ];
 
+const SEED_PRINCIPLES = [
+  {
+    title: "Value Creation Precedes Reward",
+    slug: "value-creation-precedes-reward",
+    summary: "At Katalyst, compensation changes do not happen because someone's role or task list changes. They happen when someone creates more value.",
+    body: `## First Principle: Value Creation Precedes Reward
+
+At Katalyst, compensation changes do not happen because someone's role or task list changes. They happen when someone creates more value.
+
+Roles and responsibilities may be updated to document value creation, but **value must exist first**.
+
+This is not a policy choice. It is physics.
+
+If value is not created first, any reward is either:
+
+- A bet against reality, or
+- A tax on someone else's performance
+
+### The Performance Platform
+
+The Performance Platform is being designed to:
+
+1. **Make value creation visible** - Clear metrics and outcomes
+2. **Tie rewards to outcomes, not effort** - Results matter more than activity
+3. **Remove ambiguity around what "more value" actually means** - Shared definitions and standards
+
+This principle underpins Path to Green, Super Green, job scorecards, and the performance sharing system.
+
+### Related Programs
+
+This foundational principle connects directly to our **Katalyst Performance Sharing** program, which embodies why we believe it's important for the people that help us create value to share in the reward.`,
+    status: "Published" as const,
+    visibility: "Internal" as const,
+    owner: "Leadership Team",
+    tags: ["compensation", "performance", "culture"],
+    sortOrder: 0,
+  },
+  {
+    title: "Katalyst Performance Sharing",
+    slug: "performance-sharing",
+    summary: "Our belief that those who create value should share in the rewards they help generate.",
+    body: `## Katalyst Performance Sharing
+
+At Katalyst, we believe that the people who help create value should share in the reward.
+
+### Why Performance Sharing Matters
+
+Traditional compensation models create a disconnect between company success and individual reward. Performance Sharing closes this gap by:
+
+1. **Aligning incentives** - When the company wins, the team wins
+2. **Rewarding outcomes** - Not just effort or tenure
+3. **Building ownership mentality** - Everyone thinks like an owner
+
+### How It Works
+
+Performance Sharing is tied to:
+
+- **Company performance** - Overall business outcomes
+- **Team performance** - Collective achievements
+- **Individual contribution** - Personal value creation
+
+### Connection to Value Creation
+
+This program is a natural extension of our first principle: *Value Creation Precedes Reward*. Performance Sharing is the mechanism by which created value flows back to those who created it.`,
+    status: "Published" as const,
+    visibility: "Internal" as const,
+    owner: "Leadership Team",
+    tags: ["compensation", "performance", "culture"],
+    sortOrder: 1,
+  },
+];
+
 export async function seed() {
   console.log("Seeding database...");
 
@@ -180,6 +252,12 @@ export async function seed() {
   if (existingSettings.length === 0) {
     console.log("Seeding settings...");
     await db.insert(settings).values(SEED_SETTINGS);
+  }
+
+  const existingPrinciples = await db.select().from(principles);
+  if (existingPrinciples.length === 0) {
+    console.log("Seeding principles...");
+    await db.insert(principles).values(SEED_PRINCIPLES);
   }
 
   console.log("Database seeding complete!");

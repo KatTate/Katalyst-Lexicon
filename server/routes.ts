@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema } from "@shared/schema";
+import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(
@@ -365,6 +365,106 @@ export async function registerRoutes(
       res.json(results);
     } catch (error) {
       res.status(500).json({ error: "Failed to save settings" });
+    }
+  });
+
+  // ===== PRINCIPLES =====
+  app.get("/api/principles", async (req, res) => {
+    try {
+      const list = await storage.getPrinciples();
+      res.json(list);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch principles" });
+    }
+  });
+
+  app.get("/api/principles/:id", async (req, res) => {
+    try {
+      const principle = await storage.getPrinciple(req.params.id);
+      if (!principle) {
+        const bySlug = await storage.getPrincipleBySlug(req.params.id);
+        if (!bySlug) {
+          return res.status(404).json({ error: "Principle not found" });
+        }
+        return res.json(bySlug);
+      }
+      res.json(principle);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch principle" });
+    }
+  });
+
+  app.post("/api/principles", async (req, res) => {
+    try {
+      const parsed = insertPrincipleSchema.parse(req.body);
+      const principle = await storage.createPrinciple(parsed);
+      res.status(201).json(principle);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create principle" });
+    }
+  });
+
+  app.patch("/api/principles/:id", async (req, res) => {
+    try {
+      const principle = await storage.updatePrinciple(req.params.id, req.body);
+      if (!principle) {
+        return res.status(404).json({ error: "Principle not found" });
+      }
+      res.json(principle);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update principle" });
+    }
+  });
+
+  app.delete("/api/principles/:id", async (req, res) => {
+    try {
+      const success = await storage.deletePrinciple(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Principle not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete principle" });
+    }
+  });
+
+  app.get("/api/principles/:id/terms", async (req, res) => {
+    try {
+      const terms = await storage.getTermsForPrinciple(req.params.id);
+      res.json(terms);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch terms for principle" });
+    }
+  });
+
+  app.post("/api/principles/:id/terms", async (req, res) => {
+    try {
+      const { termId } = req.body;
+      const link = await storage.linkPrincipleToTerm(req.params.id, termId);
+      res.status(201).json(link);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to link term to principle" });
+    }
+  });
+
+  app.delete("/api/principles/:principleId/terms/:termId", async (req, res) => {
+    try {
+      const success = await storage.unlinkPrincipleFromTerm(req.params.principleId, req.params.termId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to unlink term from principle" });
+    }
+  });
+
+  app.get("/api/terms/:id/principles", async (req, res) => {
+    try {
+      const principles = await storage.getPrinciplesForTerm(req.params.id);
+      res.json(principles);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch principles for term" });
     }
   });
 
