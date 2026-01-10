@@ -6,10 +6,11 @@ import {
   type Setting, type InsertSetting,
   type Principle, type InsertPrinciple,
   type PrincipleTermLink, type InsertPrincipleTermLink,
-  users, categories, terms, proposals, settings, principles, principleTermLinks
+  type TermVersion, type InsertTermVersion,
+  users, categories, terms, proposals, settings, principles, principleTermLinks, termVersions
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, inArray } from "drizzle-orm";
+import { eq, desc, asc, inArray, or, ilike, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -28,9 +29,14 @@ export interface IStorage {
   getTerms(): Promise<Term[]>;
   getTerm(id: string): Promise<Term | undefined>;
   getTermsByCategory(category: string): Promise<Term[]>;
-  createTerm(term: InsertTerm): Promise<Term>;
-  updateTerm(id: string, term: Partial<InsertTerm>): Promise<Term | undefined>;
+  searchTerms(query: string): Promise<Term[]>;
+  createTerm(term: InsertTerm, changeNote?: string, changedBy?: string): Promise<Term>;
+  updateTerm(id: string, term: Partial<InsertTerm>, changeNote?: string, changedBy?: string): Promise<Term | undefined>;
   deleteTerm(id: string): Promise<boolean>;
+
+  getTermVersions(termId: string): Promise<TermVersion[]>;
+  getTermVersion(id: string): Promise<TermVersion | undefined>;
+  createTermVersion(version: InsertTermVersion): Promise<TermVersion>;
 
   getProposals(): Promise<Proposal[]>;
   getProposal(id: string): Promise<Proposal | undefined>;
@@ -132,22 +138,81 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(terms).where(eq(terms.category, category)).orderBy(desc(terms.updatedAt));
   }
 
-  async createTerm(term: InsertTerm): Promise<Term> {
+  async searchTerms(query: string): Promise<Term[]> {
+    const searchPattern = `%${query}%`;
+    return db.select().from(terms).where(
+      or(
+        ilike(terms.name, searchPattern),
+        ilike(terms.definition, searchPattern),
+        ilike(terms.whyExists, searchPattern),
+        ilike(terms.usedWhen, searchPattern),
+        ilike(terms.notUsedWhen, searchPattern),
+        sql`array_to_string(${terms.synonyms}, ' ') ILIKE ${searchPattern}`,
+        sql`array_to_string(${terms.examplesGood}, ' ') ILIKE ${searchPattern}`,
+        sql`array_to_string(${terms.examplesBad}, ' ') ILIKE ${searchPattern}`
+      )
+    ).orderBy(desc(terms.updatedAt));
+  }
+
+  async createTerm(term: InsertTerm, changeNote: string = "Initial creation", changedBy: string = "System"): Promise<Term> {
     const [created] = await db.insert(terms).values(term).returning();
+    
+    await this.createTermVersion({
+      termId: created.id,
+      versionNumber: 1,
+      snapshotJson: created,
+      changeNote,
+      changedBy
+    });
+    
     return created;
   }
 
-  async updateTerm(id: string, term: Partial<InsertTerm>): Promise<Term | undefined> {
+  async updateTerm(id: string, term: Partial<InsertTerm>, changeNote: string = "Updated", changedBy: string = "System"): Promise<Term | undefined> {
+    const existing = await this.getTerm(id);
+    if (!existing) return undefined;
+    
+    const newVersion = existing.version + 1;
     const [updated] = await db.update(terms).set({
       ...term,
+      version: newVersion,
       updatedAt: new Date()
     }).where(eq(terms.id, id)).returning();
+    
+    if (updated) {
+      await this.createTermVersion({
+        termId: id,
+        versionNumber: newVersion,
+        snapshotJson: updated,
+        changeNote,
+        changedBy
+      });
+    }
+    
     return updated;
   }
 
   async deleteTerm(id: string): Promise<boolean> {
+    await db.delete(termVersions).where(eq(termVersions.termId, id));
+    await db.delete(principleTermLinks).where(eq(principleTermLinks.termId, id));
     const result = await db.delete(terms).where(eq(terms.id, id));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  async getTermVersions(termId: string): Promise<TermVersion[]> {
+    return db.select().from(termVersions)
+      .where(eq(termVersions.termId, termId))
+      .orderBy(desc(termVersions.versionNumber));
+  }
+
+  async getTermVersion(id: string): Promise<TermVersion | undefined> {
+    const [version] = await db.select().from(termVersions).where(eq(termVersions.id, id));
+    return version;
+  }
+
+  async createTermVersion(version: InsertTermVersion): Promise<TermVersion> {
+    const [created] = await db.insert(termVersions).values(version).returning();
+    return created;
   }
 
   async getProposals(): Promise<Proposal[]> {
@@ -254,8 +319,7 @@ export class DatabaseStorage implements IStorage {
 
   async unlinkPrincipleFromTerm(principleId: string, termId: string): Promise<boolean> {
     const result = await db.delete(principleTermLinks)
-      .where(eq(principleTermLinks.principleId, principleId))
-      .where(eq(principleTermLinks.termId, termId));
+      .where(sql`${principleTermLinks.principleId} = ${principleId} AND ${principleTermLinks.termId} = ${termId}`);
     return (result.rowCount ?? 0) > 0;
   }
 

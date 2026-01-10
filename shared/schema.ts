@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -44,6 +44,16 @@ export const terms = pgTable("terms", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const termVersions = pgTable("term_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  termId: varchar("term_id").notNull(),
+  versionNumber: integer("version_number").notNull(),
+  snapshotJson: jsonb("snapshot_json").notNull(),
+  changeNote: text("change_note").notNull(),
+  changedBy: text("changed_by").notNull(),
+  changedAt: timestamp("changed_at").notNull().defaultNow(),
+});
+
 export const proposals = pgTable("proposals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   termId: varchar("term_id"),
@@ -58,6 +68,9 @@ export const proposals = pgTable("proposals", {
   whyExists: text("why_exists").notNull(),
   usedWhen: text("used_when").notNull().default(""),
   notUsedWhen: text("not_used_when").notNull().default(""),
+  examplesGood: text("examples_good").array().notNull().default(sql`'{}'::text[]`),
+  examplesBad: text("examples_bad").array().notNull().default(sql`'{}'::text[]`),
+  synonyms: text("synonyms").array().notNull().default(sql`'{}'::text[]`),
   reviewComment: text("review_comment"),
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
 });
@@ -96,6 +109,7 @@ export const insertProposalSchema = createInsertSchema(proposals).omit({ id: tru
 export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
 export const insertPrincipleSchema = createInsertSchema(principles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertPrincipleTermLinkSchema = createInsertSchema(principleTermLinks).omit({ id: true });
+export const insertTermVersionSchema = createInsertSchema(termVersions).omit({ id: true, changedAt: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -111,3 +125,5 @@ export type InsertPrinciple = z.infer<typeof insertPrincipleSchema>;
 export type Principle = typeof principles.$inferSelect;
 export type InsertPrincipleTermLink = z.infer<typeof insertPrincipleTermLinkSchema>;
 export type PrincipleTermLink = typeof principleTermLinks.$inferSelect;
+export type InsertTermVersion = z.infer<typeof insertTermVersionSchema>;
+export type TermVersion = typeof termVersions.$inferSelect;

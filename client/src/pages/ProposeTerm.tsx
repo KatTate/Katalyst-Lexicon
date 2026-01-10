@@ -8,10 +8,12 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Plus, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { api, Category } from "@/lib/api";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   name: z.string().min(2, "Term name must be at least 2 characters"),
@@ -26,6 +28,13 @@ export default function ProposeTerm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  const [examplesGood, setExamplesGood] = useState<string[]>([]);
+  const [examplesBad, setExamplesBad] = useState<string[]>([]);
+  const [synonyms, setSynonyms] = useState<string[]>([]);
+  const [newGoodExample, setNewGoodExample] = useState("");
+  const [newBadExample, setNewBadExample] = useState("");
+  const [newSynonym, setNewSynonym] = useState("");
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -55,6 +64,9 @@ export default function ProposeTerm() {
         whyExists: values.why_exists,
         usedWhen: values.used_when || "",
         notUsedWhen: values.not_used_when || "",
+        examplesGood,
+        examplesBad,
+        synonyms,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
@@ -76,6 +88,27 @@ export default function ProposeTerm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     createProposal.mutate(values);
   }
+
+  const addGoodExample = () => {
+    if (newGoodExample.trim()) {
+      setExamplesGood([...examplesGood, newGoodExample.trim()]);
+      setNewGoodExample("");
+    }
+  };
+
+  const addBadExample = () => {
+    if (newBadExample.trim()) {
+      setExamplesBad([...examplesBad, newBadExample.trim()]);
+      setNewBadExample("");
+    }
+  };
+
+  const addSynonym = () => {
+    if (newSynonym.trim()) {
+      setSynonyms([...synonyms, newSynonym.trim()]);
+      setNewSynonym("");
+    }
+  };
 
   return (
     <Layout>
@@ -108,7 +141,7 @@ export default function ProposeTerm() {
                         <Input placeholder="e.g. Phase Gate" {...field} data-testid="input-term-name" />
                       </FormControl>
                       <FormDescription>
-                        Use the most common name. Synonyms can be added later.
+                        Use the most common name. Add synonyms below.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -216,6 +249,119 @@ export default function ProposeTerm() {
                       </FormItem>
                     )}
                   />
+                </div>
+              </div>
+
+              <div className="p-4 bg-muted/30 rounded-lg space-y-6 border border-dashed">
+                <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Synonyms</h3>
+                
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add an alternate name or abbreviation..."
+                      value={newSynonym}
+                      onChange={(e) => setNewSynonym(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSynonym())}
+                      data-testid="input-synonym"
+                    />
+                    <Button type="button" variant="outline" onClick={addSynonym} data-testid="button-add-synonym">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {synonyms.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {synonyms.map((syn, i) => (
+                        <Badge key={i} variant="secondary" className="gap-1 pr-1">
+                          {syn}
+                          <button
+                            type="button"
+                            onClick={() => setSynonyms(synonyms.filter((_, idx) => idx !== i))}
+                            className="ml-1 hover:bg-muted rounded"
+                            data-testid={`button-remove-synonym-${i}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Include abbreviations, acronyms, or alternate names that should resolve to this term.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-muted/30 rounded-lg space-y-6 border border-dashed">
+                <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Examples</h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <FormLabel className="text-green-700">Good Usage Examples</FormLabel>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add an example of correct usage..."
+                        value={newGoodExample}
+                        onChange={(e) => setNewGoodExample(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addGoodExample())}
+                        data-testid="input-good-example"
+                      />
+                      <Button type="button" variant="outline" onClick={addGoodExample} data-testid="button-add-good-example">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {examplesGood.length > 0 && (
+                      <ul className="space-y-1">
+                        {examplesGood.map((ex, i) => (
+                          <li key={i} className="flex items-center gap-2 text-sm bg-green-50 border border-green-200 rounded px-3 py-2">
+                            <span className="text-green-600">✓</span>
+                            <span className="flex-1">{ex}</span>
+                            <button
+                              type="button"
+                              onClick={() => setExamplesGood(examplesGood.filter((_, idx) => idx !== i))}
+                              className="text-muted-foreground hover:text-destructive"
+                              data-testid={`button-remove-good-example-${i}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <FormLabel className="text-red-700">Bad Usage Examples</FormLabel>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add an example of incorrect usage..."
+                        value={newBadExample}
+                        onChange={(e) => setNewBadExample(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addBadExample())}
+                        data-testid="input-bad-example"
+                      />
+                      <Button type="button" variant="outline" onClick={addBadExample} data-testid="button-add-bad-example">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {examplesBad.length > 0 && (
+                      <ul className="space-y-1">
+                        {examplesBad.map((ex, i) => (
+                          <li key={i} className="flex items-center gap-2 text-sm bg-red-50 border border-red-200 rounded px-3 py-2">
+                            <span className="text-red-600">✗</span>
+                            <span className="flex-1">{ex}</span>
+                            <button
+                              type="button"
+                              onClick={() => setExamplesBad(examplesBad.filter((_, idx) => idx !== i))}
+                              className="text-muted-foreground hover:text-destructive"
+                              data-testid={`button-remove-bad-example-${i}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </div>
 

@@ -18,6 +18,16 @@ export interface Term {
   updatedAt: string;
 }
 
+export interface TermVersion {
+  id: string;
+  termId: string;
+  versionNumber: number;
+  snapshotJson: Term;
+  changeNote: string;
+  changedBy: string;
+  changedAt: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -40,6 +50,9 @@ export interface Proposal {
   whyExists: string;
   usedWhen: string;
   notUsedWhen: string;
+  examplesGood: string[];
+  examplesBad: string[];
+  synonyms: string[];
   reviewComment: string | null;
   submittedAt: string;
 }
@@ -86,9 +99,11 @@ export const api = {
     getAll: () => fetchJson<Term[]>("GET", "/api/terms"),
     get: (id: string) => fetchJson<Term>("GET", `/api/terms/${id}`),
     getByCategory: (category: string) => fetchJson<Term[]>("GET", `/api/terms/category/${encodeURIComponent(category)}`),
+    search: (query: string) => fetchJson<Term[]>("GET", `/api/terms/search?q=${encodeURIComponent(query)}`),
+    getVersions: (id: string) => fetchJson<TermVersion[]>("GET", `/api/terms/${id}/versions`),
     getPrinciples: (id: string) => fetchJson<Principle[]>("GET", `/api/terms/${id}/principles`),
-    create: (data: Partial<Term>) => fetchJson<Term>("POST", "/api/terms", data),
-    update: (id: string, data: Partial<Term>) => fetchJson<Term>("PATCH", `/api/terms/${id}`, data),
+    create: (data: Partial<Term> & { changeNote?: string; changedBy?: string }) => fetchJson<Term>("POST", "/api/terms", data),
+    update: (id: string, data: Partial<Term> & { changeNote?: string; changedBy?: string }) => fetchJson<Term>("PATCH", `/api/terms/${id}`, data),
     delete: (id: string) => fetchJson<void>("DELETE", `/api/terms/${id}`),
   },
   categories: {
@@ -104,7 +119,7 @@ export const api = {
     get: (id: string) => fetchJson<Proposal>("GET", `/api/proposals/${id}`),
     create: (data: Partial<Proposal>) => fetchJson<Proposal>("POST", "/api/proposals", data),
     update: (id: string, data: Partial<Proposal>) => fetchJson<Proposal>("PATCH", `/api/proposals/${id}`, data),
-    approve: (id: string, comment?: string) => fetchJson<{success: boolean}>("POST", `/api/proposals/${id}/approve`, { comment }),
+    approve: (id: string, comment?: string, approvedBy?: string) => fetchJson<{success: boolean}>("POST", `/api/proposals/${id}/approve`, { comment, approvedBy }),
     reject: (id: string, comment?: string) => fetchJson<{success: boolean}>("POST", `/api/proposals/${id}/reject`, { comment }),
     requestChanges: (id: string, comment?: string) => fetchJson<{success: boolean}>("POST", `/api/proposals/${id}/request-changes`, { comment }),
     delete: (id: string) => fetchJson<void>("DELETE", `/api/proposals/${id}`),

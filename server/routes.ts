@@ -19,6 +19,19 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/terms/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query || query.trim().length < 2) {
+        return res.json([]);
+      }
+      const terms = await storage.searchTerms(query.trim());
+      res.json(terms);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to search terms" });
+    }
+  });
+
   app.get("/api/terms/:id", async (req, res) => {
     try {
       const term = await storage.getTerm(req.params.id);
@@ -28,6 +41,15 @@ export async function registerRoutes(
       res.json(term);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch term" });
+    }
+  });
+
+  app.get("/api/terms/:id/versions", async (req, res) => {
+    try {
+      const versions = await storage.getTermVersions(req.params.id);
+      res.json(versions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch term versions" });
     }
   });
 
@@ -43,7 +65,9 @@ export async function registerRoutes(
   app.post("/api/terms", async (req, res) => {
     try {
       const parsed = insertTermSchema.parse(req.body);
-      const term = await storage.createTerm(parsed);
+      const changeNote = req.body.changeNote || "Initial creation";
+      const changedBy = req.body.changedBy || "System";
+      const term = await storage.createTerm(parsed, changeNote, changedBy);
       res.status(201).json(term);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -55,7 +79,10 @@ export async function registerRoutes(
 
   app.patch("/api/terms/:id", async (req, res) => {
     try {
-      const term = await storage.updateTerm(req.params.id, req.body);
+      const changeNote = req.body.changeNote || "Updated";
+      const changedBy = req.body.changedBy || "System";
+      const { changeNote: _, changedBy: __, ...termData } = req.body;
+      const term = await storage.updateTerm(req.params.id, termData, changeNote, changedBy);
       if (!term) {
         return res.status(404).json({ error: "Term not found" });
       }
@@ -209,18 +236,21 @@ export async function registerRoutes(
           status: "Canonical",
           visibility: "Internal",
           owner: proposal.submittedBy,
-          examplesGood: [],
-          examplesBad: [],
-          synonyms: [],
+          examplesGood: proposal.examplesGood || [],
+          examplesBad: proposal.examplesBad || [],
+          synonyms: proposal.synonyms || [],
           version: 1
-        });
+        }, `Approved from proposal: ${proposal.changesSummary}`, req.body.approvedBy || "Approver");
       } else if (proposal.termId) {
         await storage.updateTerm(proposal.termId, {
           definition: proposal.definition,
           whyExists: proposal.whyExists,
           usedWhen: proposal.usedWhen,
           notUsedWhen: proposal.notUsedWhen,
-        });
+          examplesGood: proposal.examplesGood || [],
+          examplesBad: proposal.examplesBad || [],
+          synonyms: proposal.synonyms || [],
+        }, `Approved edit: ${proposal.changesSummary}`, req.body.approvedBy || "Approver");
       }
 
       res.json({ success: true });

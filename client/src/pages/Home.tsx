@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,27 @@ import { api, Term } from "@/lib/api";
 
 export default function Home() {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   
-  const { data: terms = [], isLoading } = useQuery<Term[]>({
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+  
+  const { data: terms = [], isLoading: termsLoading } = useQuery<Term[]>({
     queryKey: ["/api/terms"],
   });
+
+  const { data: searchResults = [], isLoading: searchLoading, isFetching: searchFetching } = useQuery<Term[]>({
+    queryKey: ["/api/terms/search", debouncedSearch],
+    queryFn: () => api.terms.search(debouncedSearch),
+    enabled: debouncedSearch.length >= 2,
+  });
   
-  const filteredTerms = terms.filter(t => 
-    t.name.toLowerCase().includes(search.toLowerCase()) || 
-    t.definition.toLowerCase().includes(search.toLowerCase())
-  );
+  const isSearchActive = debouncedSearch.length >= 2;
+  const isSearching = searchLoading || searchFetching;
 
   const recentTerms = [...terms].sort((a, b) => 
     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
@@ -28,7 +40,6 @@ export default function Home() {
     <Layout>
       <div className="max-w-5xl mx-auto px-6 py-12 md:py-20">
         
-        {/* Hero Section */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <h1 className="text-4xl md:text-5xl font-header font-bold text-kat-black tracking-tight">
             The Canonical Source of Truth
@@ -40,7 +51,11 @@ export default function Home() {
           
           <div className="relative max-w-xl mx-auto mt-8">
             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-muted-foreground" />
+              {isSearching ? (
+                <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+              ) : (
+                <Search className="h-5 w-5 text-muted-foreground" />
+              )}
             </div>
             <Input 
               data-testid="input-search"
@@ -49,9 +64,9 @@ export default function Home() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            {search && (
+            {isSearchActive && (
                <div className="absolute right-3 top-3.5 text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded">
-                 {filteredTerms.length} results
+                 {searchResults.length} results
                </div>
             )}
           </div>
@@ -59,29 +74,33 @@ export default function Home() {
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground pt-2 font-medium">
             <span className="flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-kat-wheat" />
-              <span>AI-assisted search active</span>
+              <span>Server-powered search</span>
             </span>
           </div>
         </div>
 
-        {isLoading ? (
+        {termsLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : search ? (
+        ) : isSearchActive ? (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <h2 className="text-2xl font-header font-bold text-kat-black">Search Results</h2>
             </div>
-            {filteredTerms.length > 0 ? (
+            {isSearching ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : searchResults.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredTerms.map(term => (
+                {searchResults.map(term => (
                   <TermCard key={term.id} term={term} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-20 bg-muted/30 rounded-lg border border-dashed border-border">
-                <p className="text-muted-foreground">No terms found for "{search}"</p>
+                <p className="text-muted-foreground">No terms found for "{debouncedSearch}"</p>
                 <Link href="/propose">
                   <Button variant="link" className="mt-2 text-primary font-bold" data-testid="link-propose-from-empty">Propose a new term?</Button>
                 </Link>
