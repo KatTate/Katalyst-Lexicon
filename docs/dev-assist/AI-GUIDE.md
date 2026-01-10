@@ -117,10 +117,26 @@ When a user has an existing codebase that needs work:
 - Screenshots of desired UI
 
 **If you find existing design documentation:**
-1. Read it thoroughly
-2. Extract key decisions into the appropriate framework deliverables
-3. Create baseline `docs/dev-assist/project/` files from this information
-4. This prevents re-asking the user questions they've already answered
+
+⚠️ **STOP - VALIDATE BEFORE EXTRACTING**
+
+Do NOT create project deliverables until you validate with the user. Found documents may be:
+- Outdated (project has evolved since they were written)
+- Incomplete (features added that aren't documented)
+- Superseded (decisions changed during development)
+
+**Validation script:**
+> "I found [document name/description] that appears to be the original specification. Before I use this to create our baseline documentation, I need to validate it with you:
+> 1. Is this document still current, or has the project direction changed?
+> 2. What features or concepts have been added since this was written?
+> 3. Are there any sections that no longer apply?"
+
+**After user confirms:**
+1. Note any gaps or updates they mention
+2. Read the document thoroughly
+3. Extract key decisions into framework deliverables
+4. Include the updates the user provided
+5. Ask user to verify each deliverable before moving to the next phase
 
 ---
 
@@ -129,6 +145,7 @@ When a user has an existing codebase that needs work:
 Before moving to the next phase, verify:
 
 ### Before Define (after Discover)
+- [ ] If using existing docs: User validated source is current
 - [ ] Problem statement is clear and specific
 - [ ] At least 3-5 user stories are written
 - [ ] User has confirmed these capture their vision
