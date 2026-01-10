@@ -48,7 +48,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "Viewer" | "Contributor" | "Editor" | "Approver" | "Admin";
+  role: "Member" | "Approver" | "Admin";
   status: string;
 }
 

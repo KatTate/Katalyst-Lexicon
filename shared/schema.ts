@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const termStatusEnum = pgEnum("term_status", ["Draft", "In Review", "Canonical", "Deprecated"]);
 export const visibilityEnum = pgEnum("visibility", ["Internal", "Client-Safe", "Public"]);
-export const userRoleEnum = pgEnum("user_role", ["Viewer", "Contributor", "Editor", "Approver", "Admin"]);
+export const userRoleEnum = pgEnum("user_role", ["Member", "Approver", "Admin"]);
 export const proposalStatusEnum = pgEnum("proposal_status", ["pending", "in_review", "changes_requested", "approved", "rejected"]);
 export const proposalTypeEnum = pgEnum("proposal_type", ["new", "edit"]);
 export const principleStatusEnum = pgEnum("principle_status", ["Draft", "Published", "Archived"]);
@@ -14,7 +14,7 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  role: userRoleEnum("role").notNull().default("Viewer"),
+  role: userRoleEnum("role").notNull().default("Member"),
   status: text("status").notNull().default("active"),
 });
 

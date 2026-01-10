@@ -92,9 +92,9 @@ const SEED_TERMS = [
 const SEED_USERS = [
   { name: "Sarah Jenkins", email: "sarah@katalyst.com", role: "Admin" as const, status: "active" },
   { name: "Mike Ross", email: "mike@katalyst.com", role: "Approver" as const, status: "active" },
-  { name: "Rachel Zane", email: "rachel@katalyst.com", role: "Editor" as const, status: "active" },
-  { name: "Harvey Specter", email: "harvey@katalyst.com", role: "Contributor" as const, status: "active" },
-  { name: "Louis Litt", email: "louis@katalyst.com", role: "Viewer" as const, status: "invited" },
+  { name: "Rachel Zane", email: "rachel@katalyst.com", role: "Member" as const, status: "active" },
+  { name: "Harvey Specter", email: "harvey@katalyst.com", role: "Member" as const, status: "active" },
+  { name: "Louis Litt", email: "louis@katalyst.com", role: "Member" as const, status: "invited" },
 ];
 
 const SEED_PROPOSALS = [

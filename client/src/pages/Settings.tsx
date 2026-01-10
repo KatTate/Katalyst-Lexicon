@@ -24,16 +24,14 @@ import { useState, useEffect } from "react";
 const ROLE_COLORS: Record<User['role'], string> = {
   'Admin': 'bg-destructive/10 text-destructive border-destructive/20',
   'Approver': 'bg-primary/10 text-primary border-primary/20',
-  'Editor': 'bg-kat-mystical/20 text-kat-charcoal border-kat-mystical/30',
-  'Contributor': 'bg-kat-wheat/30 text-kat-charcoal border-kat-wheat/50',
-  'Viewer': 'bg-muted text-muted-foreground border-border',
+  'Member': 'bg-muted text-muted-foreground border-border',
 };
 
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "Viewer" as User["role"] });
+  const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "Member" as User["role"] });
   const [localSettings, setLocalSettings] = useState<Record<string, boolean>>({});
 
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
@@ -61,7 +59,7 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({ title: "Invitation Sent", description: "The user has been invited to join." });
       setInviteOpen(false);
-      setInviteForm({ name: "", email: "", role: "Viewer" });
+      setInviteForm({ name: "", email: "", role: "Member" });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to invite user.", variant: "destructive" });
@@ -190,9 +188,7 @@ export default function Settings() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Viewer">Viewer</SelectItem>
-                            <SelectItem value="Contributor">Contributor</SelectItem>
-                            <SelectItem value="Editor">Editor</SelectItem>
+                            <SelectItem value="Member">Member</SelectItem>
                             <SelectItem value="Approver">Approver</SelectItem>
                             <SelectItem value="Admin">Admin</SelectItem>
                           </SelectContent>
@@ -255,9 +251,7 @@ export default function Settings() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Viewer">Viewer</SelectItem>
-                            <SelectItem value="Contributor">Contributor</SelectItem>
-                            <SelectItem value="Editor">Editor</SelectItem>
+                            <SelectItem value="Member">Member</SelectItem>
                             <SelectItem value="Approver">Approver</SelectItem>
                             <SelectItem value="Admin">Admin</SelectItem>
                           </SelectContent>
@@ -319,13 +313,11 @@ export default function Settings() {
                 <CardDescription>What each role can do in the Lexicon</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-                    { role: 'Viewer', desc: 'Read-only access to all published terms' },
-                    { role: 'Contributor', desc: 'Can propose new terms and edits' },
-                    { role: 'Editor', desc: 'Refines proposals, requests changes' },
-                    { role: 'Approver', desc: 'Ratifies and publishes terms' },
-                    { role: 'Admin', desc: 'Full access including system settings' },
+                    { role: 'Member', desc: 'Browse terms, propose new terms, and suggest edits to existing ones' },
+                    { role: 'Approver', desc: 'Review proposals, approve or reject changes, publish terms' },
+                    { role: 'Admin', desc: 'Full access including user management and system settings' },
                   ].map(({ role, desc }) => (
                     <div key={role} className="p-4 bg-muted/30 rounded-lg border">
                       <Badge variant="outline" className={cn("text-xs font-bold uppercase mb-2", ROLE_COLORS[role as User['role']])}>
