@@ -38,7 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **Proposals**: Editorial workflow for new term submissions and edits with approval states
 - **Principles**: Longer-form philosophies and manifestos (title, slug, summary, body with markdown, status, visibility, tags) that can link to multiple related terms via the principleTermLinks join table
 - **PrincipleTermLinks**: Join table connecting principles to related terms (bidirectional relationship)
-- **Users**: Role-based access (Viewer/Contributor/Editor/Approver/Admin)
+- **Users**: Role-based access (Member/Approver/Admin)
 - **Settings**: Key-value configuration store
 
 ### Project Structure
@@ -57,6 +57,8 @@ server/           # Express backend
   seed.ts         # Initial data seeding
 shared/           # Shared code between client and server
   schema.ts       # Drizzle schema and Zod validators
+docs/             # Documentation and methodologies
+  ux-methods/     # Reusable UX design guides
 ```
 
 ### Build and Deployment
