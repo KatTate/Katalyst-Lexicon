@@ -1,6 +1,6 @@
 # User Stories
 
-*Extracted from: `attached_assets/Pasted--Design-Document-Katalyst-Lexicon...txt` (Section 4.2)*
+*Source: Original design document + validation session 2026-01-10*
 
 ## Must Have (Priority 1)
 
@@ -10,9 +10,9 @@
 **so that** I can confirm the correct usage without disrupting the conversation.
 
 **Acceptance Criteria:**
-- [ ] Search returns results in under 300ms
+- [ ] Search returns results quickly
 - [ ] Works well on mobile during meetings
-- [ ] Full-text search across term name, definition, and examples
+- [ ] Search across term name, definition, and examples
 
 ---
 
@@ -28,28 +28,31 @@
 
 ---
 
-### US-003: Propose New Term
-**As a** contributor,
-**I want to** propose a new term or edit,
-**so that** I can suggest additions to the vocabulary.
+### US-003: Propose New Term (Complete Form)
+**As a** Member,
+**I want to** propose a new term with all relevant details,
+**so that** approvers have full context to make a decision.
 
 **Acceptance Criteria:**
-- [ ] Guided form with required fields
+- [ ] Form includes: name, category, definition, why exists, used when, not used when
+- [ ] Form includes: examples (good and bad usage)
+- [ ] Form includes: synonyms
 - [ ] Suggested duplicates shown before submission
 - [ ] Proposal enters review workflow
+
+**Note:** Current implementation is missing examples and synonyms fields on proposal form.
 
 ---
 
 ### US-004: Review and Approve Changes
-**As an** approver,
+**As an** Approver,
 **I want to** review and approve proposed changes,
 **so that** only vetted terms become canonical.
 
 **Acceptance Criteria:**
 - [ ] Review queue shows all pending proposals
-- [ ] Diff view shows field-by-field changes
 - [ ] Can approve, reject, or request changes
-- [ ] Required "change note" for edits
+- [ ] Full audit trail of review decisions
 
 ---
 
@@ -60,81 +63,139 @@
 
 **Acceptance Criteria:**
 - [ ] Category landing pages with term lists
-- [ ] Filters by status, visibility, owner
+- [ ] Filters by status, visibility
 - [ ] Sort by alphabetical, recent updates
 
 ---
 
-### US-006: Version History
+### US-006: Full Version History
 **As a** user,
-**I want to** see the history of changes to a term,
-**so that** I understand how the definition evolved.
+**I want to** see the complete history of changes to a term,
+**so that** I understand how the definition evolved and can audit changes.
 
 **Acceptance Criteria:**
-- [ ] Every change produces a new version
-- [ ] Version diff view available
-- [ ] Audit log shows who changed what, when, why
+- [ ] Every change produces a versioned snapshot
+- [ ] Version history shows who changed what, when, and why
+- [ ] Can view previous versions
+- [ ] Change notes required for edits
+
+**Note:** Current implementation only has a version counter. Full history tracking needs to be built.
+
+---
+
+### US-007: Browse and Read Principles
+**As a** team member,
+**I want to** read organizational principles and philosophies,
+**so that** I understand the reasoning behind our approach.
+
+**Acceptance Criteria:**
+- [ ] Principles page lists all principles
+- [ ] Principle detail shows full content (markdown)
+- [ ] Principles show related terms
+- [ ] Terms show related principles
+
+---
+
+### US-008: Term Relationships
+**As a** user,
+**I want to** see how terms relate to each other,
+**so that** I understand the vocabulary structure.
+
+**Acceptance Criteria:**
+- [ ] Terms can have parent/child relationships
+- [ ] Deprecated terms link to their replacement
+- [ ] Related terms are surfaced
+
+**Note:** Current implementation only has synonyms. Full relationship model needs to be defined.
 
 ---
 
 ## Should Have (Priority 2)
 
-### US-007: Client-Safe Subset
+### US-009: Client-Safe Visibility
 **As an** admin,
 **I want to** control which terms are visible to clients,
 **so that** internal-only terminology isn't exposed.
 
 **Acceptance Criteria:**
 - [ ] Visibility flags (Internal/Client-safe/Public)
-- [ ] Optional public site view showing only appropriate terms
-- [ ] Client-safe view cannot leak internal content
+- [ ] Filtering by visibility works correctly
 
 ---
 
-### US-008: Stable Term URLs
-**As a** user,
-**I want to** link directly to a term,
-**so that** I can reference it in templates and other tools.
-
-**Acceptance Criteria:**
-- [ ] Each term has a stable URL
-- [ ] Copy link functionality
-- [ ] Copy "short definition" for embedding
-
----
-
-### US-009: Role-Based Access Control
+### US-010: Role-Based Access Control
 **As an** admin,
 **I want to** assign roles with different permissions,
 **so that** governance is properly enforced.
 
 **Acceptance Criteria:**
+- [ ] Three roles: Member, Approver, Admin
 - [ ] Member: browse and propose
 - [ ] Approver: review and publish
-- [ ] Admin: full system access
+- [ ] Admin: full system access, settings management
+
+**Status:** Implemented and confirmed.
+
+---
+
+### US-011: Public Read / Auth for Actions
+**As a** system,
+**I want to** allow public read access but require authentication for actions,
+**so that** the lexicon is accessible but governance is maintained.
+
+**Acceptance Criteria:**
+- [ ] Anyone can view terms and principles without login
+- [ ] Google Workspace SSO for authentication
+- [ ] Auth required for: propose, edit, approve actions
+
+**Note:** Authentication not yet implemented. Deferred to publish.
+
+---
+
+### US-012: Basic Server-Side Search
+**As a** user,
+**I want to** search terms efficiently,
+**so that** I get results quickly even with a large vocabulary.
+
+**Acceptance Criteria:**
+- [ ] Server-side search endpoint
+- [ ] Searches term name, definition, synonyms, examples
+- [ ] Returns relevant results quickly
+
+**Note:** Current implementation is client-side only. Server search needed.
 
 ---
 
 ## Nice to Have (Priority 3)
 
-### US-010: Relationship Graph
-**As a** user,
-**I want to** see how terms relate to each other visually,
-**so that** I understand the vocabulary structure.
+### US-013: AI-Assisted Approval Analysis
+**As an** Approver,
+**I want to** see AI recommendations during review,
+**so that** I can identify related terms and principles.
+
+**Acceptance Criteria:**
+- [ ] AI analyzes proposed term against existing lexicon
+- [ ] Suggests related terms and principles
+- [ ] Flags potential duplicates or conflicts
 
 ---
 
-### US-011: Weekly Digest
+### US-014: AI-Driven Search
+**As a** user,
+**I want to** ask questions in natural language,
+**so that** I can find relevant terms and principles based on context.
+
+**Acceptance Criteria:**
+- [ ] Natural language query input
+- [ ] AI interprets intent and returns relevant results
+- [ ] Surfaces both terms and principles
+
+---
+
+### US-015: Weekly Digest
 **As a** team member,
 **I want to** receive a digest of new and updated terms,
 **so that** I stay current without checking manually.
-
----
-
-### US-012: Analytics Dashboard
-**As an** admin,
-**I want to** see adoption metrics and confusion hotspots,
-**so that** I can prioritize vocabulary improvements.
 
 ---
 
@@ -142,12 +203,21 @@
 
 - Training quizzes and onboarding modules
 - Slack bot for term lookup
-- AI assistance for drafting definitions
-- AI collision detection for near-duplicate terms
 - CRM integration (Zoho field tooltips, data validation)
 - Google Drive template annotations
+- Analytics dashboard (adoption, confusion hotspots)
+
+---
+
+## Role Definitions (Confirmed)
+
+| Role | Permissions |
+|------|-------------|
+| **Member** | Browse, search, propose new terms, suggest edits |
+| **Approver** | All Member permissions + review and publish |
+| **Admin** | All permissions + user management, settings |
 
 ---
 
 *Created: 2026-01-10*
-*Source: Original Design Document (Sections 4.2, 6, 11)*
+*Validated: 2026-01-10 - Added Principles, version history, relationships, auth model, AI features*

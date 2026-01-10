@@ -1,10 +1,10 @@
 # Data Model
 
-*Extracted from: `attached_assets/Pasted--Design-Document-Katalyst-Lexicon...txt` (Section 8) + Current Implementation*
+*Source: Original design document + current implementation + validation 2026-01-10*
 
 ## Overview
 
-The Katalyst Lexicon data model supports term management, editorial workflows, categorization, and user governance. The current implementation uses PostgreSQL with Drizzle ORM.
+The Katalyst Lexicon data model supports term management, principles, editorial workflows, categorization, and user governance. The current implementation uses PostgreSQL with Drizzle ORM.
 
 ## Entities
 
@@ -18,7 +18,7 @@ The Katalyst Lexicon data model supports term management, editorial workflows, c
 | name | String | Yes | Canonical term name |
 | category | String | Yes | Domain classification |
 | definition | Text | Yes | Non-circular definition |
-| whyExists | Text | No | Problem this term solves |
+| whyExists | Text | Yes | Problem this term solves |
 | usedWhen | Text | No | Inclusion rules |
 | notUsedWhen | Text | No | Exclusion rules |
 | examplesGood | String[] | No | Good usage examples |
@@ -27,13 +27,8 @@ The Katalyst Lexicon data model supports term management, editorial workflows, c
 | status | Enum | Yes | Draft, In Review, Canonical, Deprecated |
 | visibility | Enum | Yes | Internal, Client-Safe, Public |
 | owner | String | No | Steward responsible for this term |
-| version | Integer | Yes | Version number |
+| version | Integer | Yes | Current version number |
 | updatedAt | Timestamp | Yes | Last modification time |
-
-**Relationships:**
-- Belongs to Category (via category name)
-- Has many Proposals (via termId)
-- Can be linked to Principles (via principleTermLinks)
 
 **Status Values:**
 - `Draft`: Not yet submitted for review
@@ -45,6 +40,32 @@ The Katalyst Lexicon data model supports term management, editorial workflows, c
 - `Internal`: Only for internal team
 - `Client-Safe`: Can be shared with clients
 - `Public`: Can be published externally
+
+**Relationships:**
+- Belongs to Category (via category name)
+- Has many Proposals (via termId)
+- Has many Principles (via principleTermLinks)
+- *[NEEDED]* Has many TermVersions for history
+- *[NEEDED]* Has parent Term (for hierarchy)
+- *[NEEDED]* Replaces/Replaced by Term (for deprecation)
+
+---
+
+### TermVersion (TO BE BUILT)
+
+**Purpose:** Full version history with snapshots for audit trail.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | UUID | Yes | Primary key |
+| termId | UUID | Yes | FK to Term |
+| versionNumber | Integer | Yes | Sequential version |
+| snapshotJson | JSON | Yes | Complete term state at this version |
+| changeNote | Text | Yes | Why this change was made |
+| changedBy | String | Yes | Who made the change |
+| changedAt | Timestamp | Yes | When the change was made |
+
+**Note:** This entity needs to be created. Currently only a version counter exists.
 
 ---
 
@@ -87,7 +108,7 @@ The Katalyst Lexicon data model supports term management, editorial workflows, c
 | assignedTo | String | No | Who is reviewing |
 | changesSummary | Text | No | What changed and why |
 | definition | Text | Yes | Proposed definition |
-| whyExists | Text | No | Proposed why it exists |
+| whyExists | Text | Yes | Proposed why it exists |
 | usedWhen | Text | No | Proposed inclusion rules |
 | notUsedWhen | Text | No | Proposed exclusion rules |
 | reviewComment | Text | No | Reviewer feedback |
@@ -95,9 +116,15 @@ The Katalyst Lexicon data model supports term management, editorial workflows, c
 
 **Status Values:**
 - `pending`: Awaiting review
+- `in_review`: Being reviewed
+- `changes_requested`: Needs revision
 - `approved`: Accepted, ready to publish
 - `rejected`: Declined
-- `changes_requested`: Needs revision
+
+**GAPS - Fields needed:**
+- `examplesGood`: String[] - Good usage examples
+- `examplesBad`: String[] - Bad usage examples  
+- `synonyms`: String[] - Alternate names
 
 ---
 
@@ -110,28 +137,31 @@ The Katalyst Lexicon data model supports term management, editorial workflows, c
 | id | UUID | Yes | Primary key |
 | title | String | Yes | Principle title |
 | slug | String | Yes | URL-friendly identifier |
-| summary | Text | No | Brief description |
+| summary | Text | Yes | Brief description |
 | body | Text | Yes | Full content (markdown) |
 | status | Enum | Yes | Draft, Published, Archived |
 | visibility | Enum | Yes | Internal, Client-Safe, Public |
+| owner | String | Yes | Who maintains this |
 | tags | String[] | No | Categorization tags |
+| sortOrder | Integer | Yes | Display order |
 | createdAt | Timestamp | Yes | Creation time |
 | updatedAt | Timestamp | Yes | Last modification |
 
-**Relationships:**
-- Has many Terms (via principleTermLinks)
+**Status:** ✅ Implemented
 
 ---
 
 ### PrincipleTermLink
 
-**Purpose:** Join table connecting principles to related terms.
+**Purpose:** Join table connecting principles to related terms (bidirectional).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | id | UUID | Yes | Primary key |
 | principleId | UUID | Yes | FK to Principle |
 | termId | UUID | Yes | FK to Term |
+
+**Status:** ✅ Implemented
 
 ---
 
@@ -147,10 +177,12 @@ The Katalyst Lexicon data model supports term management, editorial workflows, c
 | role | Enum | Yes | Member, Approver, Admin |
 | status | Enum | Yes | active, invited, inactive |
 
-**Role Permissions:**
+**Role Permissions (Confirmed):**
 - `Member`: Browse, search, propose new terms/edits
 - `Approver`: All Member permissions + review and publish
 - `Admin`: All permissions + system configuration
+
+**Status:** ✅ Implemented
 
 ---
 
@@ -162,17 +194,17 @@ The Katalyst Lexicon data model supports term management, editorial workflows, c
 |-------|------|----------|-------------|
 | id | UUID | Yes | Primary key |
 | key | String | Yes | Setting name (unique) |
-| value | JSON | Yes | Setting value |
+| value | Boolean | Yes | Setting value |
 
 **Current Settings:**
-- `require_approver_signoff`: Boolean
-- `require_change_note`: Boolean
-- `allow_self_approval`: Boolean
-- `weekly_digest`: Boolean
-- `new_proposal_alerts`: Boolean
-- `changes_requested_alerts`: Boolean
-- `enable_client_portal`: Boolean
-- `enable_public_glossary`: Boolean
+- `require_approver_signoff`
+- `require_change_note`
+- `allow_self_approval`
+- `weekly_digest`
+- `new_proposal_alerts`
+- `changes_requested_alerts`
+- `enable_client_portal`
+- `enable_public_glossary`
 
 ---
 
@@ -183,7 +215,12 @@ Category 1 ──── * Term
                    │
                    ├── * Proposal
                    │
+                   ├── * TermVersion (TO BUILD)
+                   │
                    └── * PrincipleTermLink * ──── 1 Principle
+
+Term ──── Term (parent/child - TO BUILD)
+Term ──── Term (replaces - TO BUILD)
 
 User (roles control access to all entities)
 
@@ -192,14 +229,17 @@ Setting (system configuration)
 
 ---
 
-## Notes
+## Schema Gaps To Address
 
-- Terms use category name as string reference rather than FK for flexibility
-- Version field on Term tracks edit count, not full version snapshots
-- Proposal holds a complete snapshot of proposed changes
-- The original design included TermVersion and Relationship entities for more complex versioning and term relationships - these are candidates for V2
+| Gap | Description | Priority |
+|-----|-------------|----------|
+| TermVersion entity | Full version history with snapshots | High |
+| Proposal examples/synonyms | Missing fields on proposal form | High |
+| Term.parentId | Self-reference for hierarchy | Medium |
+| Term.replacesId | Points to replacement term | Medium |
+| TermRelationship entity | For related_to relationships | Low |
 
 ---
 
 *Created: 2026-01-10*
-*Source: Original Design Document (Section 8) + shared/schema.ts*
+*Validated: 2026-01-10 - Identified gaps for version history and relationships*
