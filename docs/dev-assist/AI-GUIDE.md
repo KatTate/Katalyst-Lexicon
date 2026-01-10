@@ -82,24 +82,45 @@ When a user wants to build something new:
 
 When a user has an existing codebase that needs work:
 
-1. **Check for existing `docs/dev-assist/project/` deliverables** - read them first
-2. **Assess the current state** - what exists, what's working, what's broken
-3. **Determine the appropriate entry point:**
+1. **Search the ENTIRE codebase for existing design documentation** - not just the project folder
+2. **Check for existing `docs/dev-assist/project/` deliverables** - read them first
+3. **Assess the current state** - what exists, what's working, what's broken
+4. **Determine the appropriate entry point:**
+   - No baseline docs? Create them first from existing specifications
    - Adding a new feature? Start at Phase 1 for that feature
    - Fixing broken UX? Jump to Task-Flow Mapping (Phase 2)
    - Refactoring data? Jump to Schema Modeling (Phase 3)
    - General cleanup? Start with QA Walkthrough to identify issues
 
 **Opening prompt for existing projects:**
-> "Let me take a look at what exists here. I'll check for any prior design decisions we documented, then assess the current codebase. Give me a moment to get oriented."
+> "Let me take a look at what exists here. I'll search for any prior design decisions, specifications, or planning documents, then assess the current codebase. Give me a moment to get oriented."
 
-Then:
+**CRITICAL: Search for prior documentation across the ENTIRE project:**
 ```
-1. Check: ls docs/dev-assist/project/
-2. Check: Read replit.md for architecture context
-3. Check: Review the codebase structure
-4. Report back what you found and propose next steps
+1. Check: ls docs/dev-assist/project/     # Framework deliverables
+2. Check: ls attached_assets/             # User-provided files (specs, mockups, etc.)
+3. Check: glob **/*.md                    # All markdown files in codebase
+4. Check: glob **/*.txt                   # Text files that may contain specs
+5. Check: glob **/*.pdf                   # PDF specifications or designs
+6. Search: search_codebase for "design document", "requirements", "specification"
+7. Check: Read replit.md for architecture context
+8. Review: The codebase structure
+9. Report back what you found and propose next steps
 ```
+
+**Why this matters:** Projects often start with an initial prompt or specification document that gets attached to the project. These may contain:
+- Original design documents and requirements
+- User stories or feature lists
+- Data model specifications
+- Wireframes or mockup references
+- MVP scope definitions
+- Screenshots of desired UI
+
+**If you find existing design documentation:**
+1. Read it thoroughly
+2. Extract key decisions into the appropriate framework deliverables
+3. Create baseline `docs/dev-assist/project/` files from this information
+4. This prevents re-asking the user questions they've already answered
 
 ---
 
@@ -134,9 +155,10 @@ Before moving to the next phase, verify:
 ### Starting A Session
 
 1. **Check `docs/dev-assist/project/`** for existing deliverables
-2. **Read `replit.md`** for project context
-3. **Check the task list** for any in-progress work
-4. **Greet the user** and summarize current state
+2. **If empty, search `attached_assets/`** for original specifications
+3. **Read `replit.md`** for project context
+4. **Check the task list** for any in-progress work
+5. **Greet the user** and summarize current state
 
 **Example opening:**
 > "Welcome back! Last time we completed the user stories and started on MVP scoping. We identified 3 must-have features and 2 nice-to-haves. Ready to continue with the scope definition?"
