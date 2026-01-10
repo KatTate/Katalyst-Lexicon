@@ -1,6 +1,52 @@
 # Role-Centered Task-Flow Mapping
 
-A practical guide for designing navigation, information architecture, and user experience flows in any application.
+Design navigation and information architecture based on user roles and their key tasks.
+
+---
+
+## AI Facilitation Guide
+
+### When To Use This
+- After MVP scope is defined
+- When navigation is confusing or broken
+- When adding new user roles
+- When redesigning an existing app's structure
+
+### How To Facilitate
+
+**Duration:** 25-40 minutes
+
+**Your approach:**
+1. Start with the roles defined in earlier documents (or define them now)
+2. For each role, identify their key verbs (what they DO)
+3. Write narrative flows for each critical action
+4. Extract navigation touchpoints from the flows
+5. Synthesize into an information architecture
+
+**Opening script:**
+> "Now let's map out how users will actually move through the app. We'll look at each role, understand what they need to do, and trace the path they'll take. This ensures our navigation supports real tasks, not just a collection of pages."
+
+**Key questions to ask:**
+1. "When [role] opens the app, what's the first thing they need to do?"
+2. "What's the most common task for [role]?"
+3. "What's the most critical task - the one that absolutely must work?"
+4. "After they do [action], what do they typically do next?"
+5. "Are there tasks that span multiple pages or require several steps?"
+
+**Narrative construction prompts:**
+- "Walk me through what happens when a [role] wants to [task]"
+- "Where do they start? What do they click? What do they see?"
+- "How do they know they succeeded?"
+- "What could go wrong, and how do they recover?"
+
+**Watch for:**
+- Navigation dead ends (user can't get back)
+- Missing shortcuts for frequent tasks
+- Actions hidden too deep in the hierarchy
+- Inconsistent patterns between similar flows
+
+**Closing script:**
+> "Here's the navigation structure that emerged from these flows: [summarize]. Each destination exists because it supports a specific user task. Does this feel right? Any tasks we missed?"
 
 ---
 
@@ -9,18 +55,6 @@ A practical guide for designing navigation, information architecture, and user e
 Role-Centered Task-Flow Mapping is a UX methodology that starts with **who your users are** and **what they need to accomplish**, then works backward to design navigation and interface structure that supports those goals.
 
 Unlike starting with a sitemap or wireframes, this approach ensures every navigation element exists for a reason tied to real user needs.
-
----
-
-## When To Use This
-
-Use this methodology when:
-
-- Designing navigation for a new application
-- Redesigning or fixing broken navigation in an existing app
-- Adding new user roles or permission levels
-- Users are getting lost or confused in your app
-- You have multiple user types with different needs
 
 ---
 
@@ -210,16 +244,71 @@ Before implementing, validate your navigation design:
 
 ---
 
-## Deliverables Checklist
+## Template For `docs/project/user-flows.md`
 
-At the end of this process, you should have:
+```markdown
+# User Flows
 
-- [ ] Role definitions with goals and permissions
-- [ ] Key verbs list for each role
-- [ ] Flow narratives for all critical user journeys
-- [ ] Navigation inventory grouped by type
-- [ ] Site map / Information Architecture diagram
-- [ ] Validation notes from walkthroughs
+## Roles
+
+### Role: [Name]
+**Primary Goal:** [Goal]
+**Permission Level:** [Permissions]
+**Frequency:** [How often they use the app]
+
+**Key Actions:**
+1. [Action] - [Frequency]
+2. [Action] - [Frequency]
+
+---
+
+## Flow Narratives
+
+### Flow: [Name]
+
+**Role:** [Who]
+**Trigger:** [What initiates this flow]
+**Starting Point:** [Where they begin]
+
+**Steps:**
+1. [Step] → [Result]
+2. [Step] → [Result]
+3. [Step] → [Result]
+
+**Success State:** [How they know it worked]
+
+**Navigation Touchpoints:**
+- [Touchpoint 1]
+- [Touchpoint 2]
+
+---
+
+## Navigation Structure
+
+### Primary Navigation
+| Destination | Roles | Frequency |
+|-------------|-------|-----------|
+| [Page] | [Roles] | [Freq] |
+
+### Secondary Navigation
+| Destination | Roles | Frequency |
+|-------------|-------|-----------|
+| [Page] | [Roles] | [Freq] |
+
+### Site Map
+
+```
+[App Name]
+├── [Nav Item 1]
+├── [Nav Item 2]
+└── [Nav Item 3]
+```
+
+---
+
+*Created: [Date]*
+*Last Updated: [Date]*
+```
 
 ---
 
@@ -245,16 +334,10 @@ At the end of this process, you should have:
 
 ---
 
-## Example Application
+## Transition To Next Step
 
-See the companion document `[app-name]-user-flows.md` in this directory for a worked example applying this methodology to a specific project.
+Once user flows are mapped:
 
----
+> "Now we understand how users will move through the app. Let's define what data we need to store to support these flows. We'll design the data model before building. Ready?"
 
-## References
-
-This methodology synthesizes best practices from:
-- Task Analysis (usability.gov)
-- Jobs To Be Done framework
-- User Story Mapping (Jeff Patton)
-- Information Architecture principles (Rosenfeld & Morville)
+→ Proceed to **Schema-First Data Modeling**
