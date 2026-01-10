@@ -72,6 +72,7 @@ export default function ReviewQueue() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
       toast({ title: "Changes Requested", description: "The submitter has been notified to make changes." });
+      setSelectedItem(null);
       setComment("");
     },
     onError: () => {

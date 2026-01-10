@@ -314,7 +314,13 @@ export default function TermDetail() {
               <span className="font-bold text-foreground">Visibility:</span> {term.visibility}
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="gap-2 hover:bg-white hover:shadow-sm" data-testid="button-view-history">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-2 hover:bg-white hover:shadow-sm" 
+            onClick={() => toast({ title: "Version History", description: "Full version history tracking is coming soon. This feature will show all changes made to this term over time." })}
+            data-testid="button-view-history"
+          >
             <History className="h-4 w-4" />
             View History
           </Button>

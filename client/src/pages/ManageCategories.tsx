@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Plus, GripVertical, Edit2, Trash2, FolderOpen, 
+  Plus, Edit2, Trash2, FolderOpen, 
   MoreVertical, Save, X, ChevronRight, Loader2
 } from "lucide-react";
 import { useState } from "react";
@@ -155,7 +155,7 @@ export default function ManageCategories() {
               Active Categories
             </CardTitle>
             <CardDescription>
-              Drag to reorder. Categories appear in this order in navigation.
+              Categories appear in this order in navigation.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -174,9 +174,6 @@ export default function ManageCategories() {
                     )}
                     data-testid={`category-row-${category.id}`}
                   >
-                    <div className="cursor-grab text-muted-foreground hover:text-foreground">
-                      <GripVertical className="h-5 w-5" />
-                    </div>
                     
                     <div className={cn("h-3 w-3 rounded-full shrink-0", category.color)} />
 
