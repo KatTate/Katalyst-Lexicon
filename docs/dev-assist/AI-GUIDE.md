@@ -27,7 +27,7 @@ This framework helps AI agents walk low-to-medium technical creators through bui
 - When uncertain, ask clarifying questions rather than guessing
 
 ### Key Limitations To Remember
-- You lose context between sessions - always check `docs/project/` for prior decisions
+- You lose context between sessions - always check `docs/dev-assist/project/` for prior decisions
 - You cannot see what the user sees on their screen - ask them to describe it
 - You may make mistakes - encourage users to correct you
 - Complex changes can break things - test incrementally
@@ -71,7 +71,7 @@ When a user wants to build something new:
 
 1. **Read this document** to understand your role
 2. **Start with Phase 1: Discover** - never skip discovery
-3. **Create the `docs/project/` folder** to store deliverables
+3. **Create the `docs/dev-assist/project/` folder** to store deliverables
 4. **Work through each guide in order**, creating deliverables as you go
 5. **Reference prior deliverables** when making decisions in later phases
 
@@ -82,7 +82,7 @@ When a user wants to build something new:
 
 When a user has an existing codebase that needs work:
 
-1. **Check for existing `docs/project/` deliverables** - read them first
+1. **Check for existing `docs/dev-assist/project/` deliverables** - read them first
 2. **Assess the current state** - what exists, what's working, what's broken
 3. **Determine the appropriate entry point:**
    - Adding a new feature? Start at Phase 1 for that feature
@@ -95,7 +95,7 @@ When a user has an existing codebase that needs work:
 
 Then:
 ```
-1. Check: ls docs/project/
+1. Check: ls docs/dev-assist/project/
 2. Check: Read replit.md for architecture context
 3. Check: Review the codebase structure
 4. Report back what you found and propose next steps
@@ -133,7 +133,7 @@ Before moving to the next phase, verify:
 
 ### Starting A Session
 
-1. **Check `docs/project/`** for existing deliverables
+1. **Check `docs/dev-assist/project/`** for existing deliverables
 2. **Read `replit.md`** for project context
 3. **Check the task list** for any in-progress work
 4. **Greet the user** and summarize current state
@@ -143,7 +143,7 @@ Before moving to the next phase, verify:
 
 ### Ending A Session
 
-1. **Update deliverables** in `docs/project/` with any new decisions
+1. **Update deliverables** in `docs/dev-assist/project/` with any new decisions
 2. **Update the task list** with current status
 3. **Summarize progress** for the user
 4. **Identify next steps** so the next session can pick up smoothly
@@ -173,28 +173,29 @@ Before moving to the next phase, verify:
 
 ```
 docs/
-├── AI-GUIDE.md              # This file - read first
-├── README.md                # Overview for humans
-│
-├── ux-methods/              # Reusable methodology guides
-│   ├── 1-problem-statement-canvas.md
-│   ├── 2-user-story-writing.md
-│   ├── 3-mvp-scoping-framework.md
-│   ├── 4-role-centered-task-flow-mapping.md
-│   ├── 5-schema-first-data-modeling.md
-│   ├── 6-component-inventory.md
-│   ├── 7-incremental-delivery-checklist.md
-│   └── 8-qa-walkthrough-template.md
-│
-└── project/                 # This project's deliverables
-    ├── problem-statement.md
-    ├── user-stories.md
-    ├── mvp-scope.md
-    ├── user-flows.md
-    ├── data-model.md
-    ├── components.md
-    ├── delivery-plan.md
-    └── qa-results.md
+└── dev-assist/              # Portable framework folder
+    ├── AI-GUIDE.md          # This file - read first
+    ├── README.md            # Overview for humans
+    │
+    ├── ux-methods/          # Reusable methodology guides
+    │   ├── 1-problem-statement-canvas.md
+    │   ├── 2-user-story-writing.md
+    │   ├── 3-mvp-scoping-framework.md
+    │   ├── 4-role-centered-task-flow-mapping.md
+    │   ├── 5-schema-first-data-modeling.md
+    │   ├── 6-component-inventory.md
+    │   ├── 7-incremental-delivery-checklist.md
+    │   └── 8-qa-walkthrough-template.md
+    │
+    └── project/             # This project's deliverables
+        ├── problem-statement.md
+        ├── user-stories.md
+        ├── mvp-scope.md
+        ├── user-flows.md
+        ├── data-model.md
+        ├── components.md
+        ├── delivery-plan.md
+        └── qa-results.md
 ```
 
 ---

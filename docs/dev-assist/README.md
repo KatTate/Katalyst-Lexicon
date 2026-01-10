@@ -1,6 +1,8 @@
-# Documentation
+# Dev-Assist
 
-This directory contains reusable methodology guides and project documentation for building software with AI assistance.
+A portable framework for AI-assisted software development. Contains methodology guides and project documentation templates.
+
+**To use in another project:** Copy this entire `dev-assist` folder into your project's `docs/` directory.
 
 ---
 
@@ -24,7 +26,7 @@ Each phase has methodology guides that provide step-by-step processes and templa
 
 ## Methodology Guides
 
-Located in `docs/ux-methods/`:
+Located in `ux-methods/`:
 
 | # | Guide | Phase | Purpose |
 |---|-------|-------|---------|
@@ -41,7 +43,7 @@ Located in `docs/ux-methods/`:
 
 ## Project Documentation
 
-Store project-specific deliverables in `docs/project/`:
+Store project-specific deliverables in `project/`:
 
 | Document | Created By | Purpose |
 |----------|------------|---------|
@@ -63,12 +65,12 @@ Store project-specific deliverables in `docs/project/`:
 1. AI agent reads `AI-GUIDE.md` for context
 2. Start with Guide #1 (Problem Statement Canvas)
 3. Work through each guide in order
-4. Store deliverables in `docs/project/`
+4. Store deliverables in `project/`
 5. Reference prior deliverables when making decisions
 
 ### For Existing Projects
 
-1. Check `docs/project/` for existing documentation
+1. Check `project/` for existing documentation
 2. Determine the appropriate entry point based on the task
 3. Use relevant guides to structure the work
 4. Update documentation as decisions are made
