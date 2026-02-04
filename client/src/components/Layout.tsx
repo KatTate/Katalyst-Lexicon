@@ -81,13 +81,12 @@ export function Layout({ children }: LayoutProps) {
               </Button>
             </Link>
 
-            <NavItem href="/" icon={Search} label="Search & Discover" />
-            <NavItem href="/browse" icon={Grid} label="Browse Categories" />
-            
-            <div className="pt-8 pb-2">
+            <div className="pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Knowledge Base
               </p>
+              <NavItem href="/" icon={Search} label="Search & Discover" />
+              <NavItem href="/browse" icon={Grid} label="Browse Categories" />
               <NavItem href="/principles" icon={BookOpen} label="Principles" />
             </div>
 
