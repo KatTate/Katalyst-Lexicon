@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { api, User, Setting } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const ROLE_COLORS: Record<User['role'], string> = {
   'Admin': 'bg-destructive/10 text-destructive border-destructive/20',
@@ -45,12 +45,17 @@ export default function Settings() {
     queryKey: ["/api/settings"],
   });
 
+  const settingsInitialized = useRef(false);
+  
   useEffect(() => {
-    const settingsMap: Record<string, boolean> = {};
-    settings.forEach(s => {
-      settingsMap[s.key] = s.value;
-    });
-    setLocalSettings(settingsMap);
+    if (settings.length > 0 && !settingsInitialized.current) {
+      const settingsMap: Record<string, boolean> = {};
+      settings.forEach(s => {
+        settingsMap[s.key] = s.value;
+      });
+      setLocalSettings(settingsMap);
+      settingsInitialized.current = true;
+    }
   }, [settings]);
 
   const getSetting = (key: string) => localSettings[key] ?? false;
