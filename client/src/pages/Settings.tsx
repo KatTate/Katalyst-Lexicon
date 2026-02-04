@@ -33,10 +33,13 @@ export default function Settings() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "Member" as User["role"] });
   const [localSettings, setLocalSettings] = useState<Record<string, boolean>>({});
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
 
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
+
+  const userToDelete = users.find(u => u.id === deleteUserId);
 
   const { data: settings = [], isLoading: settingsLoading } = useQuery<Setting[]>({
     queryKey: ["/api/settings"],
@@ -269,34 +272,13 @@ export default function Settings() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>Resend Invite</DropdownMenuItem>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onSelect={(e) => e.preventDefault()}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Remove User
-                                </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Remove User?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will remove {user.name} from the Katalyst Lexicon. They will no longer have access.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    onClick={() => deleteUserMutation.mutate(user.id)}
-                                  >
-                                    Remove
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onSelect={() => setDeleteUserId(user.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Remove User
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -305,6 +287,32 @@ export default function Settings() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Delete User Confirmation Dialog */}
+            <AlertDialog open={!!deleteUserId} onOpenChange={(open) => !open && setDeleteUserId(null)}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove User?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove {userToDelete?.name || "this user"} from the Katalyst Lexicon. They will no longer have access.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setDeleteUserId(null)}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => {
+                      if (deleteUserId) {
+                        deleteUserMutation.mutate(deleteUserId);
+                        setDeleteUserId(null);
+                      }
+                    }}
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {/* Role Legend */}
             <Card>
