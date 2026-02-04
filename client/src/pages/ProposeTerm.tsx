@@ -296,7 +296,7 @@ export default function ProposeTerm() {
                 
                 <div className="space-y-4">
                   <div className="space-y-3">
-                    <FormLabel className="text-green-700">Good Usage Examples</FormLabel>
+                    <label className="text-sm font-medium text-green-700">Good Usage Examples</label>
                     <div className="flex gap-2">
                       <Input
                         placeholder="Add an example of correct usage..."
@@ -330,7 +330,7 @@ export default function ProposeTerm() {
                   </div>
 
                   <div className="space-y-3">
-                    <FormLabel className="text-red-700">Bad Usage Examples</FormLabel>
+                    <label className="text-sm font-medium text-red-700">Bad Usage Examples</label>
                     <div className="flex gap-2">
                       <Input
                         placeholder="Add an example of incorrect usage..."

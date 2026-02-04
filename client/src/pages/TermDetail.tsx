@@ -7,7 +7,7 @@ import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History, Lo
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import NotFound from "./not-found";
-import { api, Term, Principle } from "@/lib/api";
+import { api, Term, Principle, TermVersion } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ export default function TermDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   
   const { data: term, isLoading, error } = useQuery<Term>({
     queryKey: ["/api/terms", params?.id],
@@ -32,6 +33,12 @@ export default function TermDetail() {
     queryKey: ["/api/terms", params?.id, "principles"],
     queryFn: () => api.terms.getPrinciples(params?.id || ""),
     enabled: !!params?.id,
+  });
+
+  const { data: versions = [], isLoading: versionsLoading } = useQuery<TermVersion[]>({
+    queryKey: ["/api/terms", params?.id, "versions"],
+    queryFn: () => api.terms.getVersions(params?.id || ""),
+    enabled: !!params?.id && historyOpen,
   });
 
   const updateMutation = useMutation({
@@ -314,16 +321,57 @@ export default function TermDetail() {
               <span className="font-bold text-foreground">Visibility:</span> {term.visibility}
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="gap-2 hover:bg-white hover:shadow-sm" 
-            onClick={() => toast({ title: "Version History", description: "Full version history tracking is coming soon. This feature will show all changes made to this term over time." })}
-            data-testid="button-view-history"
-          >
-            <History className="h-4 w-4" />
-            View History
-          </Button>
+          <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="gap-2 hover:bg-white hover:shadow-sm" 
+                data-testid="button-view-history"
+              >
+                <History className="h-4 w-4" />
+                View History
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Version History
+                </DialogTitle>
+                <DialogDescription>
+                  All changes made to "{term.name}" over time
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                {versionsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : versions.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No version history available.</p>
+                ) : (
+                  versions.map((v) => (
+                    <div key={v.id} className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-primary">Version {v.versionNumber}</span>
+                          {v.versionNumber === term.version && (
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">Current</span>
+                          )}
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(v.changedAt).toLocaleDateString()} at {new Date(v.changedAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <p className="text-sm"><span className="font-medium">Changed by:</span> {v.changedBy}</p>
+                      <p className="text-sm"><span className="font-medium">Note:</span> {v.changeNote}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
       </div>
