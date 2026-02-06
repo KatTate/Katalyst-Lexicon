@@ -150,9 +150,9 @@ When the user's message matches a BMAD trigger phrase, agent name, or workflow c
 - **Current Phase:** Phase 3 — Solutioning (entered via brownfield assessment)
 - **Project Type:** brownfield
 - **Brownfield Path:** Custom — Full BMAD Adoption + Testing
-- **Completed Artifacts:** brownfield-assessment.md
+- **Completed Artifacts:** brownfield-assessment.md, project-context.md
 - **Technology Stack:** TypeScript, React 19, Express, Drizzle ORM, PostgreSQL, Tailwind CSS, Radix UI
-- **Next Workflow:** Generate Project Context (GPC)
+- **Next Workflow:** Create Brief (CB)
 - **Migration Source:** `docs/dev-assist/project/` (problem-statement, user-stories, mvp-scope, user-flows, data-model)
 
 ## BMad File Structure
