@@ -150,19 +150,38 @@ docs/
 
 ## Recommended Path
 
-**Path:** Enter at Phase 4 — Implementation (with a brief Phase 3 checkpoint)
-**Rationale:** The core application is well-built with mature patterns. Analysis and planning are done. The remaining work is completing implementation: wiring authentication, removing mock data, adding tests, and preparing for deployment.
+**Path:** Custom — Full BMAD Adoption + Testing
+**Rationale:** User wants the project to look as if it was built with BMAD from the start. All existing planning documentation in `docs/dev-assist/` needs to be migrated into BMAD artifact format. The architecture needs formal documentation. A full testing round is needed because not everything is working correctly yet.
 
 ### Workflow Sequence
 
-1. **Generate Project Context (GPC)** — Capture the existing architecture into a formal BMAD architecture artifact
-2. **Create Epics (CE)** — Break remaining work into epics (Auth, Testing, Polish, Deploy)
-3. **Sprint Planning (SP)** — Plan the implementation sprint for remaining features
-4. **Dev Story (DS)** — Implement stories (auth wiring, mock data cleanup, testing, deployment)
+1. **Generate Project Context (GPC)** — Capture the codebase into a BMAD-compatible context file
+2. **Create Brief (CB)** — Migrate `docs/dev-assist/project/problem-statement.md` into a BMAD Product Brief
+3. **Create PRD (CP)** — Migrate `user-stories.md`, `mvp-scope.md`, `user-flows.md`, `data-model.md` into a formal BMAD PRD
+4. **Create Architecture (CA)** — Document the technical architecture formally from the existing code
+5. **Create Epics & Stories (CE)** — Break remaining work into epics and stories (including gap fixes from testing)
+6. **QA Testing Round** — Full testing pass to identify and document what's broken
+
+### Migration Notes
+
+**Source documents to migrate (from `docs/dev-assist/project/`):**
+- `problem-statement.md` → BMAD Product Brief
+- `user-stories.md` → BMAD PRD (user stories section)
+- `mvp-scope.md` → BMAD PRD (scope section)
+- `user-flows.md` → BMAD PRD (user flows section)
+- `data-model.md` → BMAD Architecture (data model section)
+
+**Additional context sources:**
+- `docs/dev-assist/AI-GUIDE.md` — Previous AI facilitation framework (superseded by BMAD)
+- `docs/dev-assist/README.md` — Previous framework overview (superseded by BMAD)
+- `docs/dev-assist/ux-methods/` — Methodology templates (not project-specific, can be archived)
 
 ## Notes & Caveats
 
-- The existing `docs/dev-assist/` planning documentation may overlap with BMAD artifacts — consider referencing rather than duplicating
+- The existing `docs/dev-assist/` planning documentation contains validated, high-quality content that should be preserved during migration
+- The data model doc notes several gaps that were identified but not yet addressed (TermVersion is now built, but term relationships are not)
+- Some user story notes are outdated (e.g., "version history is only a counter" — TermVersion table now exists with snapshots)
 - The Passport setup suggests authentication was planned but deferred — the infrastructure is in place
 - The seed file provides excellent test data for development but should be disabled or gated in production
-- The application name "Katalyst Lexicon" and domain context (organizational vocabulary management) are well-established
+- `mockData.ts` in client lib may create inconsistencies with real DB data
+- User reports not everything is working correctly — full QA pass needed to identify specific issues
