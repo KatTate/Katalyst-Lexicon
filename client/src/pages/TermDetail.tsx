@@ -3,16 +3,18 @@ import { Layout } from "@/components/Layout";
 import { useRoute, useLocation } from "wouter";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History, Loader2, BookOpen } from "lucide-react";
+import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History, Loader2, BookOpen, Plus, X } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import NotFound from "./not-found";
-import { api, Term, Principle, TermVersion } from "@/lib/api";
+import { api, Term, Principle, TermVersion, Category } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
 export default function TermDetail() {
@@ -41,16 +43,8 @@ export default function TermDetail() {
     enabled: !!params?.id && historyOpen,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (data: Partial<Term>) => api.terms.update(params?.id || "", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/terms"] });
-      toast({ title: "Term Updated", description: "Your changes have been saved." });
-      setEditOpen(false);
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update term.", variant: "destructive" });
-    },
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
   });
 
   const [editForm, setEditForm] = useState({
@@ -58,6 +52,42 @@ export default function TermDetail() {
     whyExists: "",
     usedWhen: "",
     notUsedWhen: "",
+    category: "",
+    changeNote: "",
+  });
+  const [editExamplesGood, setEditExamplesGood] = useState<string[]>([]);
+  const [editExamplesBad, setEditExamplesBad] = useState<string[]>([]);
+  const [editSynonyms, setEditSynonyms] = useState<string[]>([]);
+  const [newGoodExample, setNewGoodExample] = useState("");
+  const [newBadExample, setNewBadExample] = useState("");
+  const [newSynonym, setNewSynonym] = useState("");
+
+  const editProposalMutation = useMutation({
+    mutationFn: () => api.proposals.create({
+      termId: params?.id || "",
+      termName: term?.name || "",
+      category: editForm.category,
+      type: "edit",
+      status: "pending",
+      submittedBy: "Current User",
+      changesSummary: editForm.changeNote,
+      definition: editForm.definition,
+      whyExists: editForm.whyExists,
+      usedWhen: editForm.usedWhen,
+      notUsedWhen: editForm.notUsedWhen,
+      examplesGood: editExamplesGood,
+      examplesBad: editExamplesBad,
+      synonyms: editSynonyms,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
+      toast({ title: "Edit Submitted", description: "Your suggested edit has been submitted for review." });
+      setEditOpen(false);
+      setEditForm({ definition: "", whyExists: "", usedWhen: "", notUsedWhen: "", category: "", changeNote: "" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to submit edit proposal.", variant: "destructive" });
+    },
   });
 
   const handleEditOpen = () => {
@@ -67,7 +97,15 @@ export default function TermDetail() {
         whyExists: term.whyExists,
         usedWhen: term.usedWhen,
         notUsedWhen: term.notUsedWhen,
+        category: term.category,
+        changeNote: "",
       });
+      setEditExamplesGood(term.examplesGood || []);
+      setEditExamplesBad(term.examplesBad || []);
+      setEditSynonyms(term.synonyms || []);
+      setNewGoodExample("");
+      setNewBadExample("");
+      setNewSynonym("");
     }
     setEditOpen(true);
   };
@@ -132,33 +170,70 @@ export default function TermDetail() {
             </div>
             <div className="flex items-center gap-3 shrink-0">
                <StatusBadge status={term.status} className="text-sm px-3 py-1" />
+               <Button 
+                 variant="outline" 
+                 className="gap-2 hover:bg-muted" 
+                 onClick={handleEditOpen} 
+                 data-testid="button-suggest-edit"
+               >
+                 <Edit className="h-4 w-4" />
+                 Suggest an Edit
+               </Button>
+
+               {/* Edit Proposal Dialog */}
                <Dialog open={editOpen} onOpenChange={setEditOpen}>
-                 <DialogTrigger asChild>
-                   <Button variant="outline" size="icon" title="Edit Term" className="hover:bg-muted" onClick={handleEditOpen} data-testid="button-edit-term">
-                     <Edit className="h-4 w-4" />
-                   </Button>
-                 </DialogTrigger>
-                 <DialogContent className="max-w-2xl">
+                 <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
                    <DialogHeader>
-                     <DialogTitle className="font-header font-bold">Edit Term</DialogTitle>
-                     <DialogDescription>Make changes to this term's definition and usage rules.</DialogDescription>
+                     <DialogTitle className="font-header font-bold text-xl">Suggest an Edit to "{term.name}"</DialogTitle>
+                     <DialogDescription>Propose changes to this term. Your edit will be reviewed before being applied.</DialogDescription>
                    </DialogHeader>
-                   <div className="space-y-4 py-4">
+                   <div className="space-y-6 py-4">
+                     
+                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                       <Label className="font-bold text-amber-900">Why are you making this change? *</Label>
+                       <Textarea 
+                         value={editForm.changeNote}
+                         onChange={(e) => setEditForm(f => ({...f, changeNote: e.target.value}))}
+                         placeholder="e.g. Updated to reflect new company policy, Fixed typo in definition, Added missing usage context..."
+                         rows={2}
+                         className="mt-2"
+                         data-testid="input-edit-change-note"
+                       />
+                     </div>
+
+                     <div className="space-y-2">
+                       <Label>Category</Label>
+                       <Select value={editForm.category} onValueChange={(val) => setEditForm(f => ({...f, category: val}))}>
+                         <SelectTrigger data-testid="select-edit-category">
+                           <SelectValue placeholder="Select a category" />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {categories.map((cat) => (
+                             <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                     </div>
+
                      <div className="space-y-2">
                        <Label>Definition</Label>
                        <Textarea 
                          value={editForm.definition}
                          onChange={(e) => setEditForm(f => ({...f, definition: e.target.value}))}
                          rows={3}
+                         data-testid="input-edit-definition"
                        />
                      </div>
+
                      <div className="space-y-2">
                        <Label>Why it exists</Label>
                        <Input 
                          value={editForm.whyExists}
                          onChange={(e) => setEditForm(f => ({...f, whyExists: e.target.value}))}
+                         data-testid="input-edit-why-exists"
                        />
                      </div>
+
                      <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                          <Label>Used When</Label>
@@ -166,6 +241,7 @@ export default function TermDetail() {
                            value={editForm.usedWhen}
                            onChange={(e) => setEditForm(f => ({...f, usedWhen: e.target.value}))}
                            rows={2}
+                           data-testid="input-edit-used-when"
                          />
                        </div>
                        <div className="space-y-2">
@@ -174,24 +250,117 @@ export default function TermDetail() {
                            value={editForm.notUsedWhen}
                            onChange={(e) => setEditForm(f => ({...f, notUsedWhen: e.target.value}))}
                            rows={2}
+                           data-testid="input-edit-not-used-when"
                          />
                        </div>
                      </div>
+
+                     <div className="p-4 bg-muted/30 rounded-lg space-y-3 border border-dashed">
+                       <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Synonyms</h3>
+                       <div className="flex gap-2">
+                         <Input
+                           placeholder="Add a synonym..."
+                           value={newSynonym}
+                           onChange={(e) => setNewSynonym(e.target.value)}
+                           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (newSynonym.trim()) { setEditSynonyms([...editSynonyms, newSynonym.trim()]); setNewSynonym(""); } } }}
+                           data-testid="input-edit-synonym"
+                         />
+                         <Button type="button" variant="outline" onClick={() => { if (newSynonym.trim()) { setEditSynonyms([...editSynonyms, newSynonym.trim()]); setNewSynonym(""); } }} data-testid="button-edit-add-synonym">
+                           <Plus className="h-4 w-4" />
+                         </Button>
+                       </div>
+                       {editSynonyms.length > 0 && (
+                         <div className="flex flex-wrap gap-2">
+                           {editSynonyms.map((syn, i) => (
+                             <Badge key={i} variant="secondary" className="gap-1 pr-1">
+                               {syn}
+                               <button type="button" onClick={() => setEditSynonyms(editSynonyms.filter((_, idx) => idx !== i))} className="ml-1 hover:bg-muted rounded" data-testid={`button-edit-remove-synonym-${i}`}>
+                                 <X className="h-3 w-3" />
+                               </button>
+                             </Badge>
+                           ))}
+                         </div>
+                       )}
+                     </div>
+
+                     <div className="p-4 bg-muted/30 rounded-lg space-y-4 border border-dashed">
+                       <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Examples</h3>
+                       
+                       <div className="space-y-3">
+                         <label className="text-sm font-medium text-green-700">Good Usage Examples</label>
+                         <div className="flex gap-2">
+                           <Input
+                             placeholder="Add a good usage example..."
+                             value={newGoodExample}
+                             onChange={(e) => setNewGoodExample(e.target.value)}
+                             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (newGoodExample.trim()) { setEditExamplesGood([...editExamplesGood, newGoodExample.trim()]); setNewGoodExample(""); } } }}
+                             data-testid="input-edit-good-example"
+                           />
+                           <Button type="button" variant="outline" onClick={() => { if (newGoodExample.trim()) { setEditExamplesGood([...editExamplesGood, newGoodExample.trim()]); setNewGoodExample(""); } }} data-testid="button-edit-add-good-example">
+                             <Plus className="h-4 w-4" />
+                           </Button>
+                         </div>
+                         {editExamplesGood.length > 0 && (
+                           <ul className="space-y-1">
+                             {editExamplesGood.map((ex, i) => (
+                               <li key={i} className="flex items-center gap-2 text-sm bg-green-50 border border-green-200 rounded px-3 py-2">
+                                 <span className="text-green-600">&#10003;</span>
+                                 <span className="flex-1">{ex}</span>
+                                 <button type="button" onClick={() => setEditExamplesGood(editExamplesGood.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive" data-testid={`button-edit-remove-good-example-${i}`}>
+                                   <X className="h-3 w-3" />
+                                 </button>
+                               </li>
+                             ))}
+                           </ul>
+                         )}
+                       </div>
+
+                       <div className="space-y-3">
+                         <label className="text-sm font-medium text-red-700">Bad Usage Examples</label>
+                         <div className="flex gap-2">
+                           <Input
+                             placeholder="Add a bad usage example..."
+                             value={newBadExample}
+                             onChange={(e) => setNewBadExample(e.target.value)}
+                             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (newBadExample.trim()) { setEditExamplesBad([...editExamplesBad, newBadExample.trim()]); setNewBadExample(""); } } }}
+                             data-testid="input-edit-bad-example"
+                           />
+                           <Button type="button" variant="outline" onClick={() => { if (newBadExample.trim()) { setEditExamplesBad([...editExamplesBad, newBadExample.trim()]); setNewBadExample(""); } }} data-testid="button-edit-add-bad-example">
+                             <Plus className="h-4 w-4" />
+                           </Button>
+                         </div>
+                         {editExamplesBad.length > 0 && (
+                           <ul className="space-y-1">
+                             {editExamplesBad.map((ex, i) => (
+                               <li key={i} className="flex items-center gap-2 text-sm bg-red-50 border border-red-200 rounded px-3 py-2">
+                                 <span className="text-red-600">&#10007;</span>
+                                 <span className="flex-1">{ex}</span>
+                                 <button type="button" onClick={() => setEditExamplesBad(editExamplesBad.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive" data-testid={`button-edit-remove-bad-example-${i}`}>
+                                   <X className="h-3 w-3" />
+                                 </button>
+                               </li>
+                             ))}
+                           </ul>
+                         )}
+                       </div>
+                     </div>
+
                    </div>
                    <DialogFooter>
                      <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
                      <Button 
                        className="bg-primary text-white font-bold" 
-                       onClick={() => updateMutation.mutate(editForm)}
-                       disabled={updateMutation.isPending}
-                       data-testid="button-save-edit"
+                       onClick={() => editProposalMutation.mutate()}
+                       disabled={editProposalMutation.isPending || !editForm.changeNote.trim()}
+                       data-testid="button-submit-edit"
                      >
-                       {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                       Save Changes
+                       {editProposalMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                       Submit Edit for Review
                      </Button>
                    </DialogFooter>
                  </DialogContent>
                </Dialog>
+
                <Button variant="outline" size="icon" title="Share" className="hover:bg-muted" onClick={handleShare} data-testid="button-share-term">
                  <Share2 className="h-4 w-4" />
                </Button>

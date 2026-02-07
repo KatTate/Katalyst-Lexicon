@@ -13,8 +13,75 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
-import { api, Proposal } from "@/lib/api";
+import { api, Proposal, Term } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+
+function DiffField({ label, oldValue, newValue, testId }: { label: string; oldValue: string; newValue: string; testId: string }) {
+  const changed = oldValue !== newValue;
+  if (!changed && !newValue) return null;
+  
+  return (
+    <div data-testid={testId} className="space-y-1">
+      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide">{label}</h4>
+      {changed ? (
+        <div className="space-y-2">
+          <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-900">
+            <span className="font-bold text-red-600 text-xs uppercase mr-2">Current:</span>
+            {oldValue || <span className="italic text-muted-foreground">empty</span>}
+          </div>
+          <div className="bg-green-50 border border-green-200 rounded p-3 text-sm text-green-900">
+            <span className="font-bold text-green-600 text-xs uppercase mr-2">Proposed:</span>
+            {newValue || <span className="italic text-muted-foreground">empty</span>}
+          </div>
+        </div>
+      ) : (
+        <p className="text-kat-charcoal text-sm">{newValue}</p>
+      )}
+    </div>
+  );
+}
+
+function DiffArrayField({ label, oldValue, newValue, testId }: { label: string; oldValue: string[]; newValue: string[]; testId: string }) {
+  const oldSet = new Set(oldValue || []);
+  const newSet = new Set(newValue || []);
+  const changed = oldValue?.length !== newValue?.length || oldValue?.some(v => !newSet.has(v)) || newValue?.some(v => !oldSet.has(v));
+  
+  if (!changed && (!newValue || newValue.length === 0)) return null;
+
+  return (
+    <div data-testid={testId} className="space-y-1">
+      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide">{label}</h4>
+      {changed ? (
+        <div className="space-y-2">
+          {oldValue && oldValue.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded p-3">
+              <span className="font-bold text-red-600 text-xs uppercase mr-2">Current:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {oldValue.map((v, i) => (
+                  <Badge key={i} variant="outline" className="text-xs border-red-300 text-red-800">{v}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="bg-green-50 border border-green-200 rounded p-3">
+            <span className="font-bold text-green-600 text-xs uppercase mr-2">Proposed:</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {(newValue || []).length > 0 ? newValue.map((v, i) => (
+                <Badge key={i} variant="outline" className="text-xs border-green-300 text-green-800">{v}</Badge>
+              )) : <span className="italic text-muted-foreground text-sm">empty</span>}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {newValue.map((v, i) => (
+            <Badge key={i} variant="secondary" className="text-sm">{v}</Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ReviewQueue() {
   const [selectedItem, setSelectedItem] = useState<Proposal | null>(null);
@@ -25,6 +92,12 @@ export default function ReviewQueue() {
 
   const { data: allProposals = [], isLoading } = useQuery<Proposal[]>({
     queryKey: ["/api/proposals"],
+  });
+
+  const { data: originalTerm } = useQuery<Term>({
+    queryKey: ["/api/terms", selectedItem?.termId],
+    queryFn: () => api.terms.get(selectedItem?.termId || ""),
+    enabled: !!selectedItem?.termId && selectedItem?.type === "edit",
   });
 
   const proposals = activeTab === "all" 
@@ -116,6 +189,7 @@ export default function ReviewQueue() {
   };
 
   const isPending = approveMutation.isPending || rejectMutation.isPending || requestChangesMutation.isPending;
+  const isEditProposal = selectedItem?.type === "edit" && originalTerm;
 
   return (
     <Layout>
@@ -160,9 +234,9 @@ export default function ReviewQueue() {
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className={cn(
                           "text-[10px] font-bold uppercase",
-                          item.type === 'new' ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          item.type === 'new' ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-800 border-amber-300"
                         )}>
-                          {item.type}
+                          {item.type === 'new' ? 'New' : 'Edit'}
                         </Badge>
                         <StatusBadge status={item.status} />
                       </div>
@@ -196,7 +270,7 @@ export default function ReviewQueue() {
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className={cn(
                       "text-xs font-bold uppercase",
-                      selectedItem.type === 'new' ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                      selectedItem.type === 'new' ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-800 border-amber-300"
                     )}>
                       {selectedItem.type === 'new' ? 'New Term Proposal' : 'Edit Proposal'}
                     </Badge>
@@ -209,90 +283,156 @@ export default function ReviewQueue() {
                   <Link href={`/term/${selectedItem.termId}`}>
                     <Button variant="outline" size="sm" className="gap-2" data-testid="button-view-term">
                       <Eye className="h-4 w-4" />
-                      View Full Term
+                      View Current Term
                     </Button>
                   </Link>
                 )}
               </div>
 
-              {/* Changes Summary */}
+              {/* Changes Summary / Change Note */}
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle className="text-lg font-header">Changes Summary</CardTitle>
-                  <CardDescription>What's being proposed</CardDescription>
+                  <CardTitle className="text-lg font-header">
+                    {isEditProposal ? "Reason for Edit" : "Changes Summary"}
+                  </CardTitle>
+                  <CardDescription>
+                    {isEditProposal ? "Why this edit is being proposed" : "What's being proposed"}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-kat-charcoal" data-testid="text-changes-summary">{selectedItem.changesSummary}</p>
                 </CardContent>
               </Card>
 
-              {/* Full Proposed Content */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="text-lg font-header">Proposed Term Details</CardTitle>
-                  <CardDescription>All fields submitted for review</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div data-testid="section-definition">
-                    <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Definition</h4>
-                    <p className="text-kat-charcoal">{selectedItem.definition}</p>
-                  </div>
+              {/* Edit Proposal: Diff View */}
+              {isEditProposal && (
+                <Card className="mb-6 border-amber-200 bg-amber-50/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-header">Proposed Changes</CardTitle>
+                    <CardDescription>Comparing current term with proposed edits. Changed fields are highlighted.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <DiffField 
+                      label="Category" 
+                      oldValue={originalTerm.category} 
+                      newValue={selectedItem.category} 
+                      testId="diff-category" 
+                    />
+                    <DiffField 
+                      label="Definition" 
+                      oldValue={originalTerm.definition} 
+                      newValue={selectedItem.definition} 
+                      testId="diff-definition" 
+                    />
+                    <DiffField 
+                      label="Why This Term Exists" 
+                      oldValue={originalTerm.whyExists} 
+                      newValue={selectedItem.whyExists} 
+                      testId="diff-why-exists" 
+                    />
+                    <DiffField 
+                      label="Used When" 
+                      oldValue={originalTerm.usedWhen} 
+                      newValue={selectedItem.usedWhen} 
+                      testId="diff-used-when" 
+                    />
+                    <DiffField 
+                      label="Not Used When" 
+                      oldValue={originalTerm.notUsedWhen} 
+                      newValue={selectedItem.notUsedWhen} 
+                      testId="diff-not-used-when" 
+                    />
+                    <DiffArrayField 
+                      label="Good Examples" 
+                      oldValue={originalTerm.examplesGood} 
+                      newValue={selectedItem.examplesGood} 
+                      testId="diff-good-examples" 
+                    />
+                    <DiffArrayField 
+                      label="Bad Examples" 
+                      oldValue={originalTerm.examplesBad} 
+                      newValue={selectedItem.examplesBad} 
+                      testId="diff-bad-examples" 
+                    />
+                    <DiffArrayField 
+                      label="Synonyms" 
+                      oldValue={originalTerm.synonyms} 
+                      newValue={selectedItem.synonyms} 
+                      testId="diff-synonyms" 
+                    />
+                  </CardContent>
+                </Card>
+              )}
 
-                  {selectedItem.whyExists && (
-                    <div data-testid="section-why-exists">
-                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Why This Term Exists</h4>
-                      <p className="text-kat-charcoal">{selectedItem.whyExists}</p>
+              {/* New Term Proposal: Full Content View */}
+              {selectedItem.type === "new" && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-header">Proposed Term Details</CardTitle>
+                    <CardDescription>All fields submitted for review</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div data-testid="section-definition">
+                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Definition</h4>
+                      <p className="text-kat-charcoal">{selectedItem.definition}</p>
                     </div>
-                  )}
 
-                  {selectedItem.usedWhen && (
-                    <div data-testid="section-used-when">
-                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Used When</h4>
-                      <p className="text-kat-charcoal">{selectedItem.usedWhen}</p>
-                    </div>
-                  )}
-
-                  {selectedItem.notUsedWhen && (
-                    <div data-testid="section-not-used-when">
-                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Not Used When</h4>
-                      <p className="text-kat-charcoal">{selectedItem.notUsedWhen}</p>
-                    </div>
-                  )}
-
-                  {selectedItem.examplesGood && selectedItem.examplesGood.length > 0 && (
-                    <div data-testid="section-good-examples">
-                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Good Examples</h4>
-                      <ul className="list-disc list-inside space-y-1">
-                        {selectedItem.examplesGood.map((ex, i) => (
-                          <li key={i} className="text-kat-charcoal text-sm">{ex}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {selectedItem.examplesBad && selectedItem.examplesBad.length > 0 && (
-                    <div data-testid="section-bad-examples">
-                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Bad Examples</h4>
-                      <ul className="list-disc list-inside space-y-1">
-                        {selectedItem.examplesBad.map((ex, i) => (
-                          <li key={i} className="text-kat-charcoal text-sm">{ex}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {selectedItem.synonyms && selectedItem.synonyms.length > 0 && (
-                    <div data-testid="section-synonyms">
-                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Synonyms</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedItem.synonyms.map((syn, i) => (
-                          <Badge key={i} variant="secondary" className="text-sm">{syn}</Badge>
-                        ))}
+                    {selectedItem.whyExists && (
+                      <div data-testid="section-why-exists">
+                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Why This Term Exists</h4>
+                        <p className="text-kat-charcoal">{selectedItem.whyExists}</p>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    )}
+
+                    {selectedItem.usedWhen && (
+                      <div data-testid="section-used-when">
+                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Used When</h4>
+                        <p className="text-kat-charcoal">{selectedItem.usedWhen}</p>
+                      </div>
+                    )}
+
+                    {selectedItem.notUsedWhen && (
+                      <div data-testid="section-not-used-when">
+                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Not Used When</h4>
+                        <p className="text-kat-charcoal">{selectedItem.notUsedWhen}</p>
+                      </div>
+                    )}
+
+                    {selectedItem.examplesGood && selectedItem.examplesGood.length > 0 && (
+                      <div data-testid="section-good-examples">
+                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Good Examples</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {selectedItem.examplesGood.map((ex, i) => (
+                            <li key={i} className="text-kat-charcoal text-sm">{ex}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {selectedItem.examplesBad && selectedItem.examplesBad.length > 0 && (
+                      <div data-testid="section-bad-examples">
+                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Bad Examples</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {selectedItem.examplesBad.map((ex, i) => (
+                            <li key={i} className="text-kat-charcoal text-sm">{ex}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {selectedItem.synonyms && selectedItem.synonyms.length > 0 && (
+                      <div data-testid="section-synonyms">
+                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Synonyms</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedItem.synonyms.map((syn, i) => (
+                            <Badge key={i} variant="secondary" className="text-sm">{syn}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Submitter Info */}
               <Card className="mb-6">

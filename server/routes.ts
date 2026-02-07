@@ -243,6 +243,7 @@ export async function registerRoutes(
         }, `Approved from proposal: ${proposal.changesSummary}`, req.body.approvedBy || "Approver");
       } else if (proposal.termId) {
         await storage.updateTerm(proposal.termId, {
+          category: proposal.category,
           definition: proposal.definition,
           whyExists: proposal.whyExists,
           usedWhen: proposal.usedWhen,
