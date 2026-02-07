@@ -42,39 +42,57 @@ function DiffField({ label, oldValue, newValue, testId }: { label: string; oldVa
 }
 
 function DiffArrayField({ label, oldValue, newValue, testId }: { label: string; oldValue: string[]; newValue: string[]; testId: string }) {
-  const oldSet = new Set(oldValue || []);
-  const newSet = new Set(newValue || []);
-  const changed = oldValue?.length !== newValue?.length || oldValue?.some(v => !newSet.has(v)) || newValue?.some(v => !oldSet.has(v));
+  const old = oldValue || [];
+  const next = newValue || [];
+  const oldSet = new Set(old);
+  const newSet = new Set(next);
+  const changed = old.length !== next.length || old.some(v => !newSet.has(v)) || next.some(v => !oldSet.has(v));
   
-  if (!changed && (!newValue || newValue.length === 0)) return null;
+  if (!changed && next.length === 0) return null;
+
+  const removed = old.filter(v => !newSet.has(v));
+  const added = next.filter(v => !oldSet.has(v));
+  const kept = next.filter(v => oldSet.has(v));
 
   return (
     <div data-testid={testId} className="space-y-1">
       <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide">{label}</h4>
       {changed ? (
         <div className="space-y-2">
-          {oldValue && oldValue.length > 0 && (
+          {removed.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded p-3">
-              <span className="font-bold text-red-600 text-xs uppercase mr-2">Current:</span>
+              <span className="font-bold text-red-600 text-xs uppercase mr-2">Removed:</span>
               <div className="flex flex-wrap gap-1 mt-1">
-                {oldValue.map((v, i) => (
-                  <Badge key={i} variant="outline" className="text-xs border-red-300 text-red-800">{v}</Badge>
+                {removed.map((v, i) => (
+                  <Badge key={i} variant="outline" className="text-xs border-red-300 text-red-800 line-through">{v}</Badge>
                 ))}
               </div>
             </div>
           )}
-          <div className="bg-green-50 border border-green-200 rounded p-3">
-            <span className="font-bold text-green-600 text-xs uppercase mr-2">Proposed:</span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {(newValue || []).length > 0 ? newValue.map((v, i) => (
-                <Badge key={i} variant="outline" className="text-xs border-green-300 text-green-800">{v}</Badge>
-              )) : <span className="italic text-muted-foreground text-sm">empty</span>}
+          {added.length > 0 && (
+            <div className="bg-green-50 border border-green-200 rounded p-3">
+              <span className="font-bold text-green-600 text-xs uppercase mr-2">Added:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {added.map((v, i) => (
+                  <Badge key={i} variant="outline" className="text-xs border-green-300 text-green-800">{v}</Badge>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+          {kept.length > 0 && (
+            <div className="bg-muted/30 border border-border rounded p-3">
+              <span className="font-bold text-muted-foreground text-xs uppercase mr-2">Unchanged:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {kept.map((v, i) => (
+                  <Badge key={i} variant="outline" className="text-xs border-border text-muted-foreground">{v}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {newValue.map((v, i) => (
+          {next.map((v, i) => (
             <Badge key={i} variant="secondary" className="text-sm">{v}</Badge>
           ))}
         </div>
