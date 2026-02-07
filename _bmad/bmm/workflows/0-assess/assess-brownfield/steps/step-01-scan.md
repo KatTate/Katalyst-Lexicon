@@ -4,7 +4,9 @@
 
 - NEVER make assumptions about the project without scanning files first
 - ALWAYS treat this as collaborative discovery — present findings and ask for user confirmation
-- YOU ARE A FACILITATOR discovering what exists, not judging what should exist
+- YOU ARE A CRITICAL ASSESSOR discovering what exists, not rubber-stamping what you find
+- BE SKEPTICAL — do NOT assume that existing code is complete, correct, or what the user intended
+- FORBIDDEN to assume any feature is complete without evidence of it actually working end-to-end
 - FOCUS on practical facts: what's built, what tech is used, what works
 - YOU MUST ALWAYS SPEAK OUTPUT in your Agent communication style with the config `{communication_language}`
 
@@ -12,6 +14,7 @@
 
 - Show your analysis before taking any action
 - Read existing project files systematically
+- Validate your assumptions with the user before proceeding
 - Initialize the assessment document with findings
 - FORBIDDEN to load next step until scan is complete and user approves
 
@@ -126,14 +129,37 @@ Report all findings to the user in a clear format:
 **Key Findings:**
 {{top_findings}}
 
-I'll now create a brownfield assessment document with these findings.
+Before I proceed, I need to validate some assumptions with you."
 
-[C] Continue to assessment report generation"
+### 6. Validate Assumptions
 
-### 6. Initialize Assessment Document
+**CRITICAL: You MUST ask the user the following questions before proceeding. Do NOT skip this section. You are BLOCKED from continuing until the user answers these.**
+
+Present these questions to the user and wait for their responses:
+
+1. **Is this project what I think it is?** "Based on my scan, this appears to be {{your_assessment}}. Is that right, or is it something different?"
+
+2. **Are the features I found actually complete and working?** "I found {{feature_count}} features that look implemented. Have you actually tested them? Are they working correctly, or are some broken/incomplete?"
+
+3. **Is this still the direction you want to go?** "The project seems to be heading toward {{direction}}. Is that still what you want, or are you looking to change direction?"
+
+4. **Is what's missing intentional or still needed?** "I noticed these gaps: {{gaps}}. Were these left out on purpose, or do they still need to be built?"
+
+5. **Does the code quality match your experience?** "The code looks {{quality_assessment}}. Does that match your experience working with it, or are there issues I'm not seeing?"
+
+6. **What's driving you to use BMad right now?** "What made you want to bring in BMad at this point? Are you stuck, wanting better organization, or something else?"
+
+**Record the user's answers — they will override your scan conclusions in Step 2.**
+
+After the user answers, present:
+
+"[C] Continue to assessment document generation"
+
+### 7. Initialize Assessment Document
 
 Copy template from `{installed_path}/brownfield-assessment-template.md` to `{output_file}`.
 Fill in all discovered data from the scan.
+Fill in the Assumption Validation table with the user's responses from Section 6.
 Save the initial assessment document.
 
 ## SUCCESS METRICS:
@@ -142,6 +168,8 @@ Save the initial assessment document.
 - Technology stack accurately identified with versions
 - Architecture patterns discovered and documented
 - Current state honestly assessed
+- Assumptions validated with the user (Section 6 completed)
+- User's answers recorded in the assessment document
 - Assessment document initialized with real findings
 - User confirms findings are accurate
 
@@ -152,6 +180,9 @@ Save the initial assessment document.
 - Not checking Replit-specific resources (database, env vars)
 - Skipping the user confirmation step
 - Generating placeholder content instead of real findings
+- Rubber-stamping existing code as complete without evidence
+- Skipping the Validate Assumptions step (Section 6)
+- Proceeding without user answers to the validation questions
 
 ## NEXT STEP:
 
