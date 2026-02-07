@@ -2,18 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { TermCard } from "@/components/TermCard";
 import { cn } from "@/lib/utils";
-import { Link, useLocation } from "wouter";
+import { Link, useSearch } from "wouter";
 import { Loader2 } from "lucide-react";
 import { Term, Category } from "@/lib/api";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMemo } from "react";
 
 export default function Browse() {
-  const [location] = useLocation();
+  const searchString = useSearch();
   const activeCategory = useMemo(() => {
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = new URLSearchParams(searchString);
     return searchParams.get("category");
-  }, [location]);
+  }, [searchString]);
 
   const { data: terms = [], isLoading: termsLoading } = useQuery<Term[]>({
     queryKey: ["/api/terms"],
