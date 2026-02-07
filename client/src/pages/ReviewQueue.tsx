@@ -222,26 +222,72 @@ export default function ReviewQueue() {
                   <CardDescription>What's being proposed</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-kat-charcoal">{selectedItem.changesSummary}</p>
-                  
-                  <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-dashed">
-                    <h4 className="font-bold text-sm mb-3">Proposed Definition</h4>
+                  <p className="text-kat-charcoal" data-testid="text-changes-summary">{selectedItem.changesSummary}</p>
+                </CardContent>
+              </Card>
+
+              {/* Full Proposed Content */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg font-header">Proposed Term Details</CardTitle>
+                  <CardDescription>All fields submitted for review</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div data-testid="section-definition">
+                    <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Definition</h4>
                     <p className="text-kat-charcoal">{selectedItem.definition}</p>
                   </div>
 
-                  {selectedItem.type === 'edit' && (
-                    <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-dashed">
-                      <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
-                        <ArrowRight className="h-4 w-4" />
-                        Field-by-Field Changes
-                      </h4>
-                      <div className="space-y-3 text-sm">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-3 bg-green-50/50 rounded border-l-4 border-primary">
-                            <p className="text-xs font-bold text-muted-foreground mb-1">NEW DEFINITION</p>
-                            <p className="text-kat-charcoal">{selectedItem.definition}</p>
-                          </div>
-                        </div>
+                  {selectedItem.whyExists && (
+                    <div data-testid="section-why-exists">
+                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Why This Term Exists</h4>
+                      <p className="text-kat-charcoal">{selectedItem.whyExists}</p>
+                    </div>
+                  )}
+
+                  {selectedItem.usedWhen && (
+                    <div data-testid="section-used-when">
+                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Used When</h4>
+                      <p className="text-kat-charcoal">{selectedItem.usedWhen}</p>
+                    </div>
+                  )}
+
+                  {selectedItem.notUsedWhen && (
+                    <div data-testid="section-not-used-when">
+                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Not Used When</h4>
+                      <p className="text-kat-charcoal">{selectedItem.notUsedWhen}</p>
+                    </div>
+                  )}
+
+                  {selectedItem.examplesGood && selectedItem.examplesGood.length > 0 && (
+                    <div data-testid="section-good-examples">
+                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Good Examples</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {selectedItem.examplesGood.map((ex, i) => (
+                          <li key={i} className="text-kat-charcoal text-sm">{ex}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedItem.examplesBad && selectedItem.examplesBad.length > 0 && (
+                    <div data-testid="section-bad-examples">
+                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Bad Examples</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {selectedItem.examplesBad.map((ex, i) => (
+                          <li key={i} className="text-kat-charcoal text-sm">{ex}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedItem.synonyms && selectedItem.synonyms.length > 0 && (
+                    <div data-testid="section-synonyms">
+                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Synonyms</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedItem.synonyms.map((syn, i) => (
+                          <Badge key={i} variant="secondary" className="text-sm">{syn}</Badge>
+                        ))}
                       </div>
                     </div>
                   )}
