@@ -150,9 +150,9 @@ When the user's message matches a BMAD trigger phrase, agent name, or workflow c
 - **Current Phase:** Phase 3 — Solutioning (entered via brownfield assessment)
 - **Project Type:** brownfield
 - **Brownfield Path:** Custom — Full BMAD Adoption + Testing
-- **Completed Artifacts:** brownfield-assessment.md, project-context.md, product-brief-katalyst-lexicon-2026-02-06.md, prd-katalyst-lexicon-2026-02-06.md, architecture-katalyst-lexicon-2026-02-06.md
+- **Completed Artifacts:** brownfield-assessment.md, project-context.md, product-brief-katalyst-lexicon-2026-02-06.md, prd-katalyst-lexicon-2026-02-06.md, architecture-katalyst-lexicon-2026-02-06.md, epics-katalyst-lexicon-2026-02-06.md
 - **Technology Stack:** TypeScript, React 19, Express, Drizzle ORM, PostgreSQL, Tailwind CSS, Radix UI
-- **Next Workflow:** Create Epics (CE) or QA Testing
+- **Next Workflow:** QA Testing Round
 - **Migration Source:** `docs/dev-assist/project/` (problem-statement, user-stories, mvp-scope, user-flows, data-model)
 
 ## BMad File Structure
