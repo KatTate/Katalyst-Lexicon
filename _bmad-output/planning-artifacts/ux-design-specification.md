@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -487,3 +487,159 @@ Seven complementary design directions were created as an interactive HTML showca
 5. **Proposal form** — Replace field labels with conversational librarian voice copy, add duplicate detection
 6. **Mobile responsive** — Implement Spotlight search overlay, collapsible sidebar
 7. **Empty states** — Add librarian voice empty states for search, categories, and review queue
+
+## User Journey Flows
+
+### Journey 1: Quick Term Lookup (80% of usage)
+
+**Actor:** Any user, no auth required
+**Trigger:** In a meeting, writing a document, or in conversation — needs to confirm terminology
+**Design direction:** Search-Hero (A) + Term Detail (C)
+
+**Flow:**
+
+1. **Entry** — User opens Katalyst Lexicon (bookmarked or linked). Lands on search-hero home page. Search input is focused or prominently centered.
+2. **Search** — User types their query. After 2+ characters, results appear. On desktop, an instant dropdown below the search input. On mobile, the full-screen Spotlight overlay shows results filling available space.
+3. **Scan** — User scans 1-5 results. Status badges (green checkmark = Canonical, amber warning = Deprecated) provide instant confidence signals without clicking.
+4. **Select** — User clicks/taps a result. Navigates to term detail page.
+5. **Read Tier 1** — Definition, "When to use," "When NOT to use," and synonyms are immediately visible. On mobile, the usage grid stacks to single-column.
+6. **Optional: Read Tier 2** — If they need more depth, they expand Examples, Related Principles, or Version History sections.
+7. **Optional: Suggest Edit** — If authenticated and the definition seems incomplete or outdated, user can click "Suggest an edit" link to enter the governance flow.
+8. **Done** — User returns to their work. No explicit "done" action needed.
+
+**Error path:** No results found → empty state ("We don't have that term yet") → bridges to "Propose this term" CTA.
+
+**Loading state:** Design for the fast path (client-side search), but include a subtle loading indicator (skeleton results or spinner) to gracefully handle future server-side/semantic search latency.
+
+**Key metric:** Under 30 seconds from opening the app to reading the definition.
+
+### Journey 2: Browse by Category (Onboarding Journey)
+
+**Actor:** Any user, no auth — particularly new team members during onboarding
+**Trigger:** Exploring terminology in a specific domain, learning the organization's vocabulary
+**Design direction:** Sidebar Browse (B)
+
+**Flow:**
+
+1. **Entry** — User clicks "Browse Categories" in navigation or sidebar. For new hires, this is the recommended starting point: "New to the team? Start here."
+2. **Scan categories** — Sidebar shows color-coded categories with term counts. User identifies relevant category for their role or domain.
+3. **Select category** — User clicks a category. Main area filters to show only terms in that category as a card grid.
+4. **Scan terms** — Cards show term name, status badge, definition preview, and freshness signal. User scans visually.
+5. **Optional: Filter by status** — Sidebar status filters let them narrow to Canonical-only, or see what's In Review.
+6. **Select term** — Clicks a term card. Navigates to term detail page (same as Journey 1, step 5).
+7. **Navigate related** — From term detail, user may follow related terms or principles links, creating a natural browsing chain.
+
+**Empty state:** Category with no terms → "This category is waiting for its first terms" with Propose CTA.
+
+### Journey 3: Read Principles
+
+**Actor:** Any user, no auth
+**Trigger:** Wants to understand organizational philosophy or context behind vocabulary decisions
+
+**Flow:**
+
+1. **Entry** — User clicks "Principles" in top navigation.
+2. **Scan list** — Principles displayed as cards with title, summary, tags, and linked term count.
+3. **Select principle** — Clicks a principle card. Full principle page shows title, summary, full markdown body, and linked terms section.
+4. **Read content** — User reads the principle's full content (markdown rendered).
+5. **Explore linked terms** — Below the principle content, linked terms appear as clickable cards. User can navigate to any related term.
+6. **Done** — User returns to principles list or navigates elsewhere.
+
+### Journey 4: Propose New Term
+
+**Actor:** Member (authenticated)
+**Trigger:** Encounters a term the team uses that isn't in the lexicon
+**Design direction:** Proposal Form (E) + Empty State bridge (D)
+
+**Flow:**
+
+1. **Entry A** — User clicks "+ Propose Term" button in sidebar.
+   **Entry B** — User searches, gets "no results" empty state, clicks "Propose this term" (term name pre-filled).
+   **Entry C** — User clicks "Suggest an edit" on an existing term detail page (term fields pre-filled for editing).
+2. **Progressive form** — Form shows required fields first: term name, category, definition, why it exists, change rationale. An "Add more detail" expander reveals optional fields (when to use, when not to use, good/bad examples, synonyms). This keeps the barrier to contribution low, especially for users coming from the empty state bridge.
+3. **Debounced duplicate check** — After the user finishes typing the term name (on blur or after a typing pause, not on every keystroke), system checks for similar existing terms. If found, inline warning: "Heads up — similar term exists" with link to the existing term.
+4. **Fill required fields** — Conversational labels guide the user: "What's the term?", "What does this term mean?", "Why does this term exist?"
+5. **Optional: Expand and fill optional fields** — User clicks "Add more detail" to add usage guidance, examples, synonyms.
+6. **Submit or Save Draft** — "Submit Proposal" sends to review queue. "Save Draft" preserves work for later.
+7. **Confirmation** — Success message: "Your proposal has been submitted. You'll be notified when a reviewer takes action."
+8. **Track status** — Proposal appears in user's activity or can be found via search with "In Review" badge.
+
+**Error path:** Validation errors shown inline next to specific fields with helpful copy.
+
+### Journey 5: Review and Approve
+
+**Actor:** Approver (authenticated)
+**Trigger:** Badge count on "Review Queue" shows pending proposals; future enhancement: email/Slack notification
+**Design direction:** Review Queue (G)
+
+**Flow:**
+
+1. **Entry** — Approver sees badge count on "Review Queue" nav item. Clicks it. (Note: in v1, approvers must visit the app to see pending proposals. Email/Slack notifications are a planned future enhancement to prevent proposals sitting unreviewed.)
+2. **Scan queue** — List shows pending proposals with: proposal type (New Term / Edit), term name, definition preview, submitter name, timestamp, category.
+3. **Select proposal** — Clicks a proposal to open the full review view.
+4. **Review content** — Full proposal details displayed: all proposed fields, for edits a diff view showing what changed, submitter's rationale.
+5. **Decision** — Three actions available:
+   - **Approve** — Term is created/updated, status becomes Canonical, version history entry created
+   - **Reject** — Proposal closed with required rejection reason
+   - **Request Changes** — Proposal returned to submitter with reviewer comments
+6. **Add comment** — Reviewer adds a comment explaining their decision (required for reject/request changes, optional for approve).
+7. **Submit decision** — Confirmation: "Proposal approved. 'Retainer' is now a canonical term."
+8. **Queue updates** — Badge count decrements. Next proposal ready for review.
+
+**Empty state:** "All caught up" — positive acknowledgment when queue is empty.
+
+### Journey 6: View Version History
+
+**Actor:** Any user
+**Trigger:** Wants to understand how a term evolved, or checking when a definition changed
+
+**Flow:**
+
+1. **Entry** — On term detail page, user expands "Version History" in Tier 2.
+2. **Scan versions** — Timeline shows version number, date, author, and change summary for each version.
+3. **View diff (default)** — By default, each version entry shows what changed (diff view) — the most common use case is "what changed and why?"
+4. **Optional: View full snapshot** — User can toggle to see the complete term as it existed at that point in time, for cases where the full context is needed.
+5. **Done** — User collapses the section or navigates away.
+
+### Journey 7: Admin User Management
+
+**Actor:** Admin (authenticated)
+**Trigger:** New team member needs access, or role change required
+
+**Flow:**
+
+1. **Entry** — Admin navigates to Settings > Team Management.
+2. **View users** — User list shows name, email, role, and last active date.
+3. **Add/Edit** — Admin invites new user or edits existing user's role (Member / Approver / Admin).
+4. **Save** — Changes take effect immediately. Confirmation displayed.
+
+### Journey Patterns
+
+**Navigation patterns:**
+- **Search-first entry** — Home page search is the primary entry point for the Lookup Job. Every page also has a header search bar for quick re-searches.
+- **Breadcrumb navigation** — Term detail pages show breadcrumb (Browse > Category > Term) for orientation and back-navigation.
+- **Single-click depth** — One click from any term card (in browse, search results, or recent updates) goes directly to the full term detail page.
+
+**Feedback patterns:**
+- **Instant search with graceful loading** — Results appear as the user types (after 2+ characters), no submit button needed. A subtle loading state handles future server-side search latency without disrupting the experience.
+- **Status badges everywhere** — Every term reference (cards, search results, detail pages) shows the status badge so users always know if they're looking at a Canonical term or a Draft.
+- **Freshness signals everywhere** — "Updated 2 days ago by Sarah" appears on term cards and detail pages, building trust that the lexicon is actively maintained.
+- **Confirmation messages** — All state-changing actions (submit proposal, approve, reject) show clear confirmation with next steps.
+
+**Bridge patterns:**
+- **Lookup → Governance bridge (empty state)** — Empty search results bridge to "Propose this term." This is the primary growth loop for missing terms.
+- **Lookup → Governance bridge (edit)** — Term detail pages include "Suggest an edit" for authenticated users. This is the primary growth loop for improving existing terms.
+- **Browse → Governance bridge** — Empty categories bridge to "Propose the first term."
+
+### Flow Optimization Principles
+
+1. **Minimize steps to value** — Lookup Job: 3 interactions (open → search → read). No extra clicks, no login walls for reading.
+2. **Progressive authentication** — Browsing and searching require no auth. Auth only prompted when the user tries to propose or review.
+3. **Progressive form disclosure** — Proposal form shows required fields only by default; optional fields behind "Add more detail" expander. Keeps contribution barrier low.
+4. **Pre-fill when possible** — When bridging from search to proposal, pre-fill the term name. When bridging from category, pre-fill the category. When suggesting an edit, pre-fill all existing fields.
+5. **Debounced server interactions** — Duplicate detection triggers on blur or typing pause, not every keystroke. Prevents unnecessary server load.
+6. **Inline validation** — Form errors shown next to the field, not at the top of the form. Duplicate detection is immediate, not on submit.
+7. **Minimal decision points** — Reduce choices at each step. Search results show the most relevant matches first. Review queue shows oldest proposals first.
+8. **Clear success signals** — After every state-changing action, confirm what happened and what happens next.
+9. **Mobile-aware layouts** — Term detail usage grid stacks to single-column on mobile. Search uses full-screen Spotlight overlay. Sidebar collapses.
+10. **Notification gap acknowledged** — v1 relies on badge counts for approver awareness. Email/Slack notifications planned as future enhancement to prevent review backlog.
