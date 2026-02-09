@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -295,3 +295,69 @@ The project already uses a themeable design system approach that aligns well wit
 - Term detail page with two-tier layout
 - Empty state component with call-to-action (the "helpful librarian" voice)
 - Proposal form with guided field labels
+
+## Defining Core Experience
+
+### The Defining Interaction
+
+**"Search. Read. Done."**
+
+The defining experience of Katalyst Lexicon is a **dictionary lookup** — but for your organization's specific vocabulary. The user has a term in mind, types it, and gets a clear, authoritative answer with confidence about whether it's the right word to use.
+
+This is an established pattern — every user already knows how to use a dictionary or search engine. There is nothing novel about the core interaction. The innovation is that this dictionary is *governed, structured, versioned, and connected to organizational principles* — but the user doesn't need to know or care about any of that when they're just looking something up.
+
+### User Mental Model
+
+**Users think of this as:** "The company dictionary"
+
+- **Current solution:** Ask a colleague, search Slack history, check old documents, or guess
+- **Mental model they bring:** Google search / dictionary lookup — type words, get answers
+- **Expectation:** I type, I find, I read, I'm done. Under 30 seconds.
+- **Where they'd get confused:** If search requires exact matches, if results don't show status clearly, if the definition is buried under metadata
+- **What they hate about current solutions:** No single place to look, no confidence that what they find is current, interrupting colleagues is awkward
+
+**Key mental model insight:** Users don't think about "governance" or "workflows" — those are invisible infrastructure. They think about "is this the right word?" The governance system is what makes the answers trustworthy, but the user experience of governance should be invisible to 80% of users.
+
+### Success Criteria
+
+| Criterion | Measure | What It Feels Like |
+|-----------|---------|-------------------|
+| **Speed** | Search-to-answer in under 30 seconds | "That was fast" |
+| **Confidence** | Status badge visible and unambiguous | "I know this is the approved term" |
+| **Completeness** | Definition + usage guidance visible without clicking | "I have everything I need" |
+| **Findability** | First search returns the right term | "It found exactly what I meant" |
+| **Reliability** | Same experience every time, no surprises | "I didn't even think about it" |
+
+### Novel vs. Established Patterns
+
+**This is 100% established patterns.** The core interaction (search → results → detail) is a pattern every internet user understands. No user education is needed.
+
+**The unique twist within established patterns:**
+
+1. **Status badges on search results** — Unlike a regular dictionary, results show governance status (Canonical, Deprecated) so users can assess authority before clicking
+2. **Usage guidance alongside definition** — "When to use" and "When NOT to use" fields are unique to organizational vocabulary and don't exist in standard dictionaries
+3. **Freshness signals** — "Updated 3 days ago" on term cards is not a standard dictionary pattern but addresses the "is this stale?" concern specific to internal tools
+4. **Empty-state-to-proposal bridge** — When search fails, the path to "propose this term" is unique to a governed vocabulary tool
+
+### Experience Mechanics
+
+**1. Initiation:**
+- **Desktop:** User clicks into the search bar in the header (always visible) or lands on the home page where search is the hero element. Keyboard shortcut (Cmd/Ctrl+K) is a nice-to-have.
+- **Mobile:** User taps the search icon in the header → full-screen search overlay opens with keyboard ready
+
+**2. Interaction:**
+- User types 2+ characters → results appear below the input as cards
+- Each result card shows: term name, category tag, status badge, definition preview (first ~100 characters), freshness signal
+- Results update as the user types (debounced, ~200ms)
+- User scans results visually — status badges and category tags help them identify the right term without reading every definition
+
+**3. Feedback:**
+- **Success path:** Results appear instantly. The right term is visible. User clicks/taps it → term detail page loads with definition immediately visible above the fold.
+- **Partial match:** Results show related terms even if the exact name doesn't match (searches across name, definition, synonyms, examples)
+- **No results:** Warm empty state: "We don't have that term yet. Want to propose it?" with a direct link to the proposal form
+
+**4. Completion:**
+- User reads the definition and usage guidance in the "Use this term correctly" tier
+- If they need more depth, they expand the "Understand this term deeply" tier (examples, history, linked principles)
+- User returns to their work (meeting, document, conversation) with confidence
+- No explicit "done" action needed — closing the tab or navigating away is the natural end
