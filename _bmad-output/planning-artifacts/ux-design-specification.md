@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4]
+stepsCompleted: [1, 2, 3, 4, 5]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -165,3 +165,90 @@ The emotional design specifically addresses the three failure modes that killed 
 3. **Build trust through transparency** — Show the work: version history, change notes, authorship, timestamps, freshness signals. Trust comes from seeing that the system is maintained and governed, not from branding or design polish.
 4. **Calm efficiency, not excitement** — The best compliment for this tool is "I didn't even think about it — I just looked it up and moved on." The UX goal is to be so efficient it becomes invisible.
 5. **Delight through recognition, not decoration** — Acknowledge human contributions with small, earned moments. Show the people behind the vocabulary. Make the lexicon feel like a team artifact, not an anonymous database.
+
+## UX Pattern Analysis & Inspiration
+
+### Inspiring Products Analysis
+
+**Google Chat — "The tool nobody had to learn"**
+
+What it does well:
+- **Zero onboarding friction** — Users start using it immediately because it follows patterns they already know (message input, conversation threads, search)
+- **Always available, never demanding** — It sits in the background until needed. No splash screens, no tips, no onboarding tours
+- **Search just works** — Type, find, done. No advanced search UI, no filters to configure — just a text box that returns results
+- **Consistent, predictable layout** — Every conversation looks the same. The interface is so consistent that users stop noticing it — which is the highest compliment for a utility tool
+
+What's transferable to Katalyst Lexicon:
+- The "just works" search experience — a single input that returns useful results immediately
+- The invisible-until-needed design philosophy — governance tools shouldn't crowd the lookup experience
+- The zero-learning-curve layout — familiar patterns, obvious affordances, no training required
+
+**Apple Dictionary (macOS) — "The instant answer"**
+
+A strong parallel for the Lookup Job:
+- **Spotlight integration** — Users don't even open the app. They search from anywhere and get a definition inline
+- **Definition first, etymology later** — The primary definition is always the first thing you see. Word origin, usage notes, and related words are below the fold
+- **No navigation needed** — Search is the entire interface for 90% of usage
+
+What's transferable:
+- The full-screen search overlay on mobile should feel like Spotlight — immediate, focused, results-as-you-type
+- Definition-first layout mirrors our two-tier term detail design
+- The app should feel like "the answer is already here, you just need to type"
+
+**Notion (as a cautionary tale) — "The tool that got abandoned"**
+
+Relevant because Notion is one of the tools that previously failed for this team:
+- **Too much flexibility** — Freeform pages meant inconsistent term entries with different formats
+- **No governance** — Anyone could edit anything, so nothing felt authoritative
+- **No freshness signals** — Pages felt stale because there was no indication of maintenance or activity
+- **Discovery required effort** — Finding the right page required knowing where it was, not just what it was called
+
+What to avoid:
+- Freeform content entry — structured fields prevent the inconsistency problem
+- Equal access without governance — the approval workflow is the key differentiator
+- Static-feeling content — freshness signals and contributor names prevent the "graveyard" feeling
+
+### Transferable UX Patterns
+
+**Navigation Patterns:**
+
+- **Search-dominant home page** (from Google Chat / Apple Dictionary) — The search input is the hero element on the home page. Category browsing is secondary navigation in a sidebar, not competing for attention with search.
+- **Persistent header with search** (from Google Chat) — On desktop, the search bar lives in the header and is available on every page without navigating away. On mobile, a search icon opens the full-screen overlay.
+
+**Interaction Patterns:**
+
+- **Results-as-you-type** (from Spotlight / Google Chat) — Search results appear and update as the user types, with no "submit" button needed. Debounced input, fast rendering.
+- **Single-click depth** (from Apple Dictionary) — From any search result or browse list, one click/tap takes you to the full term detail. No intermediate pages, no modals to dismiss.
+- **Inline status indicators** (from Google Chat presence dots) — Status badges (Canonical, Deprecated, Draft, In Review) function like presence indicators — small, color-coded, always visible, instantly understood.
+
+**Visual Patterns:**
+
+- **Card-based browse lists** (common across modern tools) — Term cards in browse/search results show: name, category tag, status badge, definition preview, and freshness signal. Scannable without clicking.
+- **Clean whitespace and typography hierarchy** (from Apple's design language) — Let the content breathe. Clear typographic hierarchy makes scanning fast: term name (large, bold), definition (readable body), metadata (smaller, muted).
+
+### Anti-Patterns to Avoid
+
+1. **The "power user" trap** — Don't expose governance complexity (filters, admin tools, review queues) in the primary navigation at the same visual weight as search and browse. This is what makes internal tools feel intimidating to casual users.
+2. **The "freeform entry" problem** — Notion died because entries were inconsistent. Every term must go through the same structured form with the same fields. No rich text editors for definitions, no custom layouts.
+3. **The "empty graveyard" spiral** — If the app feels abandoned, people stop coming. Freshness signals, contributor names, and activity indicators are non-negotiable defenses against this.
+4. **The "hamburger menu on desktop" mistake** — Desktop users have screen space. Don't hide the category sidebar behind a hamburger menu on desktop viewports. It should be visible and persistent.
+5. **The "confirmation dialog" tax** — Don't add "Are you sure?" dialogs to routine actions (searching, browsing, opening terms). Save confirmation dialogs for destructive actions only (deleting, rejecting proposals).
+
+### Design Inspiration Strategy
+
+**What to Adopt:**
+
+- Google Chat's "zero onboarding" philosophy — The app should be usable on first visit without any tutorial or walkthrough
+- Apple Dictionary's "definition first" information hierarchy — The answer is always the first thing you see
+- Search-as-you-type with instant results — The pattern users expect from every modern search tool
+
+**What to Adapt:**
+
+- Google Chat's flat, minimal aesthetic — Adapt with warmer colors and the Katalyst brand palette. The app should feel approachable, not sterile.
+- Apple Spotlight's full-screen search — Adapt for mobile web (not native iOS), with results rendering below the input as cards rather than inline definitions
+
+**What to Avoid:**
+
+- Notion's freeform flexibility — Structured fields only, governance-enforced consistency
+- Complex filtering interfaces — Keep filters simple (category, status) and visible, not behind dropdowns or advanced search modals
+- Any pattern that requires learning — If a user has to think about how to use the app, we've failed
