@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -361,3 +361,93 @@ This is an established pattern — every user already knows how to use a diction
 - If they need more depth, they expand the "Understand this term deeply" tier (examples, history, linked principles)
 - User returns to their work (meeting, document, conversation) with confidence
 - No explicit "done" action needed — closing the tab or navigating away is the natural end
+
+## Visual Design Foundation
+
+### Color System
+
+**Brand Palette (Existing):**
+
+The Katalyst brand palette is earthy, warm, and professional — naturally aligned with the "warm professional, not corporate sterile" emotional principle.
+
+| Token | Role | HSL |
+|-------|------|-----|
+| kat-green | Primary / brand anchor | 88 67% 45% |
+| kat-charcoal | Body text | 86 4% 31% |
+| kat-black | Headers | 27 6% 23% |
+| kat-graylight | Page background | 220 14% 96% |
+| kat-gray | Borders, dividers | 235 11% 84% |
+| kat-wheat | Warm accent | 40 36% 77% |
+| kat-warning | Cautionary yellow | 55 68% 63% |
+
+**Semantic Status Colors (Extending brand palette):**
+
+| Status | Color Mapping | Rationale |
+|--------|--------------|-----------|
+| Canonical | kat-green (primary) | Green = primary = trustworthy. Reinforces that canonical terms are the "real" ones. |
+| Deprecated | kat-warning (amber/yellow) | Cautionary without being alarming. Signals "still here but don't use this." |
+| Draft | kat-gray / kat-gauntlet (muted) | Understated, not attention-grabbing. Drafts are works in progress, not yet important. |
+| In Review | Blue (~hsl(210 60% 50%)) | Activity indicator. Blue signals "something is happening" without positive/negative connotation. |
+
+**Semantic UI Colors:**
+
+| Purpose | Token | Usage |
+|---------|-------|-------|
+| Success | kat-green | Proposal approved, term published |
+| Warning | kat-warning | Deprecated terms, validation hints |
+| Error/Destructive | Existing destructive token | Rejection, deletion confirmation |
+| Info | Blue (same as In Review) | Informational messages, tips |
+
+**Dark Mode:** Fully supported via CSS custom properties. All semantic colors must work in both light and dark palettes with sufficient contrast.
+
+### Typography System
+
+**Font Pairing (Existing):**
+
+| Role | Font | Weight | Usage |
+|------|------|--------|-------|
+| Headers | Montserrat | Bold, tight tracking | Page titles, section headers, term names in detail view |
+| Body | Roboto | Regular/Medium | Definitions, descriptions, form labels, paragraph content |
+| Code/Mono | Roboto Mono | Regular | Technical identifiers, slugs, code references |
+
+**Type Scale:**
+
+| Level | Usage | Style |
+|-------|-------|-------|
+| h1 | Page titles ("Search & Discover", "Principles") | Montserrat bold, ~2rem |
+| h2 | Section headers, term name on detail page | Montserrat bold, ~1.5rem |
+| h3 | Subsection headers, card titles in browse lists | Montserrat bold, ~1.25rem |
+| Body | Definitions, usage guidance, descriptions | Roboto regular, 1rem, comfortable line-height (~1.6) |
+| Small | Metadata (timestamps, contributor names, version info) | Roboto, 0.875rem, muted color |
+| Caption | Freshness signals, badge labels | Roboto, 0.75rem |
+
+**Typography Principles:**
+- Term names use Montserrat bold — they should stand out as the primary information
+- Definitions use Roboto regular with generous line-height for readability — this is the content users are here to read
+- Metadata (timestamps, contributors, version numbers) uses smaller muted text — important for trust signals but shouldn't compete with the definition
+
+### Spacing & Layout Foundation
+
+**Spacing System:**
+- Base unit: 4px (Tailwind default)
+- Component internal padding: 16px (p-4)
+- Card padding: 16-24px (p-4 to p-6)
+- Section spacing: 24-32px (space-y-6 to space-y-8)
+- Page margins: 16px mobile, 24-32px desktop
+
+**Layout Structure:**
+
+- **Desktop:** Sidebar (category navigation, ~240px) + main content area. Header with persistent search bar.
+- **Mobile:** Full-width content. Header with search icon. Sidebar collapses to hamburger menu or bottom nav.
+- **Max content width:** ~1200px to prevent lines from becoming too long for readability
+
+**Density Approach:** Maintain current spacing — moderately dense, balanced between information-rich and breathable. Content doesn't feel cramped, but the interface doesn't waste space with excessive padding.
+
+### Accessibility Considerations
+
+1. **Color contrast** — All text must meet WCAG 2.1 AA contrast ratios (4.5:1 for body text, 3:1 for large text). Status badges must not rely on color alone — include text labels or icons.
+2. **Colorblind safety** — Status badges use color + shape/text. Green (Canonical) and amber (Deprecated) are distinguishable for the most common color vision deficiencies. The blue (In Review) provides additional separation.
+3. **Focus indicators** — All interactive elements must have visible focus states for keyboard navigation. Radix UI primitives handle this by default.
+4. **Touch targets** — Minimum 44x44px touch targets on mobile for all tappable elements (term cards, buttons, search results).
+5. **Screen reader support** — Status badges include aria-labels ("Status: Canonical"). Search results announce count. Radix UI components provide built-in ARIA attributes.
+6. **Reduced motion** — Respect `prefers-reduced-motion` media query. Framer Motion animations should be disabled or minimized for users who prefer reduced motion.
