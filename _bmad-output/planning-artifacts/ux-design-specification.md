@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5]
+stepsCompleted: [1, 2, 3, 4, 5, 6]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -252,3 +252,46 @@ What to avoid:
 - Notion's freeform flexibility — Structured fields only, governance-enforced consistency
 - Complex filtering interfaces — Keep filters simple (category, status) and visible, not behind dropdowns or advanced search modals
 - Any pattern that requires learning — If a user has to think about how to use the app, we've failed
+
+## Design System Foundation
+
+### Design System Choice
+
+**Existing System: shadcn/ui + Tailwind CSS v4 + Radix UI + Katalyst Brand Tokens**
+
+The project already uses a themeable design system approach that aligns well with our UX goals. No design system change is needed.
+
+### Rationale for Selection
+
+1. **Already built and working** — The design system is implemented and in use across the existing application. Switching would be wasteful and destabilizing for a brownfield project.
+2. **Tailwind supports the "warm professional" aesthetic** — Utility-first CSS makes it easy to fine-tune spacing, typography, and color without fighting component library defaults.
+3. **shadcn/ui + Radix provides accessible primitives** — Headless components handle keyboard navigation, focus management, and ARIA attributes — critical for a productivity tool used daily.
+4. **Brand tokens already defined** — Katalyst-specific colors (kat-green, kat-charcoal) are set up as design tokens. These can be extended to support the emotional design goals (warm palette, status badge colors, freshness indicators).
+5. **Framer Motion for subtle animations** — Already available for the "recognition, not decoration" delight moments (e.g., gentle transitions when a proposal is approved).
+
+### Implementation Approach
+
+- **Extend, don't replace** — Build on existing shadcn/ui components. Add new components only when no existing primitive fits.
+- **Brand token expansion** — Extend the existing Katalyst color tokens to include semantic status colors (canonical-green, deprecated-amber, draft-gray, in-review-blue) and freshness indicator styling.
+- **Typography system** — Montserrat for headers supports scannability. Roboto for body supports readability. The hierarchy already matches our "clean whitespace and typography hierarchy" pattern.
+- **Responsive breakpoints** — Use Tailwind's standard breakpoints (sm, md, lg, xl) for the desktop/mobile responsive strategy.
+
+### Customization Strategy
+
+**Status Badges:**
+- Canonical → solid green badge (confidence anchor)
+- Deprecated → muted amber/orange with strikethrough or warning styling
+- Draft → light gray, understated
+- In Review → blue, indicates activity
+
+**Visibility Indicators:**
+- Internal → no special indicator (default)
+- Client-Safe → small shield or checkmark icon
+- Public → globe icon
+
+**Component Priorities:**
+- Search input with results-as-you-type dropdown
+- Term card (for browse lists and search results) with name, category tag, status badge, definition preview, freshness signal
+- Term detail page with two-tier layout
+- Empty state component with call-to-action (the "helpful librarian" voice)
+- Proposal form with guided field labels
