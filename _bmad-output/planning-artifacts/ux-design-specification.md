@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -742,3 +742,184 @@ Seven domain-specific components needed that encode Katalyst Lexicon UX decision
 - DiffViewer — version history comparison (Journey 6)
 - NotificationBadge — review queue count indicator
 - SpotlightOverlay — mobile full-screen search (extends SearchHero)
+
+## UX Consistency Patterns
+
+### Button Hierarchy
+
+**Primary Action (green, solid):**
+- Submit Proposal, Approve, Save
+- One primary per screen section. Always the most important action.
+- Style: `bg-kat-green text-white`, rounded, medium padding
+
+**Secondary Action (outlined):**
+- Save Draft, Cancel, Request Changes
+- Paired alongside primary. Less visual weight.
+- Style: `border border-kat-gray text-kat-charcoal bg-white`
+
+**Destructive Action (red, appears in dialogs only):**
+- Reject Proposal, Delete Term
+- Never shown as a standalone button on a page — always behind a confirmation dialog.
+- Style: `bg-destructive text-destructive-foreground`
+
+**Ghost/Tertiary Action (text only):**
+- "Suggest an edit", "View all updates", "Cancel" in forms
+- Minimal visual weight. Inline with content.
+- Style: `text-kat-green hover:underline` or `text-kat-gauntlet`
+
+**Button rules:**
+- Maximum 2 visible action buttons per context (primary + secondary)
+- Destructive actions always require confirmation dialog
+- On mobile, full-width buttons in forms; inline elsewhere
+- All buttons minimum 44px touch target height on mobile
+
+### Feedback Patterns
+
+**Success (toast notification):**
+- Appears top-right, auto-dismisses after 4 seconds
+- Green left border, kat-green accent
+- Copy pattern: "Done — [what happened]. [What happens next]."
+- Example: "Proposal submitted. You'll be notified when a reviewer takes action."
+
+**Error (inline + toast):**
+- Form errors: inline below the specific field, red text
+- System errors: toast notification, red accent, persists until dismissed
+- Copy pattern: "Something went wrong — [what happened]. [What to try]."
+- Never blame the user. Use passive voice for errors.
+
+**Warning (inline alert):**
+- Duplicate detection: inline below term name field, amber background
+- Deprecated term banner: top of term detail page, amber background
+- Copy pattern: "Heads up — [what to be aware of]. [Suggested action]."
+
+**Info (inline):**
+- Hints below form fields, muted text color
+- Search result count: "3 results for 'scope'"
+- Copy pattern: Neutral, informative, brief.
+
+**Loading:**
+- Search results: skeleton cards (pulsing gray rectangles matching card layout)
+- Page transitions: spinner in content area, sidebar remains stable
+- Never block the entire screen. Loading indicators are local to the content being loaded.
+
+### Form Patterns
+
+**Field labels:**
+- Conversational tone (librarian voice): "What's the term?" not "Term Name"
+- Required fields: Green asterisk after label
+- Optional fields: Italic "(optional)" after label
+- Hint text: Below label, muted color, one sentence max
+
+**Field validation:**
+- Validate on blur (when user leaves the field), not on every keystroke
+- Error messages appear inline below the field immediately
+- Validated fields show subtle green checkmark on blur
+- Copy pattern: "This field is required" or "Definition should be at least 10 characters"
+
+**Progressive disclosure:**
+- Required fields always visible
+- Optional fields behind "Add more detail" collapsible section
+- Section header shows count: "Add more detail (4 optional fields)"
+- Collapsible remembers state within session
+
+**Form layout:**
+- Single column, full width on mobile
+- Max width ~680px on desktop (readable line length)
+- Field spacing: 20px between groups
+- Submit actions pinned at bottom with clear primary/secondary distinction
+
+### Navigation Patterns
+
+**Primary navigation (header bar):**
+- Logo (left), search input (center), nav links (right)
+- Nav items: Browse, Principles, Propose, Review Queue
+- Active item: kat-green-light background
+- Review Queue shows badge count when proposals pending
+- On mobile: hamburger menu replaces nav links, search becomes icon
+
+**Sidebar navigation (browse page):**
+- Always visible on desktop (240px width)
+- Collapsible via Sheet component on mobile
+- Category items: color dot + name + count
+- Active category: kat-green-light background
+- Status filter section below categories
+
+**Breadcrumbs (detail pages):**
+- Format: Browse > [Category Name] > [Term Name]
+- Clickable links for each level
+- Current page (term name) not clickable, muted weight
+
+**Back navigation:**
+- Browser back button works naturally (client-side routing)
+- No custom back buttons — breadcrumbs serve this purpose
+- Search results maintain scroll position on back
+
+### Search & Filter Patterns
+
+**Search behavior:**
+- Debounce: 200ms after last keystroke
+- Minimum characters: 2 before searching
+- Search scope: term name, definition, synonyms, examples
+- Results ranking: exact name match > name contains > definition/synonym match
+
+**Search results display:**
+- Highlight matching text in results (bold the matched substring)
+- Show result count: "3 results for 'scope'"
+- Maximum 10 results in dropdown before "View all results" link
+- Each result shows: term name, StatusBadge, category, definition preview (truncated)
+
+**Filter behavior:**
+- Category filter: single-select from sidebar
+- Status filter: multi-select (can combine Canonical + In Review)
+- Filters reflected in URL query parameters (shareable links)
+- Active filters shown with clear "×" to remove
+
+### Empty State Patterns
+
+**Copy voice:** Helpful librarian — warm, encouraging, never shaming
+
+**With action (growth opportunity):**
+- Icon (48px, muted opacity), heading (18px Montserrat), description (15px Roboto, muted), CTA button (primary green)
+- Description acknowledges the gap, then encourages contribution
+- CTA pre-fills what it can (term name from search, category from browse)
+
+**Without action (positive acknowledgment):**
+- Icon, heading, description only
+- Acknowledges the empty state as positive: "All caught up" not "No items found"
+
+**Specific empty states:**
+- No search results: "We don't have that term yet" + Propose CTA
+- Empty category: "This category is waiting for its first terms" + Propose CTA
+- Empty review queue: "All caught up" (no CTA)
+- No version history: "No changes recorded yet" (no CTA)
+
+### Modal & Dialog Patterns
+
+**Confirmation dialogs (destructive actions only):**
+- Used for: Reject proposal, deprecate term
+- Title: Clear action statement ("Reject this proposal?")
+- Description: Consequence + reversibility ("This will notify the submitter. You can't undo this.")
+- Actions: Cancel (secondary, left) + Confirm (destructive, right)
+- Keyboard: Escape to cancel, Enter does NOT confirm (prevents accidents)
+
+**No confirmation for positive actions:**
+- Approve, submit, save — execute immediately with a success toast
+- Rationale: Confirmation dialogs for positive actions create "confirmation dialog tax"
+
+**Sheet (mobile overlay):**
+- Used for: sidebar navigation on mobile, Spotlight search overlay
+- Full-screen or half-screen depending on content
+- Swipe down or Cancel button to dismiss
+
+### Status Indication Patterns
+
+**Badge placement:**
+- In TermCard: right-aligned next to term name
+- In term detail: inline after the term title
+- In review queue: colored dot left of proposal title
+- Consistent size and style across all contexts
+
+**Deprecated term handling:**
+- Amber banner at top of term detail: "This term has been deprecated. See [replacement term] instead."
+- In search results: Deprecated terms appear last, with slightly muted styling
+- In browse: Visible but visually de-emphasized (muted card border)
