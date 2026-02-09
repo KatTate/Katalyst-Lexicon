@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -923,3 +923,134 @@ Seven domain-specific components needed that encode Katalyst Lexicon UX decision
 - Amber banner at top of term detail: "This term has been deprecated. See [replacement term] instead."
 - In search results: Deprecated terms appear last, with slightly muted styling
 - In browse: Visible but visually de-emphasized (muted card border)
+
+## Responsive Design & Accessibility
+
+### Responsive Strategy
+
+**Desktop (1024px+):**
+- Sidebar + main content layout for browse pages (sidebar ~240px, content fills remaining)
+- Header: logo (left), search input (center, ~400px), nav links (right)
+- Search-hero home page: centered search with dropdown results
+- Term detail: two-column usage grid ("When to use" / "When NOT to use" side by side)
+- Max content width: 1200px to prevent overly long line lengths
+- Forms: max-width ~680px, centered in content area
+
+**Tablet (768px–1023px):**
+- Sidebar collapses to a toggleable Sheet drawer (triggered by hamburger icon)
+- Header: logo + hamburger (left), search input (center), condensed nav
+- Term cards: 2-column grid instead of 3
+- Term detail: usage grid remains side-by-side (sufficient space)
+- Same interaction patterns as desktop — no gesture-specific changes
+
+**Mobile (320px–767px):**
+- No sidebar visible — category navigation via Sheet drawer or dedicated browse page
+- Header: logo + hamburger (left), search icon (right)
+- Search: tapping icon triggers full-screen Spotlight overlay (keyboard appears immediately)
+- Term cards: single column, full width
+- Term detail: usage grid stacks to single column
+- Buttons: full-width in forms, inline elsewhere
+- All touch targets minimum 44x44px
+
+### Breakpoint Strategy
+
+Standard Tailwind breakpoints, desktop-aware approach (not strictly mobile-first, since 50/50 usage):
+
+| Breakpoint | Width | Layout Changes |
+|-----------|-------|----------------|
+| `sm` | 640px+ | Minor spacing adjustments |
+| `md` | 768px+ | 2-column term grid, sidebar becomes toggleable |
+| `lg` | 1024px+ | 3-column term grid, persistent sidebar, full header nav |
+| `xl` | 1280px+ | Max-width container, generous margins |
+
+Key layout transitions:
+- Below 768px: Single column everything, Spotlight search, hamburger nav, Sheet drawer for sidebar
+- 768px–1023px: 2-column grids, toggleable sidebar, inline search
+- 1024px+: Full layout — persistent sidebar, 3-column grids, header nav links
+
+### Accessibility Strategy
+
+**Compliance target:** WCAG 2.1 Level AA
+
+**Color & Contrast:**
+- All body text: minimum 4.5:1 contrast ratio against background
+- Large text (18px+ or 14px+ bold): minimum 3:1 contrast ratio
+- Status badges: color + icon + text label (never color alone)
+- Focus indicators: visible on all interactive elements (2px solid ring)
+- Dark mode: all contrast requirements maintained with adjusted palette
+
+**Keyboard Navigation:**
+- Full keyboard navigation for all interactive elements
+- Tab order follows visual reading order
+- Skip link: "Skip to main content" as first focusable element
+- Search results: arrow keys navigate, Enter selects, Escape closes dropdown
+- Accordion/collapsible sections: Enter/Space to toggle, aria-expanded state
+- Modals: focus trapped inside, Escape to close, focus returns to trigger on close
+- Destructive confirmation dialogs: Enter does NOT confirm (prevents accidental destruction)
+
+**Screen Reader Support:**
+- Semantic HTML: `<main>`, `<nav>`, `<aside>`, `<article>`, `<section>` landmarks
+- Status badges: `aria-label="Status: Canonical"`
+- Search: `role="combobox"` with `aria-expanded`, `aria-activedescendant`
+- Search result count: live region announcing "3 results found"
+- Toast notifications: `role="status"` or `aria-live="polite"`
+- Form validation errors: `aria-describedby` linking error to field, `aria-invalid="true"`
+- Expandable sections: `aria-expanded="true/false"`
+- Page title updates on route change (e.g., "Scope — Katalyst Lexicon")
+
+**Touch & Interaction:**
+- Minimum touch target: 44x44px for all tappable elements
+- Adequate spacing between touch targets (minimum 8px gap)
+- No hover-only interactions — all hover states also accessible via focus or click
+- No drag-and-drop as primary interaction
+
+**Reduced Motion:**
+- `@media (prefers-reduced-motion: reduce)` disables accordion animations, search dropdown slide-in, toast transitions, page transition animations
+- Content remains fully accessible — only visual transitions are removed
+
+**Content Accessibility:**
+- Plain language UI copy (librarian voice principle)
+- Error messages: specific and actionable
+- No time-limited interactions
+- Layout functional up to 200% browser zoom
+
+### Testing Strategy
+
+**Responsive Testing:**
+- Playwright e2e tests at 3 viewport sizes: 375px (mobile), 768px (tablet), 1280px (desktop)
+- Visual regression testing for key pages at each breakpoint
+- Real device spot-checks on iOS Safari and Android Chrome
+
+**Accessibility Testing:**
+- Automated: axe-core integration for WCAG AA violations
+- Manual: keyboard-only navigation walkthrough of all 7 user journeys
+- Screen reader: test with VoiceOver for all critical flows
+- Color contrast: verify all text/background combinations in both light and dark mode
+- Focus management: verify focus order and trap behavior in modals/overlays
+
+**Testing Checklist per Feature:**
+1. Keyboard navigable? (Tab, Enter, Escape, Arrow keys)
+2. Screen reader announces content correctly?
+3. Touch targets 44px+?
+4. Works at 200% zoom?
+5. Reduced motion respected?
+6. Color contrast AA compliant?
+7. Works at all 3 breakpoints?
+
+### Implementation Guidelines
+
+**CSS Approach:**
+- Tailwind responsive prefixes (`sm:`, `md:`, `lg:`) for breakpoint-specific styles
+- CSS custom properties (already in place) for theme-aware colors
+- `rem` units for spacing/sizing (respects user font-size preferences)
+- CSS Grid and Flexbox for responsive layouts
+
+**Component Approach:**
+- Components adapt internally via responsive Tailwind classes — no separate mobile/desktop components
+- `useMediaQuery` hook only for fundamentally different interaction patterns (Spotlight overlay vs dropdown)
+- Sheet component for mobile sidebar — same content, different container
+
+**ARIA Implementation:**
+- ARIA attributes at the component level (StatusBadge, SearchHero, TierSection have built-in ARIA)
+- Radix UI primitives include ARIA by default (Dialog, Accordion, Popover)
+- `eslint-plugin-jsx-a11y` for static ARIA validation
