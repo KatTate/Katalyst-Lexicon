@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -451,3 +451,39 @@ The Katalyst brand palette is earthy, warm, and professional — naturally align
 4. **Touch targets** — Minimum 44x44px touch targets on mobile for all tappable elements (term cards, buttons, search results).
 5. **Screen reader support** — Status badges include aria-labels ("Status: Canonical"). Search results announce count. Radix UI components provide built-in ARIA attributes.
 6. **Reduced motion** — Respect `prefers-reduced-motion` media query. Framer Motion animations should be disabled or minimized for users who prefer reduced motion.
+
+## Design Direction Decision
+
+### Design Directions Explored
+
+Seven complementary design directions were created as an interactive HTML showcase (`ux-design-directions.html`), each addressing a key screen in the application:
+
+- **A: Search-Hero Home Page** — Centered search input as the dominant element, instant results dropdown with term name/status/definition/freshness, "Recently Updated" card grid below
+- **B: Browse Layout with Category Sidebar** — Persistent ~240px sidebar with color-coded category dots and counts, inline header search, term cards in grid layout with status badges
+- **C: Term Detail — Two-Tier Layout** — Tier 1 (always visible): definition, when to use / when not to use, synonyms. Tier 2 (expandable): examples, related principles, version history
+- **D: Empty States — Helpful Librarian Voice** — Three variations: no search results (bridges to proposal), empty category (encourages contribution), empty review queue (positive acknowledgment)
+- **E: Proposal Form — Guided, Not Interrogating** — Conversational field labels, required/optional indicators, inline duplicate detection warning, Save Draft secondary action
+- **F: Mobile Search — Full-Screen Overlay** — Spotlight pattern: search icon triggers full-screen overlay, keyboard appears immediately, results fill available space
+- **G: Review Queue — Governance Workspace** — Simple list with proposal type badges (New Term / Edit), submitter names, timestamps, categories
+
+### Chosen Direction
+
+**All seven directions adopted as a unified system.** These are not competing alternatives — they are complementary screens that work together using the same brand palette, typography, interaction patterns, and voice.
+
+### Design Rationale
+
+- The unified approach directly implements all UX decisions from previous steps: search-hero for the Lookup Job, two-tier progressive disclosure for term detail, librarian voice for empty states, Spotlight pattern for mobile
+- The brand palette (earthy, warm, professional) comes through consistently across all screens
+- Status badges use the semantic color system (kat-green for Canonical, amber for Deprecated, blue for In Review, gray for Draft) with text labels for accessibility
+- Freshness signals (contributor names, timestamps, version counts) appear on every term card and detail view to prevent the "empty graveyard" anti-pattern
+- Governance screens (proposal form, review queue) feel lightweight — simple lists and conversational forms, not complex dashboards
+
+### Implementation Approach
+
+1. **Component library first** — Build reusable components (StatusBadge, TermCard, SearchInput, TierSection, EmptyState) that encode the design decisions
+2. **Search-hero home page** — Rebuild the home page with centered search as the dominant element and recently updated grid below
+3. **Browse layout** — Refine existing sidebar + grid layout with the design direction's category dot styling and status filters
+4. **Term detail** — Implement the two-tier layout with expandable sections for depth content
+5. **Proposal form** — Replace field labels with conversational librarian voice copy, add duplicate detection
+6. **Mobile responsive** — Implement Spotlight search overlay, collapsible sidebar
+7. **Empty states** — Add librarian voice empty states for search, categories, and review queue
