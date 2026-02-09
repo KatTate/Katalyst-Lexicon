@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -643,3 +643,102 @@ Seven complementary design directions were created as an interactive HTML showca
 8. **Clear success signals** — After every state-changing action, confirm what happened and what happens next.
 9. **Mobile-aware layouts** — Term detail usage grid stacks to single-column on mobile. Search uses full-screen Spotlight overlay. Sidebar collapses.
 10. **Notification gap acknowledged** — v1 relies on badge counts for approver awareness. Email/Slack notifications planned as future enhancement to prevent review backlog.
+
+## Component Strategy
+
+### Design System Components (shadcn/ui Coverage)
+
+The project has 50+ shadcn/ui components installed, providing strong coverage for standard UI needs:
+
+**Layout & Navigation:** sidebar, breadcrumb, tabs, navigation-menu, sheet (mobile drawer), separator
+**Data Display:** card, badge, table, skeleton, accordion, collapsible, avatar
+**Forms & Input:** input, textarea, select, label, form, field, checkbox, radio-group
+**Feedback:** alert, sonner/toast, dialog, tooltip, spinner, empty
+**Actions:** button, dropdown-menu, command (Cmd+K pattern)
+
+### Custom Components
+
+Seven domain-specific components needed that encode Katalyst Lexicon UX decisions:
+
+#### 1. StatusBadge
+
+**Purpose:** Display term status with semantic color, icon, and accessible label.
+**Content:** Status text + icon (✓ Canonical, ⚠ Deprecated, ○ Draft, ↻ In Review)
+**States:** Four variants mapped to semantic colors — canonical (kat-green), deprecated (amber), draft (gray), review (blue)
+**Accessibility:** `aria-label="Status: Canonical"`. Color + icon + text label for colorblind safety.
+**Usage:** Every term reference — cards, search results, detail pages, review queue.
+
+#### 2. TermCard
+
+**Purpose:** Compact term preview for browse grids, search results, and recent updates.
+**Content:** Term name (Montserrat bold), StatusBadge, category tag, definition preview (2-line truncation), freshness signal ("Updated 2 days ago by Sarah")
+**States:** Default, hover (subtle shadow + border color change), active/selected
+**Variants:** Grid card (browse page), list item (search results dropdown), compact (recent updates)
+**Actions:** Click navigates to term detail page.
+**Accessibility:** Entire card is a clickable link with descriptive `aria-label`.
+
+#### 3. SearchHero
+
+**Purpose:** Dominant search input for home page with instant results dropdown.
+**Content:** Large search input with icon, hint text, results dropdown with TermCards
+**States:** Empty (placeholder), typing (results loading via skeleton), results (dropdown visible), no results (empty state bridge)
+**Behavior:** Debounced search after 2+ characters. Floating dropdown on desktop. Full-screen Spotlight overlay on mobile.
+**Accessibility:** `role="combobox"`, `aria-expanded`, keyboard navigation (arrow keys + Enter).
+
+#### 4. TierSection
+
+**Purpose:** Expandable content section for term detail Tier 2 (examples, principles, version history).
+**Content:** Section header with label and count, expandable content area
+**States:** Collapsed (header only, chevron right), expanded (content visible, chevron down)
+**Behavior:** Click header to toggle. Smooth animation respecting `prefers-reduced-motion`.
+**Accessibility:** `aria-expanded`, keyboard-togglable (Enter/Space).
+**Foundation:** Extends shadcn's `collapsible.tsx` or `accordion.tsx` with custom styling.
+
+#### 5. UsageGuidance
+
+**Purpose:** Side-by-side "When to use" / "When NOT to use" display in Tier 1.
+**Content:** Two boxes with headers, green left border (do) and amber left border (don't)
+**States:** Default. On mobile, stacks to single-column.
+**Variants:** Full (both boxes) or partial (one box only if data missing).
+**Accessibility:** Semantic `section` elements with descriptive headings.
+
+#### 6. ProposalForm
+
+**Purpose:** Guided proposal form with progressive disclosure and duplicate detection.
+**Content:** Required fields section, "Add more detail" expander for optional fields, inline validation, duplicate warning
+**States:** Editing, validating, submitting, success, error
+**Behavior:** Debounced duplicate check on term name blur. Required/optional grouping via collapsible. Conversational labels.
+**Foundation:** Composes shadcn `form.tsx`, `input.tsx`, `textarea.tsx`, `select.tsx`, `collapsible.tsx`, `alert.tsx`.
+
+#### 7. EmptyState
+
+**Purpose:** Librarian-voice empty states that bridge to governance actions.
+**Content:** Icon, heading, descriptive message, optional CTA button
+**Variants:** With CTA (search miss, empty category) and without CTA (empty review queue "All caught up")
+**Foundation:** Extends existing `empty.tsx` with librarian voice copy patterns and CTA bridging.
+
+### Component Implementation Strategy
+
+- Build custom components using shadcn/ui primitives — extend, don't reinvent
+- Apply Katalyst brand tokens from `index.css` (kat-green, kat-charcoal, semantic status colors)
+- Follow existing component file patterns in `client/src/components/ui/`
+- Include `data-testid` attributes for e2e testing
+- Support both light and dark mode via CSS custom properties
+
+### Implementation Roadmap
+
+**Phase 1 — Core Lookup Components (Journey 1):**
+- StatusBadge — foundation for all term displays
+- TermCard — used across search, browse, and recent updates
+- SearchHero — the primary home page experience
+- TierSection — term detail expandable sections
+- UsageGuidance — term detail "when to use" display
+
+**Phase 2 — Governance Components (Journeys 4-5):**
+- ProposalForm — guided term proposal with progressive disclosure
+- EmptyState — librarian voice empty states with CTA bridges
+
+**Phase 3 — Enhancement Components (future):**
+- DiffViewer — version history comparison (Journey 6)
+- NotificationBadge — review queue count indicator
+- SpotlightOverlay — mobile full-screen search (extends SearchHero)
