@@ -22,7 +22,7 @@ migratedFrom: docs/dev-assist/project/
 
 ## Executive Summary
 
-Katalyst Lexicon is an internal web application that serves as the canonical source of truth for organization-wide vocabulary, terminology, and guiding principles. It provides a governed workflow for proposing, reviewing, and approving terms, ensuring only vetted language becomes canonical. The system supports three roles (Member, Approver, Admin), visibility controls (Internal/Client-Safe/Public), full version history, and bidirectional linking between terms and organizational principles.
+Katalyst Lexicon is an internal web application that serves as the canonical source of truth for organization-wide vocabulary, terminology, and guiding principles. The organization loses an estimated 10-20 hours per week to terminology confusion across a 30-50 person team — previous tools (Notion, Confluence, Google Docs) failed due to lack of governance workflows and version tracking. Katalyst Lexicon provides a governed workflow for proposing, reviewing, and approving terms, ensuring only vetted language becomes canonical. The system supports three roles (Member, Approver, Admin), visibility controls (Internal/Client-Safe/Public), full version history, and bidirectional linking between terms and organizational principles. A centralized, browsable vocabulary also accelerates new hire onboarding by replacing ad-hoc colleague questions with self-service term lookups.
 
 **Product Type:** Internal multi-user CRUD application with editorial workflow
 **Domain:** Knowledge management / vocabulary governance
@@ -34,21 +34,21 @@ Katalyst Lexicon is an internal web application that serves as the canonical sou
 
 ### User Success
 
-| ID | Criterion | Measurement |
-|----|-----------|-------------|
-| SC-1 | Term lookup in under 30 seconds | Time from app open to finding correct term |
-| SC-2 | Correct terminology usage increases | Reduction in terminology-related rework (qualitative) |
-| SC-3 | New hire ramp-up accelerates | Self-service term lookups vs. colleague questions |
-| SC-4 | Proposals submitted with full context | % of proposals with all required fields |
+| ID | Criterion | Measurement | Type |
+|----|-----------|-------------|------|
+| SC-1 | Term lookup in under 30 seconds | Time from app open to finding correct term | Instrumentable |
+| SC-2 | Correct terminology usage increases | Reduction in terminology-related rework; baseline: current rework hours per sprint (survey at launch) | Observational |
+| SC-3 | New hire ramp-up accelerates | Self-service term lookups vs. colleague questions; baseline: current onboarding survey scores | Observational |
+| SC-4 | Proposals submitted with full context | % of proposals with all required fields completed | Instrumentable |
 
 ### Business Success
 
-| ID | Criterion | Measurement |
-|----|-----------|-------------|
-| SC-5 | Reduced miscommunication-driven rework | Fewer scope disputes and handoff issues |
-| SC-6 | Consistent CRM language | Standardized terminology in Zoho and reporting |
-| SC-7 | Institutional knowledge preserved | Principles and term histories captured permanently |
-| SC-8 | Team adoption | Active users as % of total team members |
+| ID | Criterion | Measurement | Type |
+|----|-----------|-------------|------|
+| SC-5 | Reduced miscommunication-driven rework | Fewer scope disputes and handoff issues; baseline: current sprint retro tallies | Observational |
+| SC-6 | Consistent CRM language | Standardized terminology in Zoho and reporting; no direct app measurement — requires external CRM audit | Observational |
+| SC-7 | Institutional knowledge preserved | Principles and term histories captured permanently; baseline: 0 terms at launch, target 100-250 within 6 months | Instrumentable |
+| SC-8 | Team adoption | Active users as % of total team members (30-50 person team); baseline: 0% at launch | Instrumentable |
 
 ### Key Performance Indicators
 
@@ -97,7 +97,7 @@ Katalyst Lexicon is an internal web application that serves as the canonical sou
 | US-005 | As a user, I want to browse terms by category, so that I can explore related terminology. | Category landing pages with term lists; filters by status/visibility; sort alphabetical/recent |
 | US-006 | As a user, I want to see the complete history of changes to a term, so that I understand how definitions evolved. | Every change produces versioned snapshot; shows who, what, when, why; can view previous versions; change notes required |
 | US-007 | As a team member, I want to read organizational principles, so that I understand reasoning behind our approach. | Principles list page; detail shows full markdown content; shows related terms; terms show related principles |
-| US-008 | As a user, I want to see how terms relate to each other, so that I understand vocabulary structure. | Terms can have parent/child relationships; deprecated terms link to replacement; related terms surfaced |
+| US-008 | As a user, I want to see how terms relate to each other, so that I understand vocabulary structure. | MVP: deprecated terms link to replacement (FR10). V2: parent/child relationships and related-term surfacing |
 
 ### Priority 2 — Should Have
 
@@ -106,7 +106,7 @@ Katalyst Lexicon is an internal web application that serves as the canonical sou
 | US-009 | As an Admin, I want to control which terms are visible to clients, so that internal-only terminology isn't exposed. | Visibility flags (Internal/Client-Safe/Public); filtering by visibility works |
 | US-010 | As an Admin, I want to assign roles with different permissions, so that governance is enforced. | Three roles functioning; permissions enforced per role |
 | US-011 | As the system, I want to allow public read but require auth for actions, so that the lexicon is accessible but governed. | Public read access; Google SSO for write actions |
-| US-012 | As a user, I want to search terms efficiently with server-side search, so that results are fast with large vocabularies. | Server-side search endpoint; searches name, definition, synonyms, examples |
+| US-012 | As a user, I want to search terms efficiently, so that results return quickly even as the vocabulary grows. | Search returns results within 500ms for up to 1,000 terms; searches name, definition, synonyms, examples |
 
 ### Priority 3 — Nice to Have
 
@@ -381,7 +381,7 @@ Setting (system configuration, key-value)
 ### Search & Discovery
 
 - FR11: Any user can search terms by keyword across name, definition, synonyms, and examples
-- FR12: The system provides server-side search for performance with large vocabularies
+- FR12: Search returns results within 500ms for vocabularies up to 1,000 terms, searching across name, definition, synonyms, and examples fields
 - FR13: Search results display term name, category, status badge, and definition preview
 - FR14: Any user can browse terms organized by category
 
@@ -390,7 +390,7 @@ Setting (system configuration, key-value)
 - FR15: Members can propose a new term through a structured form
 - FR16: Members can propose edits to an existing term
 - FR17: The proposal form captures all term fields (name, category, definition, why exists, usage guidance, examples, synonyms)
-- FR18: The system checks for potential duplicate terms before proposal submission
+- FR18: Before proposal submission, the system checks if any existing term name exactly matches the proposed name (case-insensitive) and warns the user if a match is found
 - FR19: Approvers can view a queue of pending proposals
 - FR20: Approvers can approve a proposal, which automatically creates or updates the corresponding term
 - FR21: Approvers can reject a proposal with a comment
@@ -441,7 +441,7 @@ Setting (system configuration, key-value)
 
 - NFR1: Search results return within 500ms for vocabularies up to 1,000 terms
 - NFR2: Page load time under 2 seconds on standard connections
-- NFR3: Application remains responsive during concurrent multi-user access
+- NFR3: Application maintains sub-2-second page loads with up to 50 concurrent users
 
 ### Usability
 
@@ -453,8 +453,8 @@ Setting (system configuration, key-value)
 ### Security
 
 - NFR8: All write operations require authentication (when auth is wired)
-- NFR9: Role-based permissions enforced server-side, not just client-side
-- NFR10: Session management uses secure, httpOnly cookies
+- NFR9: Role-based permissions enforced regardless of client state — unauthorized actions rejected even if the UI is bypassed
+- NFR10: Session tokens protected from client-side script access
 - NFR11: No secrets or credentials exposed in client-side code
 
 ### Data Integrity
@@ -462,14 +462,14 @@ Setting (system configuration, key-value)
 - NFR12: All term modifications produce an immutable version history entry
 - NFR13: Proposal approval atomically creates/updates the term and archives the proposal
 - NFR14: Database transactions used for multi-table operations
-- NFR15: UUID primary keys for all entities
+- NFR15: Globally unique identifiers for all entity primary keys
 
-### Maintainability
+### Maintainability (Brownfield Implementation Constraints)
 
-- NFR16: TypeScript strict mode enforced across entire codebase
-- NFR17: Schema defined once in shared/schema.ts, used by both client and server
-- NFR18: All database operations go through the storage interface abstraction
-- NFR19: API routes remain thin — business logic lives in storage layer
+- NFR16: Strict type checking enforced across entire codebase
+- NFR17: Data schema defined once in a shared module, used by both client and server
+- NFR18: All database operations go through a single storage interface abstraction
+- NFR19: API route handlers remain thin — business logic lives in the storage layer
 
 ### Compatibility
 
