@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3]
+stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
   - _bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
@@ -86,3 +86,82 @@ The secondary experience is the **governance loop**: a team member spots a gap o
 3. **Progressive depth, not progressive barriers** — Surface the essential information immediately. Let users choose to go deeper into examples, history, and principles — don't force them through layers to get the basics. Usage guidance (usedWhen, notUsedWhen) is essential and stays visible alongside the definition — only deeper context (examples, history, principles) is progressive.
 4. **Governance should feel lightweight** — Proposing a term should feel like filling out a helpful form, not submitting a bureaucratic application. Reviewing should feel like a quick quality check, not a compliance exercise.
 5. **Empty states are onboarding moments** — Every empty state bridges the Lookup Job failure into the Governance Job. "No terms in this category yet — propose the first one." "No results — want to propose this term?" This is the growth loop that populates the lexicon and prevents the "feels dead on arrival" problem that killed Notion and Confluence glossaries before.
+
+## Desired Emotional Response
+
+### Primary Emotional Goals
+
+1. **Confidence** — "I know I'm using the right term." The primary emotional outcome is certainty. When a user reads a term definition with a Canonical badge, they should feel zero doubt about using it in a meeting, a proposal, or a client deliverable.
+2. **Quiet reliability** — "I'm glad this tool exists." Not wow-factor or flashiness. The feeling of a tool that's always there, always accurate, always fast. Like a dictionary you trust — you don't marvel at it, you just rely on it.
+3. **Approachability** — "I can explore this freely." Especially for new hires and infrequent users, the app should feel inviting and low-pressure. Browsing should feel like exploring, not studying. No intimidation, no information overload.
+
+### Emotional Journey Mapping
+
+| Stage | Desired Feeling | Design Implication |
+|-------|----------------|-------------------|
+| **First visit** | "This is straightforward and I can figure it out" | Clean layout, obvious search, minimal onboarding friction |
+| **Searching** | "This is fast and easy" | Instant results, clear matching, no dead ends |
+| **Reading a term** | "Now I know — I can use this confidently" | Definition prominent, status clear, usage guidance visible |
+| **No results found** | "That's okay — I can help fix this" | Warm empty state with "propose this term" invitation |
+| **Browsing categories** | "I'm discovering how our language fits together" | Connected, explorable, not overwhelming |
+| **Proposing a term** | "I'm contributing something valuable" | Guided form, encouraging tone, clear next steps |
+| **Proposal rejected** | "I understand why, and I can try again" | Constructive feedback, no shame, clear path forward |
+| **Return visit** | "Right, this is the faster way to check" | Remembered familiarity, instant search, consistent experience |
+
+### Micro-Emotions
+
+**Prioritized for this product:**
+
+- **Confidence over confusion** — The most critical axis. Every design element should increase certainty about which term to use and whether it's current.
+- **Trust over skepticism** — Users must believe the content is authoritative and up-to-date. Version history, "last updated" timestamps, and governance badges build this trust.
+- **Accomplishment over frustration** — Especially in the governance flow. Submitting a proposal should feel like a small win, not a chore. Getting approved should feel like a contribution recognized.
+- **Belonging over isolation** — The lexicon is a shared team artifact. Seeing other people's contributions, change notes, and principle authorship should reinforce that "we built this together."
+
+**Reframed approach to delight:**
+
+- **Delight through recognition, not decoration** — No confetti, no animations, no gamification. Instead, small earned moments that acknowledge human contributions: "Your first term is now part of the lexicon." Recent activity signals like "3 terms updated this week." The difference between a database and a team artifact is that a team artifact shows the human activity behind it.
+
+### Voice Principle: The Helpful Librarian
+
+The app speaks like a **helpful librarian** — someone who knows where everything is, speaks clearly, never condescends, and genuinely wants you to find what you need. Not a chatbot, not a brand mascot — a librarian. This voice is trusted because it's knowledgeable and neutral.
+
+**Voice in action:**
+
+| Context | Librarian Voice | Not This |
+|---------|----------------|----------|
+| Form labels | "What does this term mean?" | "Definition (required)" |
+| Usage guidance | "When should someone use this?" | "Usage Constraints" |
+| Empty category | "This category doesn't have any terms yet. Be the first to add one." | "No terms found." |
+| No search results | "We couldn't find what you're looking for. Try a different search, or propose this as a new term." | "0 results." |
+| Proposal submitted | "Your proposal has been submitted. An approver will review it soon." | "Submission successful." |
+| First term approved | "Your first term is now part of the lexicon." | "Status: Approved." |
+| Proposal rejected | "This proposal wasn't approved this time. Here's the feedback — you're welcome to revise and resubmit." | "Rejected. Reason: [text]" |
+
+### Design Implications
+
+| Emotional Goal | UX Design Approach |
+|---------------|-------------------|
+| Confidence | Green Canonical badge is the visual anchor. Deprecated terms get muted styling with clear warning. Status is never ambiguous. |
+| Quiet reliability | Fast load times, consistent layout, no flashy transitions. The app should feel "solid" — same experience every time. |
+| Approachability | Warm but professional color palette. Friendly typography. Conversational microcopy following the librarian voice. |
+| Encouragement | Empty states invite contribution. Rejected proposals include constructive feedback. Form labels use helpful language. |
+| Belonging | Show who contributed terms, who proposed changes, when things were last updated. The lexicon is a living team product, not an anonymous database. |
+| Trust | Version history always accessible. "Last updated" visible on term cards. Governance badges signal editorial rigor. |
+
+### Adoption-Killer Defenses
+
+The emotional design specifically addresses the three failure modes that killed Notion, Confluence, and Google Docs glossaries:
+
+1. **"Is this even up to date?" → Freshness signals everywhere** — Every term card shows a freshness indicator (e.g., "Updated 3 days ago" or "v4 — 12 changes"), even on search results and browse lists. Version count and last-updated timestamps are never hidden. The app must always feel actively maintained.
+
+2. **"Nobody else uses this" → Social proof of team activity** — Contributor names visible on terms and proposals ("Proposed by Sarah," "Reviewed by Michael"). Recent activity signals on category pages ("3 terms updated this week"). The app feels alive because you can see your colleagues' fingerprints on it.
+
+3. **"I don't have time for this" → Efficiency that's noticeable** — Sub-second search, minimal clicks, no loading spinners that linger. The app should respect the user's time so obviously that they notice it. The feeling should be "that was faster than I expected."
+
+### Emotional Design Principles
+
+1. **Warm professional, not corporate sterile** — The tone should feel like a knowledgeable colleague, not a compliance system. Friendly microcopy following the librarian voice, approachable layout, but always credible and authoritative.
+2. **Encourage contribution, never shame** — Every interaction with the governance system should make users feel their input is valued. Rejections include reasons and invite revision. Empty categories invite first contributions.
+3. **Build trust through transparency** — Show the work: version history, change notes, authorship, timestamps, freshness signals. Trust comes from seeing that the system is maintained and governed, not from branding or design polish.
+4. **Calm efficiency, not excitement** — The best compliment for this tool is "I didn't even think about it — I just looked it up and moved on." The UX goal is to be so efficient it becomes invisible.
+5. **Delight through recognition, not decoration** — Acknowledge human contributions with small, earned moments. Show the people behind the vocabulary. Make the lexicon feel like a team artifact, not an anonymous database.
