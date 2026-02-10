@@ -943,3 +943,203 @@ So that I can suggest improvements without rewriting the entire entry from scrat
 ---
 
 **Epic 5 complete: 2 stories (1 Large, 1 Medium). All FRs covered: FR6, FR15, FR16, FR17, FR18.**
+
+---
+
+## Epic 6: Review & Approve — Stories
+
+### Story 6.1: Proposal Review Queue [Size: M]
+
+As an approver,
+I want to see a queue of all pending proposals with key details at a glance,
+So that I can prioritize which proposals to review first.
+
+**Acceptance Criteria:**
+
+**Given** I am an approver and navigate to the review queue page
+**When** the page loads
+**Then** I see a list of all pending proposals ordered by submission date (oldest first)
+**And** each proposal card shows: proposed term name, proposal type (New / Edit), submitter name, submission date, and category
+
+**Given** the navigation sidebar or header has a "Review" link
+**When** pending proposals exist
+**Then** the link shows a badge count of pending proposals (e.g., "Review (3)")
+
+**Given** I click on a proposal in the queue
+**When** the proposal detail loads
+**Then** I navigate to the proposal review page for that proposal
+
+**Given** no pending proposals exist
+**When** I view the review queue
+**Then** I see an empty state: "No proposals waiting for review — the team is all caught up!"
+
+**Given** I am a member (not an approver or admin)
+**When** I try to access the review queue
+**Then** I see a message: "You don't have permission to review proposals"
+**And** the Review link does not appear in my navigation
+
+**Dev Notes:**
+- Endpoint: `GET /api/proposals?status=pending` returns pending proposals with submitter info
+- Badge count: fetch count separately or derive from list length
+- Page title: "Review Queue — Katalyst Lexicon"
+- Queue sorts oldest-first so nothing gets buried
+- `data-testid` on: each proposal card (`proposal-card-{id}`), badge count, empty state, permission message
+
+---
+
+### Story 6.2: Proposal Review and Decision [Size: L]
+
+As an approver reviewing a proposal,
+I want to see the full proposed term details and choose to approve, reject, or request changes,
+So that I can make an informed decision and provide feedback to the contributor.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing a proposal review page
+**When** the page loads
+**Then** I see all proposed term fields: name, definition, category, why it exists, usage guidance, examples, synonyms
+**And** I see the submitter's name and submission date
+**And** I see the proposal type (New or Edit)
+
+**Given** the proposal is an edit (type "Edit")
+**When** I view the review page
+**Then** I see each field with an inline diff showing changes: removed text with strikethrough and added text with highlight
+**And** unchanged fields appear normally without diff markup
+
+**Given** I want to approve the proposal
+**When** I click the "Approve" button
+**Then** I see a confirmation dialog: "Approve this proposal? This will create/update the term."
+**And** the Enter key does NOT confirm the dialog (AR15 — destructive action protection)
+**And** I must click the "Confirm Approve" button to proceed
+
+**Given** I confirm approval
+**When** the approval processes
+**Then** the corresponding term is created (for new) or updated (for edit) with the proposed values
+**And** a version history entry is created with the change notes
+**And** the proposal status changes to "Approved"
+**And** an audit event is recorded
+**And** I see a success toast: "Proposal approved — term has been published"
+**And** I am returned to the review queue
+
+**Given** the proposal has already been approved or rejected by another reviewer
+**When** I click Approve (or Reject or Request Changes)
+**Then** I see an error message: "This proposal has already been reviewed"
+**And** the page refreshes to show the current proposal status
+
+**Given** I want to reject the proposal
+**When** I click the "Reject" button
+**Then** a text area appears asking for a rejection reason (required)
+**And** I must enter a reason before the rejection is confirmed
+
+**Given** I confirm the rejection with a reason
+**When** the rejection processes
+**Then** the proposal status changes to "Rejected" with my reason saved
+**And** an audit event is recorded
+**And** I see a success toast: "Proposal rejected"
+**And** I am returned to the review queue
+
+**Given** I want to request changes
+**When** I click "Request Changes"
+**Then** a text area appears for feedback (required)
+**And** I must enter feedback before submitting
+
+**Given** I submit a change request with feedback
+**When** the request processes
+**Then** the proposal status changes to "Changes Requested" with my feedback saved
+**And** an audit event is recorded
+**And** I see a success toast: "Feedback sent to the proposer"
+**And** I am returned to the review queue
+
+**Given** I am using a screen reader
+**When** I interact with the review actions
+**Then** the confirmation dialog is announced with its purpose
+**And** focus is trapped within the dialog until I dismiss or confirm it
+
+**Dev Notes:**
+- Endpoint: `GET /api/proposals/:id` for full proposal detail
+- Approve: `POST /api/proposals/:id/approve` — wrapped in database transaction (AR20, NFR13, NFR14): atomically (1) validate proposal is still "Pending", (2) create/update term, (3) create version history entry, (4) update proposal status, (5) record audit event. If proposal is no longer Pending, return 409 Conflict.
+- Reject: `POST /api/proposals/:id/reject` with `{ reason }` body
+- Request Changes: `POST /api/proposals/:id/request-changes` with `{ feedback }` body
+- Edit comparison: inline diff approach — each field shown once with strikethrough for removed text and highlight for additions. Simpler than side-by-side and works on mobile.
+- Confirmation dialog: AlertDialog component, Enter does NOT confirm (set autoFocus on Cancel button)
+- Button hierarchy: Approve = primary green, Request Changes = secondary outlined, Reject = destructive (UX13)
+- Test: verify concurrent approval scenario — open two tabs, approve in one, try in the other, expect graceful 409 error
+- `data-testid` on: approve/reject/request-changes buttons, confirmation dialog, reason/feedback textarea, proposal fields, diff highlights
+
+---
+
+### Story 6.3: Proposal Audit Trail [Size: S]
+
+As an approver or admin,
+I want to see the full history of decisions made on a proposal,
+So that I can understand who reviewed it and what feedback was given.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing a proposal that has been reviewed
+**When** I look at the proposal detail page
+**Then** I see an audit trail section showing all actions taken: submission, any change requests with feedback, and the final decision (approved/rejected) with timestamp and reviewer name
+
+**Given** a proposal went through multiple rounds (submitted → changes requested → resubmitted → approved)
+**When** I view the audit trail
+**Then** I see each event in chronological order with timestamps, actor names, and any comments
+
+**Given** I view a freshly submitted proposal (no decisions yet)
+**When** I look at the audit trail
+**Then** I see a single entry: "Submitted by {name} on {date}"
+
+**Dev Notes:**
+- Use a dedicated `proposalEvents` table (NOT a JSON column): `proposalId`, `eventType`, `actorId`, `timestamp`, `comment`
+- Event types: "submitted", "changes_requested", "resubmitted", "approved", "rejected"
+- Endpoint: included in `GET /api/proposals/:id` response as `events` array
+- Drizzle schema: define `proposalEvents` table in `shared/schema.ts`
+- `data-testid="audit-event-{index}"` on each audit entry
+- Test: verify audit trail updates correctly after each action type (approve, reject, request changes)
+
+---
+
+### Story 6.4: Proposer Revision Flow [Size: M]
+
+As a proposer who received change feedback from a reviewer,
+I want to see the feedback, revise my proposal, and resubmit it,
+So that I can address the reviewer's concerns without starting a new proposal from scratch.
+
+**Acceptance Criteria:**
+
+**Given** I am a proposer and my proposal has status "Changes Requested"
+**When** I view my proposals (e.g., "My Proposals" section or notification)
+**Then** I see the proposal marked as "Changes Requested" with the reviewer's feedback visible
+
+**Given** I open my proposal that has changes requested
+**When** the page loads
+**Then** I see the reviewer's feedback prominently displayed at the top
+**And** below it, I see my proposal form pre-filled with my previous values
+**And** I can edit any field
+
+**Given** I revise my proposal fields
+**When** I click "Resubmit"
+**Then** the proposal status changes back to "Pending"
+**And** an audit event is recorded: "Resubmitted by {name}"
+**And** I see a success toast: "Your revised proposal has been resubmitted for review"
+**And** the proposal returns to the review queue for approvers
+
+**Given** I try to resubmit without making any changes
+**When** I click "Resubmit"
+**Then** I see a validation message: "Please address the feedback before resubmitting"
+
+**Given** I want to abandon my proposal after receiving feedback
+**When** I click "Withdraw Proposal"
+**Then** I see a confirmation dialog: "Withdraw this proposal? This cannot be undone."
+**And** confirming changes the status to "Withdrawn"
+**And** an audit event is recorded
+
+**Dev Notes:**
+- Reuses ProposalForm component in "revision" mode — pre-filled with previous values, feedback banner at top
+- Endpoint: `POST /api/proposals/:id/resubmit` with updated proposal body
+- Withdraw: `POST /api/proposals/:id/withdraw`
+- "My Proposals" could be a page or section — at minimum, the proposer needs a way to find their proposals (consider `GET /api/proposals?submitterId={userId}`)
+- `data-testid` on: feedback banner, resubmit button, withdraw button, confirmation dialog
+
+---
+
+**Epic 6 complete: 4 stories (1 Large, 2 Medium, 1 Small). All FRs covered: FR7, FR8, FR19, FR20, FR21, FR22, FR23.**
