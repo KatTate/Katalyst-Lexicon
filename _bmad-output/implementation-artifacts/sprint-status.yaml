@@ -43,7 +43,7 @@ development_status:
   # Epic 1: Search & Discovery (no dependencies - foundational)
   epic-1: in-progress
   1-1-search-api-searchhero-with-ranked-results-as-you-type: done
-  1-2-searchhero-keyboard-navigation: backlog
+  1-2-searchhero-keyboard-navigation: ready-for-dev
   1-3-mobile-spotlight-search-overlay: backlog
   1-4-home-page-with-recently-updated-terms: backlog
   epic-1-retrospective: optional
