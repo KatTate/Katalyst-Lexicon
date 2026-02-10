@@ -106,6 +106,8 @@ export function SpotlightSearch({ open, onOpenChange }: SpotlightSearchProps) {
     }
 
     if (e.key === "Tab") {
+      e.preventDefault();
+      onOpenChange(false);
       return;
     }
   }
