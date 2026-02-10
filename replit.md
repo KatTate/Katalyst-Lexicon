@@ -152,7 +152,7 @@ When the user's message matches a BMAD trigger phrase, agent name, or workflow c
 - **Brownfield Path:** Custom — Full BMAD Adoption + Testing
 - **Completed Artifacts:** brownfield-assessment.md, project-context.md, product-brief-katalyst-lexicon-2026-02-06.md, prd-katalyst-lexicon-2026-02-06.md, architecture-katalyst-lexicon-2026-02-06.md, epics-katalyst-lexicon-2026-02-06.md, ux-design-specification.md, ux-design-directions.html
 - **Technology Stack:** TypeScript, React 19, Express, Drizzle ORM, PostgreSQL, Tailwind CSS, Radix UI
-- **Next Workflow:** Epic Creation / Sprint Planning / Implementation
+- **Next Workflow:** Sprint Planning (SP) / Implementation (DS)
 - **Migration Source:** `docs/dev-assist/project/` (problem-statement, user-stories, mvp-scope, user-flows, data-model)
 
 ## BMad File Structure
