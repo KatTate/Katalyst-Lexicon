@@ -450,3 +450,115 @@ So that I can discover what's changed without searching and get a sense the lexi
 ---
 
 **Epic 1 complete: 4 stories (1 Large, 1 Medium, 2 Small). All FRs covered: FR1, FR11, FR12, FR13.**
+
+---
+
+## Epic 2: Term Detail Experience — Stories
+
+### Story 2.1: Term Detail Page with Two-Tier Progressive Disclosure [Size: L]
+
+As a user who found a term through search or browsing,
+I want to see its full definition, usage guidance, and metadata in a clear, scannable layout,
+So that I get the answer I need immediately and can explore deeper context if I want.
+
+**Acceptance Criteria:**
+
+**Given** I navigate to a term detail page (e.g., by clicking a search result)
+**When** the page loads
+**Then** I see breadcrumb navigation showing: Home > {Category} > {Term Name}
+
+**Given** I am viewing a term detail page
+**When** I look at the Tier 1 (always visible) section
+**Then** I see the term name as the page heading
+**And** the status badge (Canonical/Draft/In Review/Deprecated)
+**And** the category tag
+**And** the full definition
+**And** usage guidance (when provided) in a distinct section with clear formatting
+**And** the freshness signal ("Updated 3 days ago") and version badge ("v4")
+
+**Given** the term has a "Why it exists" explanation
+**When** I view Tier 1
+**Then** it appears below the definition as a brief contextual note
+
+**Given** the term has synonyms
+**When** I view Tier 1
+**Then** synonyms are displayed as inline tags/chips
+
+**Given** I am viewing a term detail page
+**When** I look below Tier 1
+**Then** I see collapsible Tier 2 sections that are collapsed by default: "Examples", "Version History", "Related Principles"
+
+**Given** a Tier 2 section exists (e.g., "Examples")
+**When** I click the section header
+**Then** it expands to reveal its content
+**And** other Tier 2 sections remain in their current state (independent toggles)
+
+**Given** the term has good examples and bad examples
+**When** I expand the "Examples" section
+**Then** I see good examples with a green indicator and bad examples with a red indicator
+**And** each example has clear formatting distinguishing it from prose
+
+**Given** I am using a screen reader
+**When** I navigate the page
+**Then** the page has a logical heading hierarchy (h1 for term name, h2 for sections)
+**And** Tier 2 sections use `aria-expanded` to communicate their state
+**And** all interactive elements have accessible labels
+
+**Given** the term is in "Deprecated" status
+**When** I view the detail page
+**Then** I see an amber banner at the top of the page with the text "This term has been deprecated"
+**And** if a replacement term exists, the banner includes a link: "See {replacement term name} instead"
+
+**Given** I want to suggest an improvement
+**When** I see the "Suggest an edit" link on the page
+**Then** clicking it navigates me to the proposal form with all current term fields pre-filled
+
+**Dev Notes:**
+- TierSection component: collapsible with `aria-expanded`, smooth transition (respects `prefers-reduced-motion`)
+- UsageGuidance component: distinct formatting (e.g., background, border-left accent) to separate from definition
+- Breadcrumb: derived from route context + term's category, uses `nav` element with `aria-label="Breadcrumb"`
+- Page title: "{Term Name} — Katalyst Lexicon" (AR14)
+- "Suggest an edit" link: `GET /api/terms/:id` fetches full data, navigates to `/propose?editTermId={id}` (AR19)
+- `data-testid` on: breadcrumb, term name, status badge, definition, usage guidance, each Tier 2 toggle, deprecated banner, suggest-edit link
+
+---
+
+### Story 2.2: Version History in Term Detail [Size: M]
+
+As a user exploring a term,
+I want to view how its definition has changed over time with author and timestamp,
+So that I understand the term's evolution and can trust it reflects current organizational thinking.
+
+**Acceptance Criteria:**
+
+**Given** I am on a term detail page with version history
+**When** I expand the "Version History" Tier 2 section
+**Then** I see a chronological list of versions, most recent first
+**And** each version entry shows: version number, author name, date, and change notes
+
+**Given** there are two or more versions
+**When** I view the version list
+**Then** I can see what changed between versions by reading the change notes
+**And** the current version is visually marked (e.g., "Current" badge)
+
+**Given** a version entry exists
+**When** I click "View full snapshot" on a past version
+**Then** I see the complete term definition, usage guidance, and metadata as it existed at that version
+
+**Given** a term has only one version (just created)
+**When** I expand "Version History"
+**Then** I see a single entry marked as "v1 — Original" with the creation date and author
+
+**Given** I am using a screen reader
+**When** I navigate the version list
+**Then** each version entry is announced with its version number, author, and date
+
+**Dev Notes:**
+- Endpoint: `GET /api/terms/:id/versions` returns version array sorted by version number descending
+- Version snapshot view could be a modal or inline expansion — keep it simple for MVP
+- `data-testid="version-entry-{versionNumber}"` on each version row
+- Change notes field may be empty for early versions — display "No change notes" in muted text
+
+---
+
+**Epic 2 complete: 2 stories (1 Large, 1 Medium). All FRs covered: FR2, FR9, FR10.**
