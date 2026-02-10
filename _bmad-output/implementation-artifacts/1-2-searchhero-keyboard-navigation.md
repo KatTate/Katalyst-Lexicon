@@ -1,6 +1,6 @@
 # Story 1.2: SearchHero Keyboard Navigation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -143,7 +143,16 @@ The SearchHero component from Story 1.1 already has:
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus (Replit Agent)
 
 ### Completion Notes
+- All 11 ACs verified via architect review and E2E testing (all 30 test steps passed)
+- Party Mode Finding 1 (conditional aria-controls) fixed
+- Party Mode Finding 2 (card-in-card nesting) fixed via TermCard variant="inline" prop
+- No regressions to Story 1.1 functionality (search, debounce, click nav, empty state, skeleton)
+- WAI-ARIA combobox pattern fully compliant (focus on input, aria-activedescendant tracking)
+- No new packages added
 
 ### File List
+- client/src/components/SearchHero.tsx (modified)
+- client/src/components/TermCard.tsx (modified)

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useId } from "react";
+import { useState, useRef, useEffect, useId, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Search, Loader2, Plus } from "lucide-react";
@@ -12,6 +12,7 @@ import { api, Term } from "@/lib/api";
 export function SearchHero() {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const debouncedQuery = useDebounce(query, 200);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -39,6 +40,20 @@ export function SearchHero() {
   }, [isSearchEnabled]);
 
   useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [searchResults]);
+
+  useEffect(() => {
+    if (highlightedIndex >= 0 && searchResults[highlightedIndex]) {
+      const optionId = `search-option-${searchResults[highlightedIndex].id}`;
+      const element = document.getElementById(optionId);
+      if (element) {
+        element.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [highlightedIndex, searchResults]);
+
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
         dropdownRef.current &&
@@ -53,17 +68,62 @@ export function SearchHero() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleResultSelect = useCallback((termId: string) => {
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+    navigate(`/term/${termId}`);
+  }, [navigate]);
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") {
       setIsOpen(false);
-      inputRef.current?.blur();
+      setHighlightedIndex(-1);
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!isOpen && isSearchEnabled) {
+        setIsOpen(true);
+        setHighlightedIndex(0);
+        return;
+      }
+      if (showDropdown && searchResults.length > 0) {
+        setHighlightedIndex(prev =>
+          prev < searchResults.length - 1 ? prev + 1 : prev
+        );
+      }
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (showDropdown && highlightedIndex > 0) {
+        setHighlightedIndex(prev => prev - 1);
+      } else if (showDropdown && highlightedIndex === 0) {
+        setHighlightedIndex(-1);
+      }
+      return;
+    }
+
+    if (e.key === "Enter") {
+      if (highlightedIndex >= 0 && searchResults[highlightedIndex]) {
+        e.preventDefault();
+        handleResultSelect(searchResults[highlightedIndex].id);
+      }
+      return;
+    }
+
+    if (e.key === "Tab") {
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+      return;
     }
   }
 
-  function handleResultClick(termId: string) {
-    setIsOpen(false);
-    navigate(`/term/${termId}`);
-  }
+  const activeDescendant = highlightedIndex >= 0 && searchResults[highlightedIndex]
+    ? `search-option-${searchResults[highlightedIndex].id}`
+    : undefined;
 
   return (
     <div className="relative" data-testid="search-hero">
@@ -95,9 +155,10 @@ export function SearchHero() {
             onKeyDown={handleKeyDown}
             role="combobox"
             aria-expanded={showDropdown}
-            aria-controls={listboxId}
+            aria-controls={showDropdown ? listboxId : undefined}
             aria-haspopup="listbox"
             aria-autocomplete="list"
+            aria-activedescendant={activeDescendant}
             autoComplete="off"
           />
           {showDropdown && !isSearching && (
@@ -144,18 +205,21 @@ export function SearchHero() {
             </div>
           ) : searchResults.length > 0 ? (
             <div className="p-2">
-              {searchResults.map((term) => (
+              {searchResults.map((term, index) => (
                 <div
                   key={term.id}
+                  id={`search-option-${term.id}`}
                   role="option"
-                  aria-selected={false}
-                  className="cursor-pointer"
-                  onClick={() => handleResultClick(term.id)}
+                  aria-selected={index === highlightedIndex}
+                  className={`cursor-pointer p-3 rounded-lg transition-colors ${
+                    index === highlightedIndex
+                      ? "bg-primary/10 border-l-2 border-primary"
+                      : "hover:bg-muted/50"
+                  }`}
+                  onClick={() => handleResultSelect(term.id)}
                   data-testid={`search-result-${term.id}`}
                 >
-                  <div className="p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <TermCard term={term} highlightQuery={debouncedQuery} />
-                  </div>
+                  <TermCard term={term} highlightQuery={debouncedQuery} variant="inline" />
                 </div>
               ))}
             </div>
