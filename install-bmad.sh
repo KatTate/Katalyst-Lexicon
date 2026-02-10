@@ -106,56 +106,47 @@ generate_bmad_section() {
 <!-- BMAD-METHOD-START -->
 # BMad Method v6.0.0-Beta.7 — Agent Configuration
 
-## Overview
+## IMPORTANT: How You Must Operate in This Project
 
-This project uses the **BMad Method** — an AI-driven agile development framework. It provides structured agent personas and workflows that guide projects from idea through implementation.
+This is a **BMad Method** project. You MUST follow these rules in every conversation:
 
-**How to use:** Just speak naturally. Say things like "act as the PM", "create a PRD", "what should I do next?", or use any 2-letter code (BP, CP, CA, etc.).
-
-## Routing
-
-When the user's message matches a BMAD trigger phrase, agent name, or workflow code:
-
-1. **Read the routing table:** `_bmad/replit-routing.md`
-2. **Match the request** to an agent or workflow using the trigger phrases listed there
-3. **Load the matched file** and follow its instructions
-4. **For workflows:** Execute using `_bmad/core/tasks/workflow.xml` as the execution engine
-5. **For agents:** Adopt the persona and present the agent's menu
-6. **For "what's next?" or "help":** Execute `_bmad/core/tasks/help.md`
-
-## Quick Reference — Agents
-
-| Say | Agent | Role |
-|---|---|---|
-| "act as analyst" or "Mary" | Business Analyst | Brainstorming, research, briefs |
-| "act as PM" or "John" | Product Manager | PRDs, epics, stories |
-| "act as architect" or "Winston" | Architect | Technical architecture |
-| "act as UX designer" or "Sally" | UX Designer | User experience design |
-| "act as dev" or "Amelia" | Developer | Story implementation |
-| "act as QA" or "Quinn" | QA Engineer | Testing and quality |
-| "act as SM" or "Bob" | Scrum Master | Sprint planning and management |
-| "act as tech writer" or "Paige" | Technical Writer | Documentation |
-| "quick flow" or "Barry" | Quick Flow Solo Dev | Fast builds, simple projects |
-| "start BMad" | BMad Master | Initialize and get oriented |
-
-## Quick Reference — Key Workflows
-
-| Say | Code | What It Does |
-|---|---|---|
-| "assess brownfield" | AB | Scan existing project, find best BMAD entry point |
-| "brainstorm" | BP | Generate and explore ideas |
-| "create brief" | CB | Nail down the product idea |
-| "create PRD" | CP | Product requirements document |
-| "create architecture" | CA | Technical architecture |
-| "create epics" | CE | Break work into epics and stories |
-| "sprint planning" | SP | Plan the implementation sprint |
-| "dev story" | DS | Implement a story |
-| "code review" | CR | Review implemented code |
-| "what's next?" | BH | Get guidance on next steps |
-| "quick spec" | QS | Fast technical spec (simple projects) |
-| "quick dev" | QD | Fast implementation (simple projects) |
+1. **Check every user message against the routing tables below.** Trigger phrases are not exact-match-only — use intent matching. If the user's message contains or implies a trigger phrase, activate that route. Example: "should we do sprint planning for Epic 2?" contains the intent "sprint planning" and MUST activate the SP workflow with the Scrum Master persona.
+2. **When a route matches, load the referenced file and follow it.** Do not answer the question in your own words. Load the workflow or agent file and execute it.
+3. **For workflows:** First load `_bmad/core/tasks/workflow.xml` (the execution engine), then load the matched workflow file. Execute ALL steps IN ORDER. When a step says WAIT for user input, STOP and WAIT.
+4. **For agents:** Load the agent file, adopt that persona completely, and present the agent's menu.
+5. **Never skip, summarize, or improvise** workflow steps. Never auto-proceed past WAIT points.
+6. **If no route matches,** respond normally but remain aware that this is a BMAD project. If the user seems to be asking about project planning, development, or process, suggest the relevant BMAD workflow.
+7. **If unsure whether a route matches,** ask: "Would you like me to run the [workflow name] workflow for that?"
 
 BMAD_SECTION_START
+
+  # Inline the full routing table directly from the source file
+  if [ -f "_bmad/replit-routing.md" ]; then
+    # Skip the title line and intro paragraph, include from "## Agent Routing" onward
+    sed -n '/^## Agent Routing/,$p' "_bmad/replit-routing.md"
+    echo ""
+  else
+    # Fallback: abbreviated tables if routing file is missing
+    cat << 'ROUTING_FALLBACK'
+### Agent Routing
+
+| Trigger Phrases | Agent | File |
+|---|---|---|
+| "act as analyst", "Mary" | Business Analyst | `_bmad/bmm/agents/analyst.md` |
+| "act as PM", "John" | Product Manager | `_bmad/bmm/agents/pm.md` |
+| "act as architect", "Winston" | Architect | `_bmad/bmm/agents/architect.md` |
+| "act as UX designer", "Sally" | UX Designer | `_bmad/bmm/agents/ux-designer.md` |
+| "act as dev", "Amelia" | Developer | `_bmad/bmm/agents/dev.md` |
+| "act as QA", "Quinn" | QA Engineer | `_bmad/bmm/agents/qa.md` |
+| "act as SM", "Bob" | Scrum Master | `_bmad/bmm/agents/sm.md` |
+| "act as tech writer", "Paige" | Technical Writer | `_bmad/bmm/agents/tech-writer/tech-writer.md` |
+| "quick flow", "Barry" | Quick Flow Solo Dev | `_bmad/bmm/agents/quick-flow-solo-dev.md` |
+| "start BMad", "BMad master" | BMad Master | `_bmad/core/agents/bmad-master.md` |
+
+> Full routing table not found at `_bmad/replit-routing.md`. Re-run install to regenerate.
+
+ROUTING_FALLBACK
+  fi
 
   # Project state section with dynamic project type
   echo "## Project State"
@@ -181,7 +172,7 @@ _bmad/                    # BMad Method toolkit
 │   └── teams/            # Team configurations for party mode
 ├── _config/              # Manifests, help catalog, customization
 ├── _memory/              # Agent memory (tech writer standards)
-└── replit-routing.md     # Trigger phrase → file routing table
+└── replit-routing.md     # Routing source (auto-inlined into replit.md on install)
 
 _bmad-output/             # Generated artifacts go here
 ├── planning-artifacts/   # Briefs, PRDs, architecture, UX docs
@@ -190,9 +181,11 @@ _bmad-output/             # Generated artifacts go here
 
 ## BMad Configuration
 
-- **User config:** `_bmad/core/config.yaml` (user name, language)
-- **Project config:** `_bmad/bmm/config.yaml` (project name, skill level, output paths)
+- **BMAD config:** `_bmad/bmm/config.yaml` (skill level, output paths — BMAD-specific settings only)
 - **Help catalog:** `_bmad/_config/bmad-help.csv` (phase-sequenced workflow guide)
+- **Platform values:** User name, project name, and language are resolved automatically from Replit environment ($REPLIT_USER, $REPL_SLUG, $LANG)
+
+**IMPORTANT:** Do NOT embed the contents of BMad config files (config.yaml, etc.) into this replit.md. Only reference them by file path above. Read them from disk when needed.
 <!-- BMAD-METHOD-END -->
 BMAD_SECTION_END
 }
