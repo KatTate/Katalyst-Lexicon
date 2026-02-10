@@ -1,6 +1,6 @@
 # Story 1.3: Mobile Spotlight Search Overlay
 
-Status: in-dev
+Status: done
 
 ## Story
 
@@ -167,7 +167,19 @@ No carry-forward findings from Story 1.2. All previous findings (aria-controls, 
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus
 
 ### Completion Notes
+All 9 ACs implemented and verified via architect review + 25-step E2E test suite (mobile 400x720 + desktop 1280x720). Key implementation decisions:
+- SpotlightContext pattern for cross-component communication (Layout → SearchHero)
+- SpotlightSearch as standalone component with own search state, reuses same API/debounce pattern
+- Sheet side="bottom" with full-screen override (h-full max-h-full w-full max-w-full)
+- Touch targets enforced via min-h-[44px] min-w-[44px] on all interactive elements
+- SheetDescription added for accessibility (resolves missing DialogDescription warning)
+- Desktop behavior fully preserved — no regressions
 
 ### File List
+- `client/src/components/SpotlightSearch.tsx` (CREATE)
+- `client/src/components/SpotlightContext.tsx` (CREATE)
+- `client/src/components/SearchHero.tsx` (MODIFY)
+- `client/src/components/Layout.tsx` (MODIFY)
