@@ -562,3 +562,117 @@ So that I understand the term's evolution and can trust it reflects current orga
 ---
 
 **Epic 2 complete: 2 stories (1 Large, 1 Medium). All FRs covered: FR2, FR9, FR10.**
+
+---
+
+## Epic 3: Browse & Discover — Stories
+
+### Story 3.1: Browse Page with Category Sections and Sidebar [Size: L]
+
+As a user exploring the lexicon,
+I want to see all terms organized by category on a browse page with a sidebar for quick navigation,
+So that I can explore the vocabulary by topic and jump to the category I care about.
+
+**Acceptance Criteria:**
+
+**Given** I navigate to the browse page
+**When** the page loads
+**Then** I see a page heading ("Browse Terms") with no SearchHero — the browse page uses filter controls, not a search hero
+**And** all terms are grouped under their category headings
+**And** each category section shows the category name, color accent (left border), and count of terms
+**And** terms within each category are displayed as TermCards in a responsive grid
+
+**Given** the page has multiple categories
+**When** I view the page on desktop (1024px+)
+**Then** I see a persistent sidebar on the left listing all categories as quick links
+**And** clicking a category link scrolls me smoothly to that section on the page
+
+**Given** I am on a tablet (768-1023px)
+**When** I view the page
+**Then** the sidebar is hidden and categories are listed sequentially in a two-column term grid
+
+**Given** I am on mobile (< 768px)
+**When** I view the page
+**Then** categories are listed sequentially in a single-column term grid
+**And** a "Jump to category" dropdown appears at the top for quick navigation
+
+**Given** a category has no terms and no filters are active
+**When** I view that category section
+**Then** I see an empty state: "No terms in this category yet"
+**And** a "Propose a term" CTA button is shown that pre-fills the category on the proposal form
+
+**Given** a category has no matching terms because filters are active
+**When** filters reduce a category to zero results
+**Then** that category section is hidden entirely (no empty state shown — it's just noise when filtering)
+
+**Given** I am using a screen reader
+**When** I navigate the page
+**Then** the sidebar uses `nav` with `aria-label="Categories"`
+**And** category headings provide proper hierarchy for skip navigation
+
+**Dev Notes:**
+- Sidebar uses Tailwind `hidden lg:block` for responsive show/hide
+- Category quick links use smooth scroll with `scroll-margin-top` for header offset
+- Mobile "Jump to category" is a Select/dropdown component
+- TermCards reuse the component from Epic 1
+- Fetch: `GET /api/terms` + `GET /api/categories`, group client-side by category
+- Category color used as left-border accent on section headers
+- Page title: "Browse — Katalyst Lexicon"
+- `data-testid` on: sidebar, each category link, each category section, jump-to dropdown, empty state CTAs
+
+---
+
+### Story 3.2: Filter Terms by Status and Visibility [Size: M]
+
+As a user browsing terms,
+I want to filter by status and visibility level so I can narrow down to the terms relevant to my current context,
+So that I find exactly what I need without scrolling through everything.
+
+**Acceptance Criteria:**
+
+**Given** I am on the browse page
+**When** I look above the category sections
+**Then** I see a horizontal filter bar with: a multi-select status filter and a single-select visibility filter
+**And** the status filter shows options: Canonical, Draft, In Review, Deprecated (I can select multiple simultaneously)
+**And** the visibility filter shows options: All, Internal, Client-Safe, Public (I can select only one at a time)
+
+**Given** I am on mobile (< 768px)
+**When** I view the filter area
+**Then** the filters are inside a collapsible "Filters" section that I can expand/collapse
+**And** when collapsed, a badge shows how many filters are active (e.g., "Filters (2)")
+
+**Given** I select "Canonical" and "In Review" status filters
+**When** the filters apply
+**Then** only terms with status Canonical or In Review are shown
+**And** the URL updates to reflect my filter selections (e.g., `?status=canonical,in-review`)
+**And** the term count per visible category section updates to reflect filtered results
+
+**Given** I select "Client-Safe" from the visibility filter
+**When** the filter applies
+**Then** only terms with visibility "Client-Safe" are shown
+**And** status and visibility filters work together (AND logic: status matches AND visibility matches)
+
+**Given** I copy the current URL with filter parameters and share it with a colleague
+**When** they open the URL
+**Then** they see the same filtered view with the same filters pre-selected
+
+**Given** filters are active
+**When** I click a "Clear filters" button
+**Then** all filters are removed, URL parameters are cleared, and all terms are shown
+
+**Given** a filter combination returns no results across all categories
+**When** no terms match
+**Then** I see a friendly empty state: "No terms match these filters"
+**And** a "Clear filters" button is prominent
+
+**Dev Notes:**
+- Multi-select for status uses checkbox-style toggles (can combine multiple)
+- Visibility filter is single-select dropdown or radio group
+- Desktop: horizontal filter bar above content; Mobile: collapsible "Filters" section
+- Filters reflected in URL via `useLocation` from wouter + query string parsing
+- Filter state drives the API query: `GET /api/terms?status=canonical,in-review&visibility=client-safe`
+- `data-testid` on: each filter option, clear-filters button, filter container, active-filter-count badge
+
+---
+
+**Epic 3 complete: 2 stories (1 Large, 1 Medium). All FRs covered: FR3, FR4, FR5, FR14, FR37, FR42, FR43.**
