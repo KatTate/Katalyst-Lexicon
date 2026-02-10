@@ -1,115 +1,32 @@
-import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Sparkles, TrendingUp, Loader2 } from "lucide-react";
+import { Plus, TrendingUp, Loader2 } from "lucide-react";
 import { TermCard } from "@/components/TermCard";
+import { SearchHero } from "@/components/SearchHero";
 import { Link } from "wouter";
-import { api, Term } from "@/lib/api";
+import { Term } from "@/lib/api";
 
 export default function Home() {
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-  
   const { data: terms = [], isLoading: termsLoading } = useQuery<Term[]>({
     queryKey: ["/api/terms"],
   });
 
-  const { data: searchResults = [], isLoading: searchLoading, isFetching: searchFetching } = useQuery<Term[]>({
-    queryKey: ["/api/terms/search", debouncedSearch],
-    queryFn: () => api.terms.search(debouncedSearch),
-    enabled: debouncedSearch.length >= 2,
-  });
-  
-  const isSearchActive = debouncedSearch.length >= 2;
-  const isSearching = searchLoading || searchFetching;
-
-  const recentTerms = [...terms].sort((a, b) => 
+  const recentTerms = [...terms].sort((a, b) =>
     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  ).slice(0, 3);
+  ).slice(0, 6);
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto px-6 py-12 md:py-20">
-        
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <h1 className="text-4xl md:text-5xl font-header font-bold text-kat-black tracking-tight">
-            The Canonical Source of Truth
-          </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed font-sans max-w-xl mx-auto">
-            Search the Lexicon to find organization-wide definitions, standards, and language. 
-            Reduce ambiguity and move faster.
-          </p>
-          
-          <div className="relative max-w-xl mx-auto mt-8">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              {isSearching ? (
-                <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
-              ) : (
-                <Search className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
-            <Input 
-              data-testid="input-search"
-              className="pl-11 h-14 text-lg bg-white shadow-sm border-border rounded-xl focus-visible:ring-primary focus-visible:border-primary font-sans"
-              placeholder="Search for a term, concept, or acronym..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {isSearchActive && (
-               <div className="absolute right-3 top-3.5 text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded">
-                 {searchResults.length} results
-               </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground pt-2 font-medium">
-            <span className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-kat-wheat" />
-              <span>Server-powered search</span>
-            </span>
-          </div>
-        </div>
+        <SearchHero />
 
         {termsLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : isSearchActive ? (
-          <div className="space-y-6 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between pb-2 border-b border-border">
-              <h2 className="text-2xl font-header font-bold text-kat-black">Search Results</h2>
-            </div>
-            {isSearching ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : searchResults.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {searchResults.map(term => (
-                  <TermCard key={term.id} term={term} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-20 bg-muted/30 rounded-lg border border-dashed border-border">
-                <p className="text-muted-foreground">No terms found for "{debouncedSearch}"</p>
-                <Link href="/propose">
-                  <Button variant="link" className="mt-2 text-primary font-bold" data-testid="link-propose-from-empty">Propose a new term?</Button>
-                </Link>
-              </div>
-            )}
-          </div>
         ) : (
           <div className="space-y-16 animate-in fade-in delay-150 duration-700">
-            
             <section>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -117,14 +34,23 @@ export default function Home() {
                   <h2 className="text-2xl font-header font-bold text-kat-black">Recently Updated</h2>
                 </div>
                 <Link href="/browse">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary font-medium" data-testid="button-view-all-updates">View all updates</Button>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary font-medium" data-testid="button-view-all-updates">View all</Button>
                 </Link>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {recentTerms.map(term => (
-                  <TermCard key={term.id} term={term} />
-                ))}
-              </div>
+              {recentTerms.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="recently-updated-grid">
+                  {recentTerms.map(term => (
+                    <TermCard key={term.id} term={term} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-muted/30 rounded-lg border border-dashed border-border">
+                  <p className="text-muted-foreground">No terms have been added yet.</p>
+                  <Link href="/propose">
+                    <Button variant="link" className="mt-2 text-primary font-bold" data-testid="link-propose-first-term">Be the first to propose a term</Button>
+                  </Link>
+                </div>
+              )}
             </section>
 
             <section className="bg-white rounded-2xl p-8 md:p-12 border border-border shadow-sm">
@@ -132,7 +58,7 @@ export default function Home() {
                 <div className="space-y-4 max-w-xl">
                   <h2 className="text-2xl font-header font-bold text-kat-black">Contribute to the Lexicon</h2>
                   <p className="text-muted-foreground text-lg">
-                    Spot an ambiguity? Need to define a new project phase? 
+                    Spot an ambiguity? Need to define a new project phase?
                     Submit a draft term for review by the governance committee.
                   </p>
                 </div>
@@ -144,7 +70,6 @@ export default function Home() {
                 </Link>
               </div>
             </section>
-
           </div>
         )}
       </div>

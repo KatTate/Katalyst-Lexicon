@@ -139,7 +139,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchTerms(query: string): Promise<Term[]> {
-    const searchPattern = `%${query}%`;
+    const lowerQuery = query.toLowerCase();
+    const searchPattern = `%${lowerQuery}%`;
+    const startsWithPattern = `${lowerQuery}%`;
+
+    const rankScore = sql<number>`CASE 
+      WHEN LOWER(${terms.name}) = ${lowerQuery} THEN 1
+      WHEN LOWER(${terms.name}) LIKE ${startsWithPattern} THEN 2
+      WHEN LOWER(${terms.name}) LIKE ${searchPattern} THEN 3
+      ELSE 4
+    END`;
+
     return db.select().from(terms).where(
       or(
         ilike(terms.name, searchPattern),
@@ -151,7 +161,7 @@ export class DatabaseStorage implements IStorage {
         sql`array_to_string(${terms.examplesGood}, ' ') ILIKE ${searchPattern}`,
         sql`array_to_string(${terms.examplesBad}, ' ') ILIKE ${searchPattern}`
       )
-    ).orderBy(desc(terms.updatedAt));
+    ).orderBy(rankScore, asc(terms.name)).limit(10);
   }
 
   async createTerm(term: InsertTerm, changeNote: string = "Initial creation", changedBy: string = "System"): Promise<Term> {
