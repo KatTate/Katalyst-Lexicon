@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1]
+stepsCompleted: [1, 2]
 inputDocuments:
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/architecture-katalyst-lexicon-2026-02-06.md
@@ -136,8 +136,126 @@ NFR21: Responsive design supports desktop, tablet, and mobile viewports
 
 ### FR Coverage Map
 
-{{requirements_coverage_map}}
+| FR | Epic | Description |
+|----|------|-------------|
+| FR1 | Epic 1 | View all terms (term list as search results + recently updated) |
+| FR2 | Epic 2 | View term full detail (two-tier layout) |
+| FR3 | Epic 3 | Filter terms by category |
+| FR4 | Epic 3 | Filter terms by status |
+| FR5 | Epic 3 | Filter terms by visibility |
+| FR6 | Epic 5 | Create new terms via proposal form |
+| FR7 | Epic 6 | Edit existing terms with change notes (via approval) |
+| FR8 | Epic 6 | Record versioned snapshot on modification |
+| FR9 | Epic 2 | View version history (Tier 2 section) |
+| FR10 | Epic 2 | Deprecated terms show replacement |
+| FR11 | Epic 1 | Search by keyword across name, definition, synonyms, examples |
+| FR12 | Epic 1 | Search returns within 500ms |
+| FR13 | Epic 1 | Search result display (name, category, status, definition preview) |
+| FR14 | Epic 3 | Browse terms organized by category |
+| FR15 | Epic 5 | Propose new term through structured form |
+| FR16 | Epic 5 | Propose edits to existing term |
+| FR17 | Epic 5 | Proposal form captures all term fields |
+| FR18 | Epic 5 | Duplicate check before submission |
+| FR19 | Epic 6 | View pending proposals queue |
+| FR20 | Epic 6 | Approve proposal → create/update term atomically |
+| FR21 | Epic 6 | Reject proposal with comment |
+| FR22 | Epic 6 | Request changes with feedback |
+| FR23 | Epic 6 | Full audit trail of proposal decisions |
+| FR24 | Epic 4 | View principles list |
+| FR25 | Epic 4 | View principle detail with markdown body |
+| FR26 | Epic 7 | Create, edit, and archive principles |
+| FR27 | Epic 4 | Link principles to terms (bidirectional) |
+| FR28 | Epic 4 | Term detail shows linked principles |
+| FR29 | Epic 4 | Principle detail shows linked terms |
+| FR30 | Epic 7 | View all system users |
+| FR31 | Epic 7 | Invite new users with role |
+| FR32 | Epic 7 | Change user roles |
+| FR33 | Epic 7 | Enforce role-based permissions |
+| FR34 | Epic 7 | Public read access without auth |
+| FR35 | Epic 7 | Category CRUD |
+| FR36 | Epic 7 | Category display order and color |
+| FR37 | Epic 3 | Sidebar category quick links |
+| FR38 | Epic 7 | System settings toggles |
+| FR39 | Epic 7 | Governance controls |
+| FR40 | Epic 7 | Notification controls |
+| FR41 | Epic 7 | Visibility controls |
+| FR42 | Epic 3 | Visibility classification on terms/principles |
+| FR43 | Epic 3 | Filter content by visibility level |
+| FR44 | Epic 7 | Auth required for write operations |
+
+**All 44 FRs mapped. Zero gaps.**
 
 ## Epic List
 
-{{epics_list}}
+### Epic 1: Search & Discovery
+Any user can search for a term and see instant, ranked results — the primary entry point for the "Lookup Job" (80% of all usage). The search experience must feel instant, with results-as-you-type, status badges at a glance, and a mobile Spotlight overlay.
+**FRs covered:** FR1, FR11, FR12, FR13
+**ARs covered:** AR1, AR2, AR3, AR4, AR5, AR6, AR7 (StatusBadge, TermCard, SearchHero), AR8
+**UX covered:** UX1, UX2, UX3, UX15
+**NFRs addressed:** NFR1, NFR2, NFR4, NFR5
+**A11y (built-in):** AR12 (WCAG 2.1 AA on all components), AR6 (keyboard nav), AR17 (touch targets), NFR6 (data-testid), NFR7 (colorblind-safe badges)
+
+### Epic 2: Term Detail Experience
+Any user can read a complete term definition with usage guidance, view version history, and understand how definitions evolved — the "answer" moment that determines whether the product succeeds.
+**FRs covered:** FR2, FR9, FR10
+**ARs covered:** AR7 (TierSection, UsageGuidance), AR9, AR10
+**UX covered:** UX8, UX12
+**A11y (built-in):** AR12, AR17, NFR6, NFR7
+
+### Epic 3: Browse & Discover
+Any user can browse terms by category, filter by status and visibility, and explore the organization's vocabulary — supporting onboarding and category exploration.
+**FRs covered:** FR3, FR4, FR5, FR14, FR37, FR42, FR43
+**ARs covered:** AR11, AR18 (empty category bridge)
+**UX covered:** UX11, UX14, UX15
+**A11y (built-in):** AR12, AR17, NFR6
+
+### Epic 4: Principles & Knowledge Connections
+Any user can read organizational principles and navigate the bidirectional relationships between principles and terms — supporting "aha moments" during onboarding and exploration.
+**FRs covered:** FR24, FR25, FR27, FR28, FR29
+**UX covered:** UX3 (card-based principle lists)
+**A11y (built-in):** AR12, AR17, NFR6
+
+### Epic 5: Propose & Contribute
+Authenticated members can propose new terms or suggest edits through a guided form with progressive disclosure, duplicate detection, and pre-fill from governance bridges — transforming passive readers into active contributors.
+**FRs covered:** FR6, FR15, FR16, FR17, FR18
+**ARs covered:** AR7 (ProposalForm, EmptyState), AR18, AR19
+**UX covered:** UX4, UX5, UX6, UX9, UX10, UX13, UX14
+**Dependencies:** Requires Epic 1 search API for duplicate detection
+**A11y (built-in):** AR12, AR15 (destructive dialogs), AR17, NFR6
+
+### Epic 6: Review & Approve
+Approvers can view pending proposals, review full details, and make decisions (approve, reject, request changes) — maintaining the governed workflow that makes the lexicon authoritative.
+**FRs covered:** FR7, FR8, FR19, FR20, FR21, FR22, FR23
+**ARs covered:** AR7 (EmptyState for empty queue), AR15, AR20
+**UX covered:** UX7, UX9, UX13
+**NFRs addressed:** NFR12, NFR13, NFR14
+**Dependencies:** Requires Epic 5 to have proposals to review
+**A11y (built-in):** AR12, AR15, AR17, NFR6
+**Complexity note:** Story for "approve proposal" is the most technically complex — creates/updates term + version history entry + updates proposal status atomically in a database transaction. Needs careful decomposition.
+
+### Epic 7: Administration & Governance
+Admins can manage users, categories, principles authoring, and system settings — ensuring proper role-based access, category organization, and governance controls.
+**FRs covered:** FR26, FR30, FR31, FR32, FR33, FR34, FR35, FR36, FR38, FR39, FR40, FR41, FR44
+**NFRs addressed:** NFR8, NFR9, NFR10, NFR11
+**A11y (built-in):** AR12, AR15, AR17, NFR6
+
+### Epic 8: Quality & Testing
+Cross-cutting quality concerns that can't be addressed per-component: dark mode theming, skip link, page title updates, Playwright e2e test suite, and full WCAG 2.1 AA compliance audit.
+**ARs covered:** AR13 (skip link), AR14 (page titles), AR16 (reduced motion)
+**UX covered:** UX16 (dark mode), UX17 (e2e test suite)
+**NFRs addressed:** NFR6 (data-testid audit), NFR20 (browser compatibility), NFR21 (responsive verification)
+
+## Dependencies
+
+```
+Epic 1: Search & Discovery        → No dependencies (foundational)
+Epic 2: Term Detail Experience     → No dependencies (foundational)
+Epic 3: Browse & Discover          → No dependencies (foundational)
+Epic 4: Principles & Knowledge     → No dependencies (foundational)
+Epic 5: Propose & Contribute       → Depends on Epic 1 (search API for duplicate detection)
+Epic 6: Review & Approve           → Depends on Epic 5 (proposals to review)
+Epic 7: Administration             → No dependencies (can be done in parallel)
+Epic 8: Quality & Testing          → Should be last (audits all previous work)
+```
+
+**Key architectural note:** Accessibility requirements (WCAG 2.1 AA, keyboard navigation, ARIA attributes, touch targets, data-testid) are embedded as acceptance criteria in every component story across Epics 1-7 — not deferred to Epic 8. Epic 8 covers only the cross-cutting horizontal concerns (dark mode, skip link, page titles, e2e suite, final audit).
