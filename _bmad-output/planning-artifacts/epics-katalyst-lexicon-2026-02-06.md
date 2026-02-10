@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2]
+stepsCompleted: [1, 2, 3]
 inputDocuments:
   - _bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md
   - _bmad-output/planning-artifacts/architecture-katalyst-lexicon-2026-02-06.md
@@ -1372,3 +1372,185 @@ So that only authorized users can propose, review, and administer the lexicon.
 ---
 
 **Epic 7 complete: 5 stories (5 Medium). All FRs covered: FR26, FR30, FR31, FR32, FR33, FR34, FR35, FR36, FR38, FR39, FR40, FR41, FR44.**
+
+---
+
+## Epic 8: Quality & Testing — Stories
+
+### Story 8.1: Dark Mode and Theme System [Size: M]
+
+As a user who prefers dark mode,
+I want the application to respect my system theme preference and provide a manual toggle,
+So that I can use the lexicon comfortably in low-light environments.
+
+**Acceptance Criteria:**
+
+**Given** my operating system is set to dark mode
+**When** I visit the application for the first time
+**Then** the application renders in dark mode automatically
+
+**Given** I am using the application
+**When** I look for the theme toggle
+**Then** I find it in the top-right area of the header (desktop) or accessible from the mobile header/menu
+**And** it shows a Sun icon (in dark mode) or Moon icon (in light mode)
+
+**Given** I click the theme toggle
+**When** the theme switches
+**Then** all pages, components, and text update to the new theme
+**And** the transition is smooth (or instant if `prefers-reduced-motion: reduce` is enabled)
+**And** my preference is saved and persists across sessions (localStorage)
+
+**Given** I am in dark mode
+**When** I view status badges, cards, forms, toasts, dialogs, and all UI components
+**Then** all components maintain WCAG AA contrast ratios (4.5:1 for normal text, 3:1 for large text)
+**And** category colors remain distinguishable
+**And** status badge colors remain meaningful and differentiable
+
+**Given** I am in dark mode viewing a principle with markdown content
+**When** the body includes code blocks, blockquotes, links, or headings
+**Then** all markdown-rendered elements have proper dark mode styling and remain legible
+
+**Dev Notes:**
+- Define semantic color tokens as CSS custom properties (`--color-surface`, `--color-text-primary`, `--color-text-secondary`, `--color-accent`, `--color-border`, etc.) that swap between light and dark themes. Do NOT rely solely on per-component `dark:` overrides — use token-based theming for consistency and maintainability.
+- Theme toggle: Sun/Moon icon button in header top-right, uses `class="dark"` on `<html>` element
+- Persist preference in localStorage, default to `prefers-color-scheme` media query
+- Audit all components for dark mode: cards, badges, forms, toasts, dialogs, empty states, markdown content (principle bodies — code blocks, blockquotes, links, headings)
+- `data-testid` on: theme toggle button
+
+---
+
+### Story 8.2: Skip Link, Page Titles, and Reduced Motion [Size: S]
+
+As a user relying on assistive technology or keyboard navigation,
+I want skip navigation, meaningful page titles, and motion-safe animations,
+So that I can navigate efficiently and comfortably.
+
+**Acceptance Criteria:**
+
+**Given** I am using keyboard navigation
+**When** I press Tab as the first action on any page
+**Then** a "Skip to main content" link becomes visible as the first focusable element
+**And** pressing Enter on it moves focus to the main content area, bypassing the header and navigation
+
+**Given** I navigate to any page in the application
+**When** the page loads
+**Then** the browser tab title updates to: "{Page Name} — Katalyst Lexicon"
+**And** examples: "Browse — Katalyst Lexicon", "Scope — Katalyst Lexicon", "Review Queue — Katalyst Lexicon"
+
+**Given** I have `prefers-reduced-motion: reduce` enabled in my OS settings
+**When** I use the application
+**Then** all animations, transitions, and motion effects are disabled or replaced with instant state changes
+
+**Dev Notes:**
+- Skip link: visually hidden by default, visible on `:focus`, placed as first child of `<body>` or Layout component (AR13)
+- Page titles: use a `useDocumentTitle` hook or set `document.title` in each page component (AR14)
+- Reduced motion: Tailwind's `motion-safe:` and `motion-reduce:` prefixes, or CSS `@media (prefers-reduced-motion: reduce)` (AR16)
+- `data-testid` on: skip-link
+
+---
+
+### Story 8.3: Playwright E2E Test Suite [Size: L]
+
+As a development team,
+I want a comprehensive end-to-end test suite that validates critical user journeys at three viewport sizes,
+So that we catch regressions before they reach users and maintain confidence in the application quality.
+
+**Acceptance Criteria:**
+
+**Given** the test suite is configured
+**When** I run the Playwright tests
+**Then** they execute against three viewport sizes: 375px (mobile), 768px (tablet), 1280px (desktop)
+
+**Given** the test suite runs
+**When** critical user journeys are tested
+**Then** the following journeys pass:
+- **Lookup Job:** Search for a term → view results → click into term detail → read definition and expand Tier 2 sections
+- **Browse Job:** Navigate to browse → filter by status → click into a category → view term
+- **Propose Job:** Navigate to propose → fill required fields → see duplicate warning → submit → verify success
+- **Review Job:** Navigate to review queue → open proposal → approve → verify term created
+- **Principles Job:** View principles list → click into detail → verify linked terms
+
+**Given** the test suite runs on mobile (375px)
+**When** mobile-specific interactions are tested
+**Then** the Spotlight search overlay opens, results display, and navigation works correctly
+
+**Given** critical journeys are tested
+**When** the suite runs in dark mode
+**Then** the same journey tests pass with the theme toggled to dark mode (verifying no contrast or layout regressions)
+
+**Given** all `data-testid` attributes are in place
+**When** tests select elements
+**Then** they use `data-testid` selectors exclusively (no CSS class or tag selectors)
+
+**Given** the permission matrix is tested
+**When** the suite runs role-based access tests
+**Then** it verifies: unauthenticated can read, Member can propose but not review/admin, Approver can review but not admin, Admin has full access
+
+**Dev Notes:**
+- Viewport sizes per UX17: 375px, 768px, 1280px
+- Test against running dev server
+- Use `data-testid` for all element selection
+- Each test creates its own test data with unique names (e.g., `Test Term ${nanoid()}`) rather than relying on pre-existing data. Tests should be independent and runnable in any order.
+- Run critical journey tests in both light and dark mode to catch theme-related regressions
+- Permission matrix tests: 4 roles × key operations
+- Priority order if time is limited: (1) Lookup Job, (2) Permission matrix, (3) Propose + Review flow, (4) Browse, (5) Principles
+
+---
+
+### Story 8.4: WCAG 2.1 AA Compliance Audit [Size: M]
+
+As a product team,
+I want a formal accessibility audit of the completed application,
+So that we can confirm WCAG 2.1 AA compliance and fix any gaps before launch.
+
+**Acceptance Criteria:**
+
+**Given** the application is feature-complete
+**When** an accessibility audit is performed
+**Then** all pages are tested for: color contrast (4.5:1 normal, 3:1 large text), keyboard navigability, screen reader compatibility, focus management, and ARIA attribute correctness
+
+**Given** the audit identifies issues
+**When** results are documented
+**Then** each issue includes: severity (Critical/Major/Minor), affected component, WCAG criterion violated, and recommended fix
+
+**Given** the audit is complete
+**When** results are reviewed
+**Then** all Critical and Major issues are resolved before launch
+**And** Minor issues are documented as follow-up tasks
+
+**Given** the audit covers all key flows
+**When** the following are tested
+**Then** each passes: search (combobox pattern), term detail (progressive disclosure), browse (filters + sidebar), proposal form (validation + error states), review actions (confirmation dialogs), navigation (skip link + role-filtered items)
+
+**Given** the audit includes a data-testid coverage check
+**When** all interactive elements and key display elements are examined
+**Then** any elements missing `data-testid` attributes are documented as issues (NFR6)
+
+**Dev Notes:**
+- Use axe-core (via `@axe-core/playwright` or browser extension) for automated checks
+- Manual testing: keyboard-only navigation through all critical journeys
+- Screen reader testing: at minimum, VoiceOver (macOS) or NVDA (Windows)
+- Include data-testid coverage audit — verify all interactive and meaningful display elements have testids
+- Document results in `_bmad-output/implementation-artifacts/accessibility-audit.md`
+- Focus areas: AR12-AR17 compliance across all implemented components
+- This is a verify + fix story, not a greenfield build — produces a report, then fixes for Critical/Major issues
+
+---
+
+**Epic 8 complete: 4 stories (1 Large, 2 Medium, 1 Small). All cross-cutting quality concerns covered.**
+
+---
+
+## Summary
+
+| Epic | Stories | Sizes | FRs Covered |
+|------|---------|-------|-------------|
+| Epic 1: Search & Discovery | 4 | 1L, 1M, 1S, 1S | FR1, FR11, FR12, FR13 |
+| Epic 2: Term Detail Experience | 2 | 1L, 1M | FR2, FR9, FR10 |
+| Epic 3: Browse & Discover | 2 | 1L, 1M | FR3, FR4, FR5, FR14, FR37, FR42, FR43 |
+| Epic 4: Principles & Knowledge | 3 | 2M, 1S | FR24, FR25, FR27, FR28, FR29 |
+| Epic 5: Propose & Contribute | 2 | 1L, 1M | FR6, FR15, FR16, FR17, FR18 |
+| Epic 6: Review & Approve | 4 | 1L, 2M, 1S | FR7, FR8, FR19, FR20, FR21, FR22, FR23 |
+| Epic 7: Administration | 5 | 5M | FR26, FR30-FR36, FR38-FR41, FR44 |
+| Epic 8: Quality & Testing | 4 | 1L, 2M, 1S | Cross-cutting (ARs, UX, NFRs) |
+| **Total** | **26 stories** | **5L, 14M, 7S** | **All 44 FRs** |
