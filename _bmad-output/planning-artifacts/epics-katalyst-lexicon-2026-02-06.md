@@ -676,3 +676,119 @@ So that I find exactly what I need without scrolling through everything.
 ---
 
 **Epic 3 complete: 2 stories (1 Large, 1 Medium). All FRs covered: FR3, FR4, FR5, FR14, FR37, FR42, FR43.**
+
+---
+
+## Epic 4: Principles & Knowledge Connections — Stories
+
+### Story 4.1: Principles List Page [Size: M]
+
+As a user exploring organizational thinking,
+I want to browse a list of all principles,
+So that I can discover the philosophies behind the organization's vocabulary.
+
+**Acceptance Criteria:**
+
+**Given** I navigate to the principles page
+**When** the page loads
+**Then** I see a list of all principles displayed as cards
+**And** each card shows: principle title, status badge, summary preview (2-line truncation), tag list, and linked term count (e.g., "5 related terms")
+
+**Given** principles exist with different statuses
+**When** I view the list
+**Then** I see status badges on each card (Published, Draft, Archived) consistent with the term status badge pattern
+
+**Given** no principles exist yet
+**When** I view the principles list page
+**Then** I see an empty state: "Principles will appear here once they're published"
+**And** the message does not include a "Create" CTA (since most users cannot create principles)
+
+**Given** I click on a principle card
+**When** I click
+**Then** I navigate to that principle's detail page
+
+**Given** I am using a screen reader
+**When** I navigate the principles list
+**Then** the page has proper heading hierarchy and each card is announced with title and linked term count
+
+**Dev Notes:**
+- PrincipleCard: reuses Card pattern, shows title, status badge, summary (2-line clamp), tags as chips, linked term count
+- Endpoint: `GET /api/principles` — response should include `linkedTermCount` for each principle
+- Page title: "Principles — Katalyst Lexicon"
+- `data-testid` on: each principle card (`principle-card-{id}`), empty state
+
+---
+
+### Story 4.2: Principle Detail Page [Size: M]
+
+As a user who selected a principle,
+I want to read its full content rendered as formatted text and see which terms it connects to,
+So that I understand the principle deeply and can explore related vocabulary.
+
+**Acceptance Criteria:**
+
+**Given** I navigate to a principle detail page
+**When** the page loads
+**Then** I see the principle title as the page heading
+**And** the full summary text
+**And** the body content rendered as formatted markdown (headings, lists, bold, links)
+**And** the status badge and visibility classification
+**And** tags displayed as inline chips
+
+**Given** the principle has linked terms
+**When** I view the detail page
+**Then** I see a "Related Terms" section listing the linked terms as TermCards
+**And** clicking a linked term navigates me to that term's detail page
+
+**Given** the principle has no linked terms
+**When** I view the detail page
+**Then** the "Related Terms" section shows: "No terms linked to this principle yet"
+
+**Given** the principle has status "Archived"
+**When** I view the detail page
+**Then** I see a muted banner at the top: "This principle has been archived"
+**And** the page content is still fully readable (not hidden or blocked)
+
+**Given** I am using a screen reader
+**When** I navigate the detail page
+**Then** the page has a logical heading hierarchy (h1 for title, h2 for sections)
+**And** all interactive elements have accessible labels
+
+**Dev Notes:**
+- Markdown rendering: use `react-markdown` or `marked` + `DOMPurify`. Either way, sanitize all HTML output to prevent XSS from user-authored markdown
+- Endpoint: `GET /api/principles/:id` — response includes full body and `linkedTerms` array (via join on `principleTermLinks`)
+- Archived banner uses muted styling (gray background, not amber — it's not a warning, just informational)
+- Page title: "{Principle Title} — Katalyst Lexicon"
+- `data-testid` on: principle title, body content, related terms section, each linked term card, archived banner
+
+---
+
+### Story 4.3: Bidirectional Term-Principle Links [Size: S]
+
+As a user viewing a term detail page,
+I want to see which principles are connected to this term,
+So that I understand the broader organizational context behind the term's definition.
+
+**Acceptance Criteria:**
+
+**Given** I am on a term detail page and the term has linked principles
+**When** I expand the "Related Principles" Tier 2 section
+**Then** I see a list of linked principles with their title, summary preview, and status
+**And** clicking a principle navigates me to that principle's detail page
+
+**Given** a term has no linked principles
+**When** I expand the "Related Principles" Tier 2 section
+**Then** I see a brief message: "No principles linked to this term"
+
+**Given** I link a principle to a term (via admin)
+**When** I view either the term detail or the principle detail
+**Then** the link appears in both directions — the term shows the principle and the principle shows the term
+
+**Dev Notes:**
+- Term detail already has the Tier 2 "Related Principles" section shell from Story 2.1 — this story populates it with data
+- Endpoint: `GET /api/terms/:id` response should include `linkedPrinciples` array (via join on `principleTermLinks` table)
+- `data-testid="linked-principle-{id}"` on each linked principle item
+
+---
+
+**Epic 4 complete: 3 stories (2 Medium, 1 Small). All FRs covered: FR24, FR25, FR27, FR28, FR29.**
