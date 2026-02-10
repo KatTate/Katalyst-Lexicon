@@ -259,3 +259,194 @@ Epic 8: Quality & Testing          → Should be last (audits all previous work)
 ```
 
 **Key architectural note:** Accessibility requirements (WCAG 2.1 AA, keyboard navigation, ARIA attributes, touch targets, data-testid) are embedded as acceptance criteria in every component story across Epics 1-7 — not deferred to Epic 8. Epic 8 covers only the cross-cutting horizontal concerns (dark mode, skip link, page titles, e2e suite, final audit).
+
+---
+
+## Epic 1: Search & Discovery — Stories
+
+### Story 1.1: Search API + SearchHero with Ranked Results-as-You-Type [Size: L]
+
+As a user looking up a term,
+I want to type into a prominent search input and see ranked, highlighted results appear instantly,
+So that I find the right term in seconds without submitting a form or navigating away.
+
+**Acceptance Criteria:**
+
+**Given** I land on the home page
+**When** the page loads
+**Then** I see a large, centered search input as the dominant element on the page
+**And** the input has placeholder text guiding me (e.g., "Search terms, definitions, synonyms...")
+
+**Given** I type "sco" into the search input
+**When** 200ms passes after my last keystroke
+**Then** a dropdown appears below the input showing matching terms as cards
+**And** each card shows: term name, category tag, status badge, definition preview, and freshness signal ("Updated 3 days ago", "v4")
+
+**Given** results are returned for "sco"
+**When** a term named exactly "Scope" exists
+**Then** it appears first (exact name match ranked highest)
+**And** terms whose names start with "sco" appear next
+**And** terms where "sco" appears in the definition, synonyms, or examples appear last
+
+**Given** results are displayed
+**When** I look at any result card
+**Then** the matching text "sco" is highlighted in bold wherever it appears — in the term name, definition preview, or synonym list
+
+**Given** I type a query with no matches
+**When** the dropdown appears
+**Then** I see a friendly empty state: "We don't have that term yet"
+**And** a "Propose this term" button is shown with my search query pre-filled as the term name
+
+**Given** search results are loading
+**When** I see the dropdown area
+**Then** skeleton card placeholders are shown (not a full-page spinner)
+
+**Given** I type fewer than 2 characters
+**When** I have typed only 1 character
+**Then** no search is triggered and no dropdown appears
+
+**Given** I clear the search input (backspace to empty or click clear)
+**When** the input becomes empty
+**Then** the dropdown closes and I return to the default home page state
+
+**Given** I click on a search result card
+**When** the result is selected
+**Then** I navigate to that term's detail page
+
+**Given** a term has status "Canonical"
+**When** I view its status badge on any card
+**Then** I see a green badge with a checkmark icon and the text "Canonical"
+
+**Given** a term has status "Deprecated"
+**When** I view its status badge
+**Then** I see an amber badge with a warning icon and visually muted card styling
+
+**Given** I am using a screen reader
+**When** I interact with the search
+**Then** the combobox has proper ARIA attributes (`role="combobox"`, `aria-expanded`, `aria-activedescendant`)
+**And** result count is announced via `aria-live="polite"`
+**And** all interactive elements have accessible labels
+
+**Dev Notes:**
+- StatusBadge component: 4 variants (Canonical/green, Deprecated/amber, Draft/gray, In Review/blue), each with icon + color + text. `data-testid="badge-status-{status}"`
+- TermCard component: composes Card + StatusBadge, shows name, category, definition preview (2-line truncation), freshness (relative time from `updatedAt`), version badge (`currentVersion`). `data-testid="term-card-{id}"`
+- SearchHero component: WAI-ARIA combobox pattern, uses `useDebounce(200ms)` + TanStack Query with `staleTime: 30_000`, `enabled: query.length >= 2`
+- Search API endpoint: `GET /api/terms/search?q={query}`, max 10 results
+- SQL CASE WHEN scoring in `storage.searchTerms()`: exact name = 1, name starts with = 2, name contains = 3, definition/synonym match = 4. Case-insensitive via LOWER()
+- Client-side highlighting: bold matched substrings across name, definition preview, and synonyms
+- EmptyState component with "Propose this term" CTA linking to `?name={searchQuery}`
+- Consider GIN index on search fields for scaling beyond 500 terms (NFR1)
+- All components support `className` override via `cn()`, light/dark mode, `prefers-reduced-motion`
+- Minimum 44px touch targets on mobile (AR17)
+
+---
+
+### Story 1.2: SearchHero Keyboard Navigation [Size: S]
+
+As a keyboard user or power user,
+I want to navigate search results using keyboard shortcuts,
+So that I can find and select terms without using a mouse.
+
+**Acceptance Criteria:**
+
+**Given** the search input is focused and results are visible
+**When** I press the Down Arrow key
+**Then** the first result is highlighted with a visible focus indicator
+**And** subsequent Down Arrow presses move the highlight down through results
+
+**Given** a result is highlighted
+**When** I press the Up Arrow key
+**Then** the highlight moves to the previous result
+
+**Given** a result is highlighted
+**When** I press Enter
+**Then** I navigate to that term's detail page
+
+**Given** results are visible
+**When** I press Tab
+**Then** the dropdown closes without selecting any result
+**And** focus moves to the next focusable element on the page
+
+**Given** results are visible
+**When** I press Escape
+**Then** the dropdown closes, selection is cleared, and focus remains on the search input
+
+**Given** the search input is focused but no results are visible
+**When** I press Down Arrow
+**Then** the dropdown opens (if cached results exist) and the first result is highlighted
+
+**Dev Notes:**
+- `aria-activedescendant` tracks the currently highlighted result
+- Highlighted result gets visible focus ring or background highlight
+- All keyboard behavior works identically when hardware keyboard is connected on mobile
+
+---
+
+### Story 1.3: Mobile Spotlight Search Overlay [Size: M]
+
+As a user on a mobile device,
+I want search to open as a full-screen overlay when I tap the search icon,
+So that I get maximum space for results and the keyboard appears immediately.
+
+**Acceptance Criteria:**
+
+**Given** I am on any page on a mobile device (viewport < 768px)
+**When** I tap the search icon in the header
+**Then** a full-screen overlay (Sheet) slides up covering the entire screen
+**And** the search input is auto-focused and the keyboard appears
+
+**Given** I am in the Spotlight overlay and type a search query
+**When** results appear
+**Then** they fill the available screen space as full-width cards
+**And** the same ranking, highlighting, and empty state behavior as desktop applies
+
+**Given** I am in the Spotlight overlay
+**When** I tap a search result
+**Then** the overlay closes and I navigate to the term detail page
+
+**Given** I am in the Spotlight overlay
+**When** I tap the close button or swipe down
+**Then** the overlay closes and I return to the page I was on
+
+**Dev Notes:**
+- Uses `useMediaQuery("(max-width: 767px)")` to determine rendering mode
+- Mobile: Sheet component (full-screen); Desktop: Popover dropdown
+- Same SearchHero component renders different sub-trees internally — no separate MobileSearchHero file
+- Header shows search icon (not full input) on mobile viewports
+- All touch targets minimum 44x44px (AR17)
+
+---
+
+### Story 1.4: Home Page with Recently Updated Terms [Size: S]
+
+As a user landing on the home page,
+I want to see recently updated terms below the search bar,
+So that I can discover what's changed without searching and get a sense the lexicon is actively maintained.
+
+**Acceptance Criteria:**
+
+**Given** I am on the home page
+**When** the page loads
+**Then** I see the SearchHero at the top as the dominant element
+**And** below it, I see a section titled "Recently Updated" showing the most recently modified terms
+
+**Given** terms exist in the system
+**When** I view the "Recently Updated" section
+**Then** I see up to 6 terms displayed as TermCards in a responsive grid
+**And** the grid shows 1 column on mobile, 2 on tablet, 3 on desktop
+**And** terms are ordered by most recently updated first
+
+**Given** no terms exist in the system
+**When** I view the home page
+**Then** I see an empty state below the search bar with a message like "The lexicon is just getting started"
+**And** a "Propose the first term" CTA button is visible
+
+**Dev Notes:**
+- Uses existing terms API with sort by `updatedAt` descending, limit 6
+- TermCard grid uses Tailwind responsive: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`
+- EmptyState component with librarian voice copy
+- Page title: "Katalyst Lexicon" (home page)
+
+---
+
+**Epic 1 complete: 4 stories (1 Large, 1 Medium, 2 Small). All FRs covered: FR1, FR11, FR12, FR13.**
