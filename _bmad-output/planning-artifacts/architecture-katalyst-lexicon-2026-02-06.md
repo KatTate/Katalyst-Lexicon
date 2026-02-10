@@ -530,8 +530,10 @@ _Added 2026-02-10 after completing the UX Design Specification. These decisions 
 - Client uses `useDebounce` hook (200ms delay) combined with TanStack Query for search state
 - Minimum 2 characters before triggering search API call
 - Max 10 results in dropdown; "View all results" link for overflow
-- `storage.searchTerms()` must return results ranked: exact name match → name contains → definition/synonym match
+- `storage.searchTerms()` must return results ranked using SQL `CASE WHEN` scoring: `CASE WHEN LOWER(name) = LOWER(query) THEN 1 WHEN LOWER(name) LIKE LOWER(query) || '%' THEN 2 WHEN LOWER(name) LIKE '%' || LOWER(query) || '%' THEN 3 ELSE 4 END` — keeps ranking consistent across all consumers and avoids client-side re-sorting
+- Search result highlighting is **client-side only**: the API returns plain text results, and the SearchHero/TermCard components use string matching to bold the matched substring in the rendered output (no API changes needed)
 - Mobile search renders as full-screen Sheet overlay (Spotlight pattern) triggered by search icon in header
+- **Keyboard behavior:** Down Arrow opens dropdown if closed and moves selection down; Up Arrow moves selection up; Enter selects highlighted result; Tab closes dropdown without selecting; Escape closes dropdown and clears selection
 
 ### AD-12: Domain Component System
 
@@ -544,7 +546,7 @@ _Added 2026-02-10 after completing the UX Design Specification. These decisions 
 | Component | Composes | Purpose |
 |-----------|----------|---------|
 | StatusBadge | `badge.tsx` | Term status indicator (Canonical/Deprecated/Draft/In Review) with icon + color + text |
-| TermCard | `card.tsx`, StatusBadge | Term summary card for browse/search results with freshness signal |
+| TermCard | `card.tsx`, StatusBadge | Term summary card for browse/search results with freshness signal (reads `updatedAt` for relative time display e.g. "Updated 3 days ago", and `currentVersion` for version badge e.g. "v4") |
 | SearchHero | `input.tsx`, `popover.tsx` or `sheet.tsx` | Home page search with results-as-you-type dropdown or Spotlight overlay |
 | TierSection | `collapsible.tsx` | Expandable term detail section with aria-expanded |
 | UsageGuidance | — | Side-by-side "When to use" / "When NOT to use" with responsive stacking |
@@ -575,6 +577,7 @@ _Added 2026-02-10 after completing the UX Design Specification. These decisions 
 - Tier 2 sections use Radix Accordion with `aria-expanded` state
 - On mobile, Tier 2 accordion sections stack below Tier 1 content (vertical scroll, no tabs)
 - UsageGuidance component renders side-by-side on md+ breakpoint, single column on mobile
+- **Breadcrumb navigation:** Term detail pages display breadcrumbs derived from routing context and the term's category: `Browse > {Category Name} > {Term Name}`. Breadcrumbs are rendered client-side using the term's `categoryId` (resolved to category name via cached category data from TanStack Query). No dedicated breadcrumb API endpoint needed.
 
 ### AD-14: Responsive Interaction Strategy
 
@@ -617,7 +620,7 @@ _Added 2026-02-10 after completing the UX Design Specification. These decisions 
 | Modals/Sheets | Focus trapped inside, Escape to close, focus returns to trigger on close |
 
 **Consequences:**
-- Skip link must be the first DOM element inside `<body>` (or root component)
+- Skip link lives in `Layout.tsx` (renders on every page) as the first child element, before the header. This ensures it appears on all routes without modifying `App.tsx` or `main.tsx`.
 - `prefers-reduced-motion` media query disables Framer Motion animations, accordion slide transitions, toast transitions
 - All interactive elements have visible focus indicators (2px solid ring)
 - Minimum touch target: 44x44px for all tappable elements on mobile
@@ -642,6 +645,7 @@ _Added 2026-02-10 after completing the UX Design Specification. These decisions 
 
 **Consequences:**
 - ProposeTerm page reads query params on mount to pre-fill form fields
+- **"Suggest an edit" data loading:** When `?termId=xxx&type=edit` is present, ProposeTerm page must fetch the full term data via `GET /api/terms/:id` on mount and pre-fill all editable form fields (definition, usedWhen, notUsedWhen, etc.) with the current values. This is a data loading pattern, not just a routing decision.
 - EmptyState component is reusable with configurable icon, heading, description, and CTA button
 - "Suggest an edit" link on term detail creates a governance bridge without a new API endpoint (uses existing `POST /api/proposals` with `type: "edit"`)
 - Route: `/propose?name=xxx&category=yyy` or `/propose?termId=xxx&type=edit`
@@ -690,6 +694,7 @@ const { data: results, isLoading } = useQuery({
   queryKey: ["/api/terms/search", debouncedQuery],
   queryFn: () => apiRequest("GET", `/api/terms/search?q=${encodeURIComponent(debouncedQuery)}`),
   enabled: debouncedQuery.length >= 2,
+  staleTime: 30_000, // Override global Infinity — search results should feel fresh (30s)
 });
 ```
 
@@ -731,6 +736,7 @@ const isMobile = useMediaQuery("(max-width: 767px)");
   <FormField name="name" label="What's the term?" required />
   <FormField name="category" label="Which category?" required />
   <FormField name="definition" label="What does it mean?" required />
+  <FormField name="whyExists" label="Why does this term need to exist?" required />
   <FormField name="changeRationale" label="Why are you proposing this?" required />
 
   {/* Optional fields — behind collapsible */}
@@ -753,7 +759,7 @@ const isMobile = useMediaQuery("(max-width: 767px)");
 - Optional fields show italic "(optional)" label suffix
 - Field labels use librarian voice (conversational tone, not technical labels)
 - Validate on blur, not on keystroke
-- Duplicate detection: debounced check on term name field blur → `GET /api/terms/search?q={name}` → show amber warning if similar terms found
+- Duplicate detection: triggered on term name field **blur** (not on keystroke), uses the same `useDebounce` hook with a separate 300ms delay and a separate TanStack Query (`queryKey: ["/api/terms/check-duplicate", name]`). Fires once per blur event, not continuously. Shows amber warning Alert if similar terms found.
 - Submit actions pinned at bottom: Primary ("Submit Proposal") + Secondary ("Save Draft")
 - Form max-width ~680px on desktop, full-width on mobile
 
@@ -852,8 +858,8 @@ client/src/
 |-----|--------|----------|----------------------|
 | Auth not wired | All write endpoints unprotected | High | Wire Passport.js middleware per AD-1 plan |
 | No database transactions | Proposal approval is not atomic (multi-table) | Medium | Wrap approve flow in `db.transaction()` |
-| Search result ranking | Results not ranked by relevance | High | Add ORDER BY scoring in `searchTerms()`: exact name match → name contains → definition/synonym |
-| Duplicate detection endpoint | No dedicated check for proposal duplicates | Medium | Add `GET /api/terms/check-duplicate?name=xxx` or reuse search endpoint with client-side matching |
+| Search result ranking | Results not ranked by relevance | High | **Resolved in AD-11:** SQL `CASE WHEN` scoring specified — implement in `searchTerms()` |
+| Duplicate detection endpoint | No dedicated check for proposal duplicates | Medium | **Resolved in Pattern 8:** Reuse search endpoint with blur-triggered debounce and separate query key |
 | Page title updates | Route changes don't update document.title | Low | Add `useEffect` in each page to set `document.title = "PageName — Katalyst Lexicon"` |
 | `mockData.ts` exists | Legacy file in `client/src/lib/` | Low | Remove if no longer referenced |
 | No rate limiting | API endpoints unbounded | Low | Add express-rate-limit middleware |
@@ -863,6 +869,6 @@ client/src/
 ---
 
 *Generated: 2026-02-06*
-*Updated: 2026-02-10 — UX-driven architecture addendum (AD-11 through AD-16, Patterns 5-10, updated structure)*
+*Updated: 2026-02-10 — UX-driven architecture addendum (AD-11 through AD-16, Patterns 5-10, updated structure, Party Mode validation: 10 improvements incorporated)*
 *Architecture type: Brownfield documentation of existing implementation + UX design specification integration*
 *Source: Direct codebase analysis + UX Design Specification (2026-02-09)*
