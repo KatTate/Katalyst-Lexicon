@@ -1,0 +1,99 @@
+# generated: 2026-02-10
+# project: workspace
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Mark epic as 'in-progress' when starting work on its first story
+# - SM typically creates next story ONLY after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then Dev runs code-review (fresh context, ideally different LLM)
+# - Dependencies: Epic 5 depends on Epic 1 (search API), Epic 6 depends on Epic 5 (proposals), Epic 8 last (audits all)
+
+generated: 2026-02-10
+project: workspace
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: Search & Discovery (no dependencies - foundational)
+  epic-1: backlog
+  1-1-search-api-searchhero-with-ranked-results-as-you-type: backlog
+  1-2-searchhero-keyboard-navigation: backlog
+  1-3-mobile-spotlight-search-overlay: backlog
+  1-4-home-page-with-recently-updated-terms: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Term Detail Experience (no dependencies - foundational)
+  epic-2: backlog
+  2-1-term-detail-page-with-two-tier-progressive-disclosure: backlog
+  2-2-version-history-in-term-detail: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Browse & Discover (no dependencies - foundational)
+  epic-3: backlog
+  3-1-browse-page-with-category-sections-and-sidebar: backlog
+  3-2-filter-terms-by-status-and-visibility: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Principles & Knowledge Connections (no dependencies - foundational)
+  epic-4: backlog
+  4-1-principles-list-page: backlog
+  4-2-principle-detail-page: backlog
+  4-3-bidirectional-term-principle-links: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Propose & Contribute (depends on Epic 1 - search API for duplicate detection)
+  epic-5: backlog
+  5-1-proposal-form-for-new-terms: backlog
+  5-2-propose-edits-to-existing-terms: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Review & Approve (depends on Epic 5 - needs proposals to review)
+  epic-6: backlog
+  6-1-proposal-review-queue: backlog
+  6-2-proposal-review-and-decision: backlog
+  6-3-proposal-audit-trail: backlog
+  6-4-proposer-revision-flow: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Administration & Governance (no dependencies - can run in parallel)
+  epic-7: backlog
+  7-1-category-management: backlog
+  7-2-user-management: backlog
+  7-3-principles-authoring-admin: backlog
+  7-4-system-settings-and-governance-controls: backlog
+  7-5-role-based-access-enforcement: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: Quality & Testing (depends on all others - should be last)
+  epic-8: backlog
+  8-1-dark-mode-and-theme-system: backlog
+  8-2-skip-link-page-titles-and-reduced-motion: backlog
+  8-3-playwright-e2e-test-suite: backlog
+  8-4-wcag-2-1-aa-compliance-audit: backlog
+  epic-8-retrospective: optional
