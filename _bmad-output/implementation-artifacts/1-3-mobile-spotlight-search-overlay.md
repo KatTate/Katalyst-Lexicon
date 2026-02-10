@@ -1,6 +1,6 @@
 # Story 1.3: Mobile Spotlight Search Overlay
 
-Status: ready-for-dev
+Status: in-dev
 
 ## Story
 

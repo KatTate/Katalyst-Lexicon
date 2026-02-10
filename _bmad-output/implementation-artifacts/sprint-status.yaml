@@ -44,7 +44,7 @@ development_status:
   epic-1: in-progress
   1-1-search-api-searchhero-with-ranked-results-as-you-type: done
   1-2-searchhero-keyboard-navigation: done
-  1-3-mobile-spotlight-search-overlay: ready-for-dev
+  1-3-mobile-spotlight-search-overlay: in-dev
   1-4-home-page-with-recently-updated-terms: done
   epic-1-retrospective: optional
 

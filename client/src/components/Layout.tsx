@@ -1,10 +1,12 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog, BookOpen } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Category, Proposal } from "@/lib/api";
+import { SpotlightSearch } from "./SpotlightSearch";
+import { SpotlightProvider } from "./SpotlightContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,9 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+
+  const openSpotlight = useCallback(() => setSpotlightOpen(true), []);
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -54,7 +59,10 @@ export function Layout({ children }: LayoutProps) {
     );
   };
 
+  const spotlightContextValue = useMemo(() => ({ openSpotlight }), [openSpotlight]);
+
   return (
+    <SpotlightProvider value={spotlightContextValue}>
     <div className="min-h-screen bg-background flex font-sans text-foreground">
       {/* Sidebar */}
       <aside className={cn(
@@ -145,9 +153,21 @@ export function Layout({ children }: LayoutProps) {
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b bg-sidebar sticky top-0 z-30">
           <h1 className="font-header text-xl font-bold text-sidebar-foreground">Katalyst Lexicon</h1>
-          <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} data-testid="button-mobile-menu">
-            <Menu className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openSpotlight}
+              className="min-h-[44px] min-w-[44px]"
+              data-testid="button-header-search"
+              aria-label="Search the Lexicon"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="min-h-[44px] min-w-[44px]" data-testid="button-mobile-menu">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -162,6 +182,9 @@ export function Layout({ children }: LayoutProps) {
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
+
+      <SpotlightSearch open={spotlightOpen} onOpenChange={setSpotlightOpen} />
     </div>
+    </SpotlightProvider>
   );
 }

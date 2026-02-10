@@ -8,8 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TermCard } from "./TermCard";
 import { useDebounce } from "@/hooks/useDebounce";
 import { api, Term } from "@/lib/api";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useSpotlight } from "./SpotlightContext";
 
 export function SearchHero() {
+  const isMobile = useIsMobile();
+  const { openSpotlight } = useSpotlight();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -124,6 +128,30 @@ export function SearchHero() {
   const activeDescendant = highlightedIndex >= 0 && searchResults[highlightedIndex]
     ? `search-option-${searchResults[highlightedIndex].id}`
     : undefined;
+
+  if (isMobile) {
+    return (
+      <div className="relative" data-testid="search-hero">
+        <div className="text-center max-w-2xl mx-auto mb-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <h1 className="text-3xl font-header font-bold text-kat-black tracking-tight">
+            The Canonical Source of Truth
+          </h1>
+          <p className="text-base text-muted-foreground leading-relaxed font-sans max-w-xl mx-auto">
+            Search the Lexicon to find definitions, standards, and language.
+          </p>
+          <Button
+            onClick={openSpotlight}
+            variant="outline"
+            className="w-full max-w-sm mx-auto h-14 text-base gap-3 rounded-xl border-border shadow-sm font-sans text-muted-foreground justify-start pl-4 min-h-[44px]"
+            data-testid="button-open-spotlight"
+          >
+            <Search className="h-5 w-5 flex-shrink-0" />
+            <span>Search terms, definitions, synonyms...</span>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative" data-testid="search-hero">
