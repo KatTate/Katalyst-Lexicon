@@ -1,6 +1,6 @@
 # Story 1.1: Search API + SearchHero with Ranked Results-as-You-Type
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -167,7 +167,24 @@ So that I find the right term in seconds without submitting a form or navigating
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus
 
 ### Completion Notes
+All 18 ACs implemented and verified via E2E tests. Key changes:
+- Backend: SQL CASE WHEN ranked scoring (4 tiers) with LIMIT 10, replacing simple ILIKE
+- Frontend: New SearchHero component with WAI-ARIA combobox, 200ms debounce, staleTime 30s override
+- StatusBadge: Added icons (CheckCircle2, AlertTriangle, Pencil, Clock) per status variant
+- TermCard: Added freshness signal (formatRelativeTime), version badge (v{n}), optional highlightQuery prop
+- Home.tsx: Integrated SearchHero, expanded Recently Updated from 3 to 6 cards, preserved Contribute CTA
+- Utilities: useDebounce hook, formatRelativeTime(), highlightMatch()
+
+Minor note: StatusBadge data-testid duplicates across cards in same view (non-blocking, can namespace per-item later)
 
 ### File List
+- server/storage.ts (MODIFIED - searchTerms with ranked scoring)
+- client/src/components/SearchHero.tsx (CREATED)
+- client/src/components/StatusBadge.tsx (MODIFIED - icons + data-testid)
+- client/src/components/TermCard.tsx (MODIFIED - freshness, version, highlighting)
+- client/src/pages/Home.tsx (MODIFIED - SearchHero integration, 6 recent cards)
+- client/src/hooks/useDebounce.ts (CREATED)
+- client/src/lib/utils.ts (MODIFIED - formatRelativeTime, highlightMatch)
