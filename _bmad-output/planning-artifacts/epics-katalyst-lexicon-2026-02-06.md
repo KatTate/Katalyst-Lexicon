@@ -792,3 +792,154 @@ So that I understand the broader organizational context behind the term's defini
 ---
 
 **Epic 4 complete: 3 stories (2 Medium, 1 Small). All FRs covered: FR24, FR25, FR27, FR28, FR29.**
+
+---
+
+## Epic 5: Propose & Contribute — Stories
+
+### Story 5.1: Proposal Form for New Terms [Size: L]
+
+As a team member who noticed a missing term,
+I want to fill out a guided proposal form that asks for the term name, definition, category, and optional details,
+So that I can contribute to the lexicon without needing to know the full editorial process.
+
+**Acceptance Criteria:**
+
+**Given** I navigate to the "Propose a Term" page
+**When** the page loads
+**Then** I see a form with required fields always visible: Term Name, Definition, Category (dropdown), and "Why does this term need to exist?"
+**And** optional fields are hidden behind an "Add more detail" collapsible section: Usage Guidance, Good Examples, Bad Examples, Synonyms
+**And** form labels use conversational "librarian voice" (e.g., "What's the term?" instead of "Term Name")
+
+**Given** I click "Add more detail"
+**When** the collapsible section expands
+**Then** I see the optional fields: Usage Guidance (textarea), Good Examples (add multiple), Bad Examples (add multiple), Synonyms (comma-separated or tag input)
+
+**Given** I have added a good or bad example to the dynamic list
+**When** I click the remove button next to it
+**Then** the example is removed from the list
+
+**Given** I fill in the Term Name field and tab away (blur)
+**When** the name I entered exactly matches or starts with an existing term's name
+**Then** I see an amber warning below the field: "A similar term already exists: {matching term name}"
+**And** a link to view the existing term is provided
+**And** the warning does NOT block submission — it's informational only
+
+**Given** I fill in the Term Name field and tab away (blur)
+**When** the name only matches in a definition or synonym (not in term names)
+**Then** no duplicate warning is shown (only exact name match and "starts with" matches trigger the warning)
+
+**Given** required fields are all empty
+**When** I view the submit button
+**Then** it appears disabled with reduced opacity
+
+**Given** I fill out all required fields correctly
+**When** I view the submit button
+**Then** it becomes enabled (green, primary style)
+
+**Given** I fill out all required fields and click "Submit Proposal"
+**When** the submission succeeds
+**Then** the proposal is created with status "Pending"
+**And** I see a success toast (4-second auto-dismiss): "Your proposal has been submitted for review"
+**And** I am navigated to a confirmation page or back to the home page
+
+**Given** I leave a required field empty
+**When** I try to submit
+**Then** I see inline validation errors on the empty fields
+**And** the form does not submit
+
+**Given** I fill in a field correctly
+**When** I tab away from the field (blur)
+**Then** I see a green checkmark next to the field indicating it's valid
+
+**Given** submission fails (server error)
+**When** the error occurs
+**Then** I see a persistent error toast (does not auto-dismiss): "Something went wrong. Please try again."
+**And** my form data is preserved so I don't lose my work
+
+**Given** I have entered data into the form
+**When** I navigate away without submitting (clicking a link, pressing back, etc.)
+**Then** I see a confirmation dialog: "You have unsaved changes. Leave anyway?"
+**And** I can choose to stay or leave
+
+**Given** I arrived at the proposal page via "Propose this term" from a search empty state
+**When** the page loads
+**Then** the Term Name field is pre-filled with the search query from the URL parameter (`?name={query}`)
+
+**Given** I arrived via a "Propose a term" CTA from an empty category
+**When** the page loads
+**Then** the Category dropdown is pre-filled with that category from the URL parameter (`?category={id}`)
+
+**Given** I arrived with both URL parameters (`?name=Sprint&category=2`)
+**When** the page loads
+**Then** both the Term Name and Category fields are pre-filled
+
+**Given** I am using a screen reader
+**When** I interact with the form
+**Then** all fields have associated labels, required fields are marked with `aria-required`
+**And** validation errors are announced via `aria-describedby` linked to error messages
+**And** the success/error toasts are announced via `aria-live` regions
+
+**Dev Notes:**
+- ProposalForm component: progressive disclosure with Collapsible for optional fields
+- Duplicate detection: on name blur, call `GET /api/terms/search?q={name}` — only warn if results include exact name match or name-starts-with match (tiers 1-2 from search ranking). Ignore contains/definition matches (tiers 3-4) to avoid false positives
+- Inline validation on blur using react-hook-form + zod resolver
+- Toast: success = 4s auto-dismiss; error = persistent until dismissed
+- Endpoint: `POST /api/proposals` with body matching proposal insert schema
+- Good/Bad examples: dynamic list with "Add another" and per-item remove button
+- Synonyms: tag-style input (comma-separated, chips display)
+- Button hierarchy: Primary green "Submit Proposal" button, disabled until required fields valid (UX13)
+- Unsaved changes: use `beforeunload` event + wouter navigation guard
+- Seed data should include at least one term for duplicate detection testing
+- URL params `?name=` and `?category=` work independently and together
+- `data-testid` on: each form field, submit button, duplicate warning, add-more-detail toggle, each example add/remove button, toast messages, unsaved-changes dialog
+
+---
+
+### Story 5.2: Propose Edits to Existing Terms [Size: M]
+
+As a team member who thinks an existing term's definition needs updating,
+I want to propose an edit with all current values pre-filled so I only change what needs changing,
+So that I can suggest improvements without rewriting the entire entry from scratch.
+
+**Acceptance Criteria:**
+
+**Given** I click "Suggest an edit" on a term detail page
+**When** the proposal form loads
+**Then** all fields are pre-filled with the term's current values (name, definition, category, usage guidance, examples, synonyms)
+**And** the form heading indicates this is an edit proposal (e.g., "Suggest changes to: {term name}")
+**And** an additional required field appears: "Change Notes" — explaining what I changed and why
+
+**Given** I modify one or more fields and add change notes
+**When** I click "Submit Proposal"
+**Then** a proposal is created with type "Edit" linked to the original term
+**And** the proposal stores both the proposed values and a reference to the original term ID
+**And** I see a success toast: "Your edit suggestion has been submitted for review"
+
+**Given** I try to submit an edit proposal without change notes
+**When** I click submit
+**Then** I see an inline validation error: "Please explain what you changed and why"
+
+**Given** I haven't changed any fields from their original values
+**When** I click submit
+**Then** I see a validation message: "No changes detected — please modify at least one field"
+
+**Given** the duplicate detection fires on the name field
+**When** I haven't changed the name (it's the same as the original)
+**Then** no duplicate warning is shown (it would match itself)
+
+**Given** I have entered data into the form
+**When** I navigate away without submitting
+**Then** I see the same "unsaved changes" confirmation dialog as for new proposals
+
+**Dev Notes:**
+- Pre-fill: fetch term data via `GET /api/terms/:id`, populate form via URL param `?editTermId={id}` (AR19)
+- Proposal type: "new" vs "edit" — edit proposals include `editTermId` foreign key
+- Change notes field: textarea, required for edit proposals, not shown for new proposals
+- Change detection: use react-hook-form's `isDirty` which compares against `defaultValues` (the original term values)
+- Same ProposalForm component with conditional rendering for edit mode
+- `data-testid` on: change-notes field, edit-mode heading, all form fields (reused from 5.1)
+
+---
+
+**Epic 5 complete: 2 stories (1 Large, 1 Medium). All FRs covered: FR6, FR15, FR16, FR17, FR18.**
