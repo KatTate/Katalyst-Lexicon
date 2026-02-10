@@ -1143,3 +1143,232 @@ So that I can address the reviewer's concerns without starting a new proposal fr
 ---
 
 **Epic 6 complete: 4 stories (1 Large, 2 Medium, 1 Small). All FRs covered: FR7, FR8, FR19, FR20, FR21, FR22, FR23.**
+
+---
+
+## Epic 7: Administration & Governance — Stories
+
+### Story 7.1: Category Management [Size: M]
+
+As an admin,
+I want to create, edit, reorder, and delete categories with display colors,
+So that the lexicon stays organized as the vocabulary grows.
+
+**Acceptance Criteria:**
+
+**Given** I am an admin on the category management page
+**When** the page loads
+**Then** I see a list of all categories in their current display order
+**And** each category shows: name, color swatch, term count, and sort position
+
+**Given** I click "Add Category"
+**When** a form appears
+**Then** I can enter a name, select a color, and set the sort position
+**And** clicking "Save" creates the category and it appears in the list
+
+**Given** I click "Edit" on a category
+**When** the edit form appears
+**Then** all current values are pre-filled
+**And** I can change the name, color, or sort position
+**And** saving updates the category across all terms that use it
+
+**Given** I want to reorder categories
+**When** I click the up or down arrow buttons next to a category
+**Then** the category swaps position with its neighbor
+**And** the display order updates and is reflected on the browse page sidebar
+
+**Given** I click "Delete" on a category that has terms assigned
+**When** the confirmation dialog appears
+**Then** it warns: "This category has {N} terms. Reassign them before deleting."
+**And** Enter does NOT confirm (AR15)
+**And** deletion is blocked until terms are reassigned
+
+**Given** I click "Delete" on a category with no terms
+**When** I confirm the deletion
+**Then** the category is removed
+
+**Dev Notes:**
+- Endpoint: CRUD at `GET/POST/PUT/DELETE /api/categories`
+- Sort order: integer field, use up/down arrow buttons for reorder (not drag-and-drop — simpler, fully accessible, sufficient for admin use)
+- Color: hex picker or preset palette
+- Page title: "Manage Categories — Katalyst Lexicon"
+- Test: verify deleting a category with terms is blocked
+- `data-testid` on: category list, add button, each category row, edit/delete buttons, color picker, up/down reorder buttons
+
+---
+
+### Story 7.2: User Management [Size: M]
+
+As an admin,
+I want to view all users, create new users with a role, and change existing users' roles,
+So that the right people have the right permissions to contribute and review.
+
+**Acceptance Criteria:**
+
+**Given** I am an admin on the user management page
+**When** the page loads
+**Then** I see a table of all users showing: name, email, role (Member/Approver/Admin), and join date
+
+**Given** I click "Create User"
+**When** a form appears
+**Then** I can enter a name, email address, and select a role (Member, Approver, or Admin)
+**And** clicking "Create" adds the user to the system
+
+**Given** I want to change a user's role
+**When** I click the role dropdown next to their name
+**Then** I can select a new role (Member, Approver, Admin)
+**And** the change takes effect immediately
+**And** I see a success toast confirming the role change
+
+**Given** I try to remove the last admin
+**When** I attempt to change the only admin's role to Member or Approver
+**Then** I see an error: "Cannot remove the last admin — at least one admin is required"
+
+**Given** I am not an admin
+**When** I try to access user management
+**Then** I see a "Permission denied" message and the page is not accessible
+
+**Dev Notes:**
+- Endpoint: `GET /api/users`, `POST /api/users`, `PUT /api/users/:id/role`
+- "Create User" creates a user record directly — no email invitation system exists. User authenticates through whatever auth mechanism is in place.
+- Role enforcement: server-side middleware checks role before allowing access
+- Test: verify last-admin protection edge case
+- Page title: "Manage Users — Katalyst Lexicon"
+- `data-testid` on: user table, create-user button, each user row, role dropdown, permission denied message
+
+---
+
+### Story 7.3: Principles Authoring (Admin) [Size: M]
+
+As an admin,
+I want to create, edit, and archive organizational principles and link them to terms,
+So that the team can reference the thinking behind our vocabulary.
+
+**Acceptance Criteria:**
+
+**Given** I am an admin on the principles management page
+**When** I click "Create Principle"
+**Then** I see a form with fields: Title, Summary, Body (markdown editor), Status (Draft/Published), Visibility (Internal/Client-Safe/Public), and Tags
+
+**Given** I am editing a principle's body
+**When** I type markdown syntax
+**Then** I can preview the rendered output before saving
+
+**Given** I save a new or edited principle
+**When** the save succeeds
+**Then** I see a success toast and the principle appears in the principles list
+
+**Given** I want to link a principle to terms
+**When** I edit a principle
+**Then** I see a "Related Terms" section with a searchable term input
+**And** as I type a term name, a dropdown shows matching terms from the search API
+**And** I can click a result to add it as a linked term
+**And** linked terms appear as removable chips below the input (like an email autocomplete field)
+**And** I can click the "x" on a chip to remove a link
+
+**Given** I want to archive a principle
+**When** I click "Archive"
+**Then** I see a confirmation dialog
+**And** confirming changes the status to "Archived"
+**And** the principle remains viewable but displays the archived banner (from Story 4.2)
+
+**Dev Notes:**
+- Reuses the principle form pattern; admin-only access
+- Markdown preview: toggle between edit and preview modes
+- Term linker: type-to-search dropdown using `GET /api/terms/search?q=`, selected terms shown as removable chips
+- Manage links via `POST/DELETE /api/principles/:id/terms/:termId`
+- Endpoint: `POST/PUT /api/principles`, `PUT /api/principles/:id/archive`
+- `data-testid` on: create button, form fields, markdown preview toggle, term search input, term chips, remove-chip buttons, archive button
+
+---
+
+### Story 7.4: System Settings and Governance Controls [Size: M]
+
+As an admin,
+I want to configure system behavior through settings toggles for governance, notifications, and visibility,
+So that I can tailor the lexicon's rules to our team's needs.
+
+**Acceptance Criteria:**
+
+**Given** I am an admin on the settings page
+**When** the page loads
+**Then** I see settings organized into three sections: Governance, Notifications, and Visibility
+
+**Given** I view the Governance section
+**When** I see the toggle controls
+**Then** I can toggle: "Require approver signoff for new terms", "Require change notes on edits", "Allow self-approval"
+**And** each toggle shows its current state (on/off)
+
+**Given** I view the Notifications section
+**When** I see the toggle controls
+**Then** I can toggle: "Weekly digest", "New proposal alerts", "Changes requested alerts"
+**And** a note below the section reads: "Notification delivery is coming soon — these settings will take effect when notifications are enabled"
+
+**Given** I view the Visibility section
+**When** I see the toggle controls
+**Then** I can toggle: "Enable client portal", "Enable public glossary"
+
+**Given** I change a setting
+**When** I toggle it
+**Then** the change saves automatically (no separate save button needed)
+**And** I see a brief success toast confirming the change
+
+**Given** I am not an admin
+**When** I try to access the settings page
+**Then** I see a "Permission denied" message
+
+**Dev Notes:**
+- Endpoint: `GET /api/settings`, `PUT /api/settings/:key` with `{ value }` body
+- Settings stored as key-value pairs in settings table
+- Auto-save on toggle change (debounced if needed)
+- Notification settings are configuration only — notification delivery (email, in-app) is a future feature. Toggles work and values persist, but nothing sends yet. The "coming soon" note sets honest expectations.
+- Page title: "Settings — Katalyst Lexicon"
+- `data-testid` on: each settings section, each toggle, coming-soon note, permission denied message
+
+---
+
+### Story 7.5: Role-Based Access Enforcement [Size: M]
+
+As a system,
+I want to enforce role-based permissions on all write operations,
+So that only authorized users can propose, review, and administer the lexicon.
+
+**Acceptance Criteria:**
+
+**Given** an unauthenticated user
+**When** they attempt any write operation (propose, edit, approve, admin action)
+**Then** the API returns 401 Unauthorized
+**And** the UI shows a "Please sign in" message
+
+**Given** a user with role "Member"
+**When** they attempt to access admin pages (categories, users, settings, principles authoring)
+**Then** the API returns 403 Forbidden
+**And** the UI hides admin navigation items and shows "Permission denied" if accessed directly
+
+**Given** a user with role "Member"
+**When** they attempt to access the review queue or approve/reject proposals
+**Then** the API returns 403 Forbidden
+
+**Given** a user with role "Approver"
+**When** they attempt admin actions (manage users, categories, settings)
+**Then** the API returns 403 Forbidden
+
+**Given** any user (authenticated or not)
+**When** they access read-only pages (home, search, browse, term detail, principles list/detail)
+**Then** access is allowed without authentication (FR34 — public read)
+
+**Given** the navigation renders
+**When** a user is logged in
+**Then** navigation items are filtered by role: Members see Propose, Approvers see Propose + Review, Admins see Propose + Review + Admin
+
+**Dev Notes:**
+- Server middleware: `requireAuth` (checks session), `requireRole(role)` (checks user role)
+- Create a shared permissions utility (`shared/permissions.ts`) used by both server middleware and client navigation — single source of truth for the role matrix. Don't duplicate permission logic in two places.
+- Permissions matrix: Read (all), Propose (Member+), Review (Approver+), Admin (Admin only)
+- FR33, FR34, FR44 all addressed here
+- Test priority: e2e suite should test the full permission matrix (4 roles × key operations) — flag for Epic 8 test suite
+- `data-testid` on: permission-denied message, role-filtered navigation items
+
+---
+
+**Epic 7 complete: 5 stories (5 Medium). All FRs covered: FR26, FR30, FR31, FR32, FR33, FR34, FR35, FR36, FR38, FR39, FR40, FR41, FR44.**
