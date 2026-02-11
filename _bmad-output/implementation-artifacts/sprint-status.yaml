@@ -50,8 +50,8 @@ development_status:
 
   # Epic 2: Term Detail Experience (no dependencies - foundational)
   # Sprint 1 Phase C — batched with 4.3 for TermDetail.tsx efficiency
-  epic-2: ready-for-dev
-  2-1-term-detail-page-with-two-tier-progressive-disclosure: ready-for-dev
+  epic-2: in-progress
+  2-1-term-detail-page-with-two-tier-progressive-disclosure: in-progress
   2-2-version-history-in-term-detail: ready-for-dev
   epic-2-retrospective: optional
 
