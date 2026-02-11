@@ -1,6 +1,6 @@
 # Story 3.1: Browse Page with Category Sections and Sidebar
 
-Status: todo
+Status: done
 
 ## Story
 

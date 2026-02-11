@@ -57,9 +57,9 @@ development_status:
 
   # Epic 3: Browse & Discover (no dependencies - foundational)
   # Sprint 2 — largest gap, 3.2 depends on 3.1
-  epic-3: ready-for-dev
-  3-1-browse-page-with-category-sections-and-sidebar: ready-for-dev
-  3-2-filter-terms-by-status-and-visibility: ready-for-dev
+  epic-3: done
+  3-1-browse-page-with-category-sections-and-sidebar: done
+  3-2-filter-terms-by-status-and-visibility: done
   epic-3-retrospective: optional
 
   # Epic 4: Principles & Knowledge Connections (no dependencies - foundational)

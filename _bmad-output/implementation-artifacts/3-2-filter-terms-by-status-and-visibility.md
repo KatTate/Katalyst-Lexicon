@@ -1,6 +1,6 @@
 # Story 3.2: Filter Terms by Status and Visibility
 
-Status: todo
+Status: done
 
 ## Story
 
