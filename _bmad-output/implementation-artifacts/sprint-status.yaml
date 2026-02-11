@@ -49,22 +49,25 @@ development_status:
   epic-1-retrospective: done
 
   # Epic 2: Term Detail Experience (no dependencies - foundational)
-  epic-2: backlog
-  2-1-term-detail-page-with-two-tier-progressive-disclosure: backlog
-  2-2-version-history-in-term-detail: backlog
+  # Sprint 1 Phase C — batched with 4.3 for TermDetail.tsx efficiency
+  epic-2: ready-for-dev
+  2-1-term-detail-page-with-two-tier-progressive-disclosure: ready-for-dev
+  2-2-version-history-in-term-detail: ready-for-dev
   epic-2-retrospective: optional
 
   # Epic 3: Browse & Discover (no dependencies - foundational)
-  epic-3: backlog
-  3-1-browse-page-with-category-sections-and-sidebar: backlog
-  3-2-filter-terms-by-status-and-visibility: backlog
+  # Sprint 2 — largest gap, 3.2 depends on 3.1
+  epic-3: ready-for-dev
+  3-1-browse-page-with-category-sections-and-sidebar: ready-for-dev
+  3-2-filter-terms-by-status-and-visibility: ready-for-dev
   epic-3-retrospective: optional
 
   # Epic 4: Principles & Knowledge Connections (no dependencies - foundational)
-  epic-4: backlog
-  4-1-principles-list-page: backlog
-  4-2-principle-detail-page: backlog
-  4-3-bidirectional-term-principle-links: backlog
+  # Sprint 1 Phase B — smallest gap, ship first
+  epic-4: ready-for-dev
+  4-1-principles-list-page: ready-for-dev
+  4-2-principle-detail-page: ready-for-dev
+  4-3-bidirectional-term-principle-links: ready-for-dev
   epic-4-retrospective: optional
 
   # Epic 5: Propose & Contribute (depends on Epic 1 - search API for duplicate detection)
