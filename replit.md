@@ -76,6 +76,12 @@ Preferred communication style: Simple, everyday language.
 ### Data Fetching
 - **@tanstack/react-query**: Server state management and caching.
 
+### Testing
+- **Vitest**: Test runner for API integration tests.
+- **Playwright**: E2E browser testing (via Replit run_test tool).
+- Test files: `tests/api/` directory with per-epic test files.
+- Run API tests: `npx vitest run tests/api/`
+
 ### Development Tools
 - **Vite**: Build tool and dev server.
 - **tsx**: TypeScript execution for Node.js.
