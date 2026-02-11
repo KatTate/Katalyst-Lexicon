@@ -1,27 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { useRoute } from "wouter";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, User, Calendar, Eye, Tag } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import NotFound from "./not-found";
 import { api, Principle, Term } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
-
-function PrincipleStatusBadge({ status }: { status: Principle["status"] }) {
-  const styles = {
-    Published: "bg-primary/10 text-primary border-primary/20",
-    Draft: "bg-kat-warning/20 text-yellow-800 border-kat-warning/30",
-    Archived: "bg-muted text-muted-foreground border-border",
-  };
-
-  return (
-    <Badge variant="outline" className={cn("font-bold uppercase tracking-wide text-[10px] px-2 py-0.5 shadow-none rounded-md", styles[status])}>
-      {status}
-    </Badge>
-  );
-}
+import { PrincipleStatusBadge } from "@/components/PrincipleStatusBadge";
 
 function escapeHtml(text: string): string {
   const htmlEscapes: Record<string, string> = {

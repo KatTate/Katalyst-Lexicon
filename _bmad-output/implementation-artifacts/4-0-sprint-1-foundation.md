@@ -1,6 +1,6 @@
 # Story 4.0: Sprint 1 Foundation — Shared Components and API Enrichment
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -126,7 +126,29 @@ So that all subsequent stories in Sprint 1 can build on a stable, DRY foundation
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus (via Replit Agent)
 
 ### Completion Notes
+Implemented all 5 features (F1-F5) for Sprint 1 Foundation:
+- F1: Installed react-markdown and rehype-sanitize packages
+- F2: Extracted PrincipleStatusBadge to shared component, removed inline duplicates from BrowsePrinciples.tsx and PrincipleDetail.tsx
+- F3: Created PrincipleCard with card/inline variants following TermCard pattern. Card variant wraps in Link, inline does not. Integrated inline variant into TermDetail Tier 2 Related Principles section.
+- F4: Enriched GET /api/principles with linkedTermCount via SQL subquery (COALESCE + ::int cast). Bypasses IStorage to avoid changing the interface, uses db directly in route handler.
+- F5: Created lightweight EmptyState component (under 30 lines) with message + optional action link. Used in BrowsePrinciples empty state.
+
+### LSP Status
+Clean — no errors or warnings
+
+### Visual Verification
+UI verified via Playwright e2e testing
 
 ### File List
+- `client/src/components/PrincipleStatusBadge.tsx` — CREATED
+- `client/src/components/PrincipleCard.tsx` — CREATED
+- `client/src/components/EmptyState.tsx` — CREATED
+- `client/src/pages/BrowsePrinciples.tsx` — MODIFIED (removed inline badge, uses PrincipleCard + EmptyState)
+- `client/src/pages/PrincipleDetail.tsx` — MODIFIED (removed inline badge, imports shared PrincipleStatusBadge)
+- `client/src/pages/TermDetail.tsx` — MODIFIED (uses PrincipleCard inline variant in Related Principles Tier 2)
+- `server/routes.ts` — MODIFIED (enriched GET /api/principles with linkedTermCount subquery)
+- `_bmad-output/implementation-artifacts/4-0-sprint-1-foundation.md` — MODIFIED (status updates)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — MODIFIED (status updates)

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { useRoute, useLocation } from "wouter";
 import { StatusBadge } from "@/components/StatusBadge";
+import { PrincipleCard } from "@/components/PrincipleCard";
 import { TierSection } from "@/components/TierSection";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Share2, Info, AlertTriangle, CheckCircle2, History, Loader2, BookOpen, Plus, X, ChevronRight, Home, Eye } from "lucide-react";
@@ -419,12 +420,8 @@ export default function TermDetail() {
                 <div className="space-y-3">
                   {governingPrinciples.map(principle => (
                     <Link key={principle.id} href={`/principle/${principle.slug}`}>
-                      <div
-                        className="bg-primary/5 border border-primary/20 p-4 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer"
-                        data-testid={`link-principle-${principle.id}`}
-                      >
-                        <h4 className="font-bold text-primary">{principle.title}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">{principle.summary}</p>
+                      <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer">
+                        <PrincipleCard principle={principle} variant="inline" />
                       </div>
                     </Link>
                   ))}

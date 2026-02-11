@@ -1,8 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema } from "@shared/schema";
+import { db } from "./db";
+import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks } from "@shared/schema";
 import { z } from "zod";
+import { sql, asc } from "drizzle-orm";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -402,7 +404,21 @@ export async function registerRoutes(
   // ===== PRINCIPLES =====
   app.get("/api/principles", async (req, res) => {
     try {
-      const list = await storage.getPrinciples();
+      const list = await db.select({
+        id: principles.id,
+        title: principles.title,
+        slug: principles.slug,
+        summary: principles.summary,
+        body: principles.body,
+        status: principles.status,
+        visibility: principles.visibility,
+        owner: principles.owner,
+        tags: principles.tags,
+        sortOrder: principles.sortOrder,
+        createdAt: principles.createdAt,
+        updatedAt: principles.updatedAt,
+        linkedTermCount: sql<number>`COALESCE((SELECT COUNT(*)::int FROM ${principleTermLinks} WHERE ${principleTermLinks.principleId} = ${principles.id}), 0)`,
+      }).from(principles).orderBy(asc(principles.sortOrder));
       res.json(list);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch principles" });
