@@ -3,7 +3,7 @@ story_key: 2-1
 title: "Term Detail Page with Two-Tier Progressive Disclosure"
 epic: "Epic 2: Term Detail Experience"
 size: L
-status: review
+status: done
 ---
 
 # Story 2.1: Term Detail Page with Two-Tier Progressive Disclosure

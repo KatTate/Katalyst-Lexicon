@@ -53,7 +53,7 @@ development_status:
   epic-2: done
   2-1-term-detail-page-with-two-tier-progressive-disclosure: done
   2-2-version-history-in-term-detail: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   # Epic 3: Browse & Discover (no dependencies - foundational)
   # Sprint 2 — largest gap, 3.2 depends on 3.1

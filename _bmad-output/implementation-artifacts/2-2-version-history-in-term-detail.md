@@ -3,7 +3,7 @@ story_key: 2-2
 title: "Version History in Term Detail"
 epic: "Epic 2: Term Detail Experience"
 size: M
-status: review
+status: done
 ---
 
 # Story 2.2: Version History in Term Detail
