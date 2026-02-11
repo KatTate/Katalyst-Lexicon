@@ -87,12 +87,7 @@ export default function PrincipleDetail() {
           {isArchived && (
             <div className="bg-muted border border-border p-4 rounded-lg flex items-start gap-3" data-testid="banner-archived">
               <Eye className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-bold text-muted-foreground">This principle is Archived</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  It is kept for historical reference but is no longer active guidance.
-                </p>
-              </div>
+              <p className="text-muted-foreground">This principle has been archived</p>
             </div>
           )}
 
