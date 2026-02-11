@@ -118,9 +118,24 @@ When a route is matched:
 
 ## Project State
 
-- **Current Phase:** not started
+- **Current Phase:** Implementation — Sprint 1 (Epics 4 + 2)
 - **Project Type:** brownfield
-- **Completed Artifacts:** none yet
+- **Completed Epics:** Epic 1 (Search & Discovery) — all 4 stories done, retro done
+- **In Progress:** Epic 4 (Principles & Knowledge) — foundation (Story 4.0) done, Stories 4.1/4.3/4.2 ready for dev
+- **Ready for Dev:** Epic 2 (Term Detail) — Stories 2.1/2.2 ready for dev
+- **Backlog:** Epics 3, 5, 6, 7, 8
+- **Sprint Plan:** `_bmad-output/implementation-artifacts/sprint-plan-epics-2-3-4.md`
+- **Sprint Status:** `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- **Completed Artifacts:**
+  - Product Brief: `_bmad-output/planning-artifacts/product-brief-katalyst-lexicon-2026-02-06.md`
+  - PRD: `_bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md`
+  - Architecture: `_bmad-output/planning-artifacts/architecture-katalyst-lexicon-2026-02-06.md`
+  - UX Design: `_bmad-output/planning-artifacts/ux-design-specification.md`
+  - Epics & Stories: `_bmad-output/planning-artifacts/epics-katalyst-lexicon-2026-02-06.md`
+  - Epic 1 Retro: `_bmad-output/implementation-artifacts/epic-1-retro-2026-02-10.md`
+  - Epic 1 Code Review: `_bmad-output/implementation-artifacts/epic-1-code-review.md`
+  - Sprint Plan (Epics 2-4): `_bmad-output/implementation-artifacts/sprint-plan-epics-2-3-4.md`
+  - Gap Analysis (Epics 2-4): `_bmad-output/implementation-artifacts/gap-analysis-epics-2-3-4.md`
 
 ## BMad File Structure
 
