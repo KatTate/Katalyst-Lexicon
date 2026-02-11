@@ -64,12 +64,12 @@ development_status:
 
   # Epic 4: Principles & Knowledge Connections (no dependencies - foundational)
   # Sprint 1 Phase A (foundation) → Phase B (stories) — smallest gap, ship first
-  epic-4: in-progress
+  epic-4: done
   4-0-sprint-1-foundation: done
   4-1-principles-list-page: done
   4-2-principle-detail-page: done
   4-3-bidirectional-term-principle-links: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
 
   # Epic 5: Propose & Contribute (depends on Epic 1 - search API for duplicate detection)
   epic-5: backlog
