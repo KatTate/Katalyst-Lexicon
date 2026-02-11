@@ -74,7 +74,7 @@ development_status:
   # Epic 5: Propose & Contribute (depends on Epic 1 - search API for duplicate detection)
   epic-5: in-progress
   5-1-proposal-form-for-new-terms: ready-for-dev
-  5-2-propose-edits-to-existing-terms: backlog
+  5-2-propose-edits-to-existing-terms: ready-for-dev
   epic-5-retrospective: optional
 
   # Epic 6: Review & Approve (depends on Epic 5 - needs proposals to review)
