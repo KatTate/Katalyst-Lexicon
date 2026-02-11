@@ -1,6 +1,6 @@
 # Story 4.0: Sprint 1 Foundation — Shared Components and API Enrichment
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 

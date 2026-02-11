@@ -65,7 +65,7 @@ development_status:
   # Epic 4: Principles & Knowledge Connections (no dependencies - foundational)
   # Sprint 1 Phase A (foundation) → Phase B (stories) — smallest gap, ship first
   epic-4: in-progress
-  4-0-sprint-1-foundation: ready-for-dev
+  4-0-sprint-1-foundation: in-progress
   4-1-principles-list-page: ready-for-dev
   4-2-principle-detail-page: ready-for-dev
   4-3-bidirectional-term-principle-links: ready-for-dev
