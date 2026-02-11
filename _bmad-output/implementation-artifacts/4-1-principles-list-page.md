@@ -1,6 +1,6 @@
 # Story 4.1: Principles List Page
 
-Status: review
+Status: done
 
 ## Story
 

@@ -1,6 +1,6 @@
 # Story 4.2: Principle Detail Page
 
-Status: review
+Status: done
 
 ## Story
 

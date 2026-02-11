@@ -1,6 +1,6 @@
 # Story 4.3: Bidirectional Term-Principle Links
 
-Status: review
+Status: done
 
 ## Story
 

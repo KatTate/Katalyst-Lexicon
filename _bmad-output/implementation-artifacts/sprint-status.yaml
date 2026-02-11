@@ -66,9 +66,9 @@ development_status:
   # Sprint 1 Phase A (foundation) → Phase B (stories) — smallest gap, ship first
   epic-4: in-progress
   4-0-sprint-1-foundation: done
-  4-1-principles-list-page: review
-  4-2-principle-detail-page: review
-  4-3-bidirectional-term-principle-links: review
+  4-1-principles-list-page: done
+  4-2-principle-detail-page: done
+  4-3-bidirectional-term-principle-links: done
   epic-4-retrospective: optional
 
   # Epic 5: Propose & Contribute (depends on Epic 1 - search API for duplicate detection)
