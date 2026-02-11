@@ -3,7 +3,7 @@ story_key: 2-1
 title: "Term Detail Page with Two-Tier Progressive Disclosure"
 epic: "Epic 2: Term Detail Experience"
 size: L
-status: in-progress
+status: review
 ---
 
 # Story 2.1: Term Detail Page with Two-Tier Progressive Disclosure
@@ -76,7 +76,9 @@ So that I get the answer I need immediately and can explore deeper context if I 
 ## Dev Agent Record
 
 - Agent Model Used: Claude 4.6 Opus
-- Completion Notes: (pending)
-- File List: (pending)
-- LSP Status: (pending)
-- Visual Verification: (pending)
+- Completion Notes: Refined existing TermDetail.tsx implementation to meet all ACs. Changed deprecated banner from red/destructive to amber colors per AC. Replaced inline edit dialog with navigation to `/propose?editTermId={id}` per AR19. Updated ProposeTerm to support editTermId pre-fill. Cleaned up unused imports and state from TermDetail.
+- File List:
+  - Modified: `client/src/pages/TermDetail.tsx` (removed edit dialog, fixed deprecated banner colors, updated suggest-edit to navigate)
+  - Modified: `client/src/pages/ProposeTerm.tsx` (added editTermId support, pre-fill from API, edit mode UI)
+- LSP Status: clean
+- Visual Verification: pending e2e test

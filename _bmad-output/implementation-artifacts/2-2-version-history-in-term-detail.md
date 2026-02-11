@@ -3,7 +3,7 @@ story_key: 2-2
 title: "Version History in Term Detail"
 epic: "Epic 2: Term Detail Experience"
 size: M
-status: ready-for-dev
+status: review
 ---
 
 # Story 2.2: Version History in Term Detail
@@ -46,7 +46,8 @@ So that I understand the term's evolution and can trust it reflects current orga
 ## Dev Agent Record
 
 - Agent Model Used: Claude 4.6 Opus
-- Completion Notes: (pending)
-- File List: (pending)
-- LSP Status: (pending)
-- Visual Verification: (pending)
+- Completion Notes: Updated version history display to show "v1 — Original" label for first version entries. Added ARIA list roles and labels for screen reader support. Verified API sorts by version number descending (most recent first). Snapshot dialog already implemented.
+- File List:
+  - Modified: `client/src/pages/TermDetail.tsx` (version history labels, ARIA attributes)
+- LSP Status: clean
+- Visual Verification: pending e2e test

@@ -9,10 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ArrowLeft, Save, Loader2, Plus, X } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { api, Category } from "@/lib/api";
-import { useState } from "react";
+import { api, Category, Term } from "@/lib/api";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
@@ -22,10 +22,15 @@ const formSchema = z.object({
   why_exists: z.string().min(5, "Explain why this term is needed"),
   used_when: z.string().optional(),
   not_used_when: z.string().optional(),
+  change_note: z.string().optional(),
 });
 
 export default function ProposeTerm() {
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const editTermId = searchParams.get("editTermId");
+  const prefillName = searchParams.get("name");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -35,31 +40,60 @@ export default function ProposeTerm() {
   const [newGoodExample, setNewGoodExample] = useState("");
   const [newBadExample, setNewBadExample] = useState("");
   const [newSynonym, setNewSynonym] = useState("");
+  const [prefilled, setPrefilled] = useState(false);
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
 
+  const { data: editTerm } = useQuery<Term>({
+    queryKey: ["/api/terms", editTermId],
+    queryFn: () => api.terms.get(editTermId || ""),
+    enabled: !!editTermId,
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      name: prefillName || "",
       definition: "",
       why_exists: "",
       used_when: "",
       not_used_when: "",
+      change_note: "",
     },
   });
+
+  useEffect(() => {
+    if (editTerm && !prefilled) {
+      form.reset({
+        name: editTerm.name,
+        category: editTerm.category,
+        definition: editTerm.definition,
+        why_exists: editTerm.whyExists,
+        used_when: editTerm.usedWhen,
+        not_used_when: editTerm.notUsedWhen,
+        change_note: "",
+      });
+      setExamplesGood(editTerm.examplesGood || []);
+      setExamplesBad(editTerm.examplesBad || []);
+      setSynonyms(editTerm.synonyms || []);
+      setPrefilled(true);
+    }
+  }, [editTerm, prefilled, form]);
+
+  const isEditMode = !!editTermId;
 
   const createProposal = useMutation({
     mutationFn: (values: z.infer<typeof formSchema>) => 
       api.proposals.create({
+        termId: isEditMode ? editTermId : undefined,
         termName: values.name,
         category: values.category,
-        type: "new",
+        type: isEditMode ? "edit" : "new",
         status: "pending",
         submittedBy: "Current User",
-        changesSummary: `New term proposal: ${values.name}`,
+        changesSummary: isEditMode ? (values.change_note || `Edit proposal for: ${values.name}`) : `New term proposal: ${values.name}`,
         definition: values.definition,
         whyExists: values.why_exists,
         usedWhen: values.used_when || "",
@@ -71,10 +105,12 @@ export default function ProposeTerm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
       toast({
-        title: "Proposal Submitted",
-        description: "Your term has been submitted for review by the governance committee.",
+        title: isEditMode ? "Edit Submitted" : "Proposal Submitted",
+        description: isEditMode
+          ? "Your suggested edit has been submitted for review."
+          : "Your term has been submitted for review by the governance committee.",
       });
-      setTimeout(() => setLocation("/"), 1500);
+      setTimeout(() => setLocation(isEditMode ? `/term/${editTermId}` : "/"), 1500);
     },
     onError: () => {
       toast({
@@ -114,15 +150,19 @@ export default function ProposeTerm() {
     <Layout>
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <Link href="/">
+          <Link href={isEditMode ? `/term/${editTermId}` : "/"}>
             <div className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-6" data-testid="link-back-home">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Cancel and go back
+              {isEditMode ? "Back to term" : "Cancel and go back"}
             </div>
           </Link>
-          <h1 className="text-3xl font-header text-primary">Propose a New Term</h1>
+          <h1 className="text-3xl font-header text-primary" data-testid="text-propose-heading">
+            {isEditMode ? `Suggest an Edit to "${editTerm?.name || "..."}"` : "Propose a New Term"}
+          </h1>
           <p className="text-muted-foreground mt-2">
-            Submit a new term for the Katalyst Lexicon. All proposals are reviewed by domain stewards before being canonized.
+            {isEditMode
+              ? "Propose changes to this term. Your edit will be reviewed before being applied."
+              : "Submit a new term for the Katalyst Lexicon. All proposals are reviewed by domain stewards before being canonized."}
           </p>
         </div>
 
@@ -138,10 +178,10 @@ export default function ProposeTerm() {
                     <FormItem>
                       <FormLabel>Term Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Phase Gate" {...field} data-testid="input-term-name" />
+                        <Input placeholder="e.g. Phase Gate" {...field} readOnly={isEditMode} className={isEditMode ? "bg-muted" : ""} data-testid="input-term-name" />
                       </FormControl>
                       <FormDescription>
-                        Use the most common name. Add synonyms below.
+                        {isEditMode ? "Term name cannot be changed in edit proposals." : "Use the most common name. Add synonyms below."}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -154,7 +194,7 @@ export default function ProposeTerm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Domain / Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-category">
                             <SelectValue placeholder="Select a domain" />
@@ -365,6 +405,29 @@ export default function ProposeTerm() {
                 </div>
               </div>
 
+              {isEditMode && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-950/30 dark:border-amber-700">
+                  <FormField
+                    control={form.control}
+                    name="change_note"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-amber-900 dark:text-amber-300">Why are you making this change?</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="e.g. Updated to reflect new company policy, Fixed typo in definition, Added missing usage context..."
+                            rows={2}
+                            {...field}
+                            data-testid="input-change-note"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
               <div className="flex justify-end pt-4">
                 <Button 
                   type="submit" 
@@ -378,7 +441,7 @@ export default function ProposeTerm() {
                   ) : (
                     <Save className="mr-2 h-4 w-4" />
                   )}
-                  Submit Proposal
+                  {isEditMode ? "Submit Edit for Review" : "Submit Proposal"}
                 </Button>
               </div>
 
