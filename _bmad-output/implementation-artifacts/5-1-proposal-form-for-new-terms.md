@@ -1,6 +1,6 @@
 # Story 5.1: Proposal Form for New Terms
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -146,4 +146,19 @@ Claude 4.6 Opus (Replit Agent)
 
 ### Completion Notes
 
+Story 5.1 implemented as a major refactor of ProposeTerm.tsx. All 18 ACs satisfied. Key implementation decisions:
+- Progressive disclosure via Radix Collapsible component (closed by default)
+- Conversational labels: "What's the term?", "What does this term mean?", "Why does this term exist?", "When should someone use this?", "When should someone NOT use this?"
+- Inline validation: green Check icons appear on blur via `touchedFields` Set + `isFieldValid()` helper
+- Duplicate detection: `checkDuplicates()` on name blur calls `api.terms.search()`, filters for exact/startsWith matches client-side
+- Submit gating: `requiredFieldsFilled` computed from `form.watch()`, disables button until all thresholds met
+- URL pre-fill: `?name=` and `?category=` parsed from URL params via `useSearch()` from wouter
+- Unsaved changes: `beforeunload` handler + AlertDialog with `navigateWithGuard()` using `formDirtyRef` (ref to avoid stale closures)
+- Toast durations: success 4000ms, error 1000000ms (persistent)
+- No new files created, no server changes, no schema changes
+
 ### File List
+
+| File | Action | Lines Changed |
+|------|--------|---------------|
+| `client/src/pages/ProposeTerm.tsx` | MODIFIED | Major refactor — progressive disclosure, validation, duplicate detection, unsaved changes guard. Combined with 5.2: +492/-352 total (stories implemented sequentially in same file). |

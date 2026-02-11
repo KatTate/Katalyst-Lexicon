@@ -1,6 +1,6 @@
 # Story 5.2: Propose Edits to Existing Terms
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -136,4 +136,18 @@ Claude 4.6 Opus (Replit Agent)
 
 ### Completion Notes
 
+Story 5.2 implemented as incremental enhancement to Story 5.1's ProposeTerm.tsx. All 16 ACs satisfied. Key implementation decisions:
+- Name field unlocked: removed `readOnly={isEditMode}` and `bg-muted` conditional — users can propose renames
+- Change notes: required in edit mode via custom validation in `onSubmit()` (not Zod schema, since it's conditional). Error: "Please explain what you changed and why"
+- Change detection: `hasFormChanges` via `useMemo` combining `formState.isDirty` + `JSON.stringify` array comparison against `editTerm` originals. Blocks submission with "No changes detected" alert
+- Duplicate suppression: `shouldShowDuplicate` via `useMemo` — suppresses when name matches `editTerm.name` (case-insensitive)
+- Auto-expand: Collapsible `setDetailOpen(true)` when edit term has any optional content (usedWhen, notUsedWhen, examplesGood, examplesBad, synonyms)
+- Loading state: early return with Loader2 spinner while editTerm query resolves
+- Edit-specific UI: heading "Suggest changes to: {name}", back link "Back to term" → `/term/{id}`, submit "Submit Edit for Review", navigation to `/term/{id}` on success
+- No new files created, no server changes, no schema changes
+
 ### File List
+
+| File | Action | Lines Changed |
+|------|--------|---------------|
+| `client/src/pages/ProposeTerm.tsx` | MODIFIED | Incremental enhancement on 5.1 — edit mode logic (change detection, change notes, duplicate suppression, auto-expand, loading state). Combined with 5.1: +492/-352 total (stories implemented sequentially in same file). |
