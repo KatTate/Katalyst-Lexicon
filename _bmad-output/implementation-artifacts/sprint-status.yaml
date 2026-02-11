@@ -72,8 +72,8 @@ development_status:
   epic-4-retrospective: done
 
   # Epic 5: Propose & Contribute (depends on Epic 1 - search API for duplicate detection)
-  epic-5: backlog
-  5-1-proposal-form-for-new-terms: backlog
+  epic-5: in-progress
+  5-1-proposal-form-for-new-terms: ready-for-dev
   5-2-propose-edits-to-existing-terms: backlog
   epic-5-retrospective: optional
 
