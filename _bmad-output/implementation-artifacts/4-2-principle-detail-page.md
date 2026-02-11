@@ -1,6 +1,6 @@
 # Story 4.2: Principle Detail Page
 
-Status: todo
+Status: review
 
 ## Story
 
@@ -130,3 +130,29 @@ So that I understand the principle deeply and can explore related vocabulary.
 - Existing principle API: `server/routes.ts` → `GET /api/principles/:id`, `GET /api/principles/:id/terms`
 - Schema: `shared/schema.ts` → `principles`, `principleTermLinks`
 - Scratchpad note: "Choose react-markdown + rehype-sanitize during Story 4.2, reuse in Epic 4 Story 4.2"
+
+## Dev Agent Record
+
+### Agent Model Used
+Claude 4.6 Opus (via Replit Agent)
+
+### Completion Notes
+Comprehensive enhancement of PrincipleDetail.tsx addressing all 7 ACs:
+- AC1: Replaced custom `renderMarkdown()` + `dangerouslySetInnerHTML` with `react-markdown` + `rehype-sanitize`. Custom component overrides for headings, paragraphs, lists, links, code blocks to match Katalyst design system. Removed `escapeHtml()` and `renderMarkdown()` functions entirely.
+- AC2: Replaced tag-style term links with TermCard components in a responsive grid (1-col mobile, 2-col desktop). Related Terms section now always renders.
+- AC3: Added EmptyState with message "No terms linked to this principle yet" when no related terms exist.
+- AC4: Archived banner already present with correct muted styling — verified, no changes needed.
+- AC5: Fixed heading hierarchy — section headings changed from h3 to h2 ("Tags", "Related Terms"). Markdown h1 renders as h2 to maintain hierarchy under page h1.
+- AC6: Added `document.title = "{Principle Title} — Katalyst Lexicon"` with cleanup on unmount.
+- AC7: XSS sanitization now handled by rehype-sanitize (strips script tags, event handlers, dangerous HTML).
+- Added data-testid attributes: banner-archived, text-principle-visibility, heading-tags, heading-related-terms, related-terms-grid, empty-related-terms, section-metadata.
+- Gracefully handles empty body (section not rendered if principle.body is empty).
+
+### LSP Status
+Clean — no errors or warnings
+
+### Visual Verification
+Pending e2e test
+
+### File List
+- `client/src/pages/PrincipleDetail.tsx` — REWRITTEN (react-markdown, TermCards, EmptyState, heading hierarchy, page title, data-testid attrs)

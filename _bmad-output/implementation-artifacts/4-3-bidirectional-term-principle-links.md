@@ -1,6 +1,6 @@
 # Story 4.3: Bidirectional Term-Principle Links
 
-Status: todo
+Status: review
 
 ## Story
 
@@ -97,3 +97,22 @@ So that I understand the broader organizational context behind the term's defini
 - Storage methods: `server/storage.ts` → `getPrinciplesForTerm()`, `getTermsForPrinciple()`
 - Join table schema: `shared/schema.ts` → `principleTermLinks`
 - Scratchpad note: "Story 4.3 (bidirectional links) depends on Epic 2 Story 2.1 completing the term detail Tier 2 'Related Principles' section shell (now complete)"
+
+## Dev Agent Record
+
+### Agent Model Used
+Claude 4.6 Opus (via Replit Agent)
+
+### Completion Notes
+Most of Story 4.3's ACs were already satisfied by Story 4.0 foundation work (PrincipleCard inline variant with PrincipleStatusBadge, correct data-testid="linked-principle-{id}") and prior Epic 2 implementation (Related Principles Tier 2 section in TermDetail, bidirectional API endpoints). Remaining gap addressed:
+- Aligned empty state message to match AC exactly: "No principles linked to this term" (was "No principles are linked to this term yet.")
+- Added data-testid="text-empty-principles" to the empty state element
+
+### LSP Status
+Clean — no errors or warnings
+
+### Visual Verification
+Pending e2e test
+
+### File List
+- `client/src/pages/TermDetail.tsx` — MODIFIED (empty state message alignment + data-testid)

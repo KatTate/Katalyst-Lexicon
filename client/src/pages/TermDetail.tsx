@@ -415,7 +415,7 @@ export default function TermDetail() {
               data-testid="tier-section-related-principles"
             >
               {governingPrinciples.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">No principles are linked to this term yet.</p>
+                <p className="text-center text-muted-foreground py-4" data-testid="text-empty-principles">No principles linked to this term</p>
               ) : (
                 <div className="space-y-3">
                   {governingPrinciples.map(principle => (

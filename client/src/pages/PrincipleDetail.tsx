@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { useRoute } from "wouter";
@@ -7,32 +8,10 @@ import { cn } from "@/lib/utils";
 import NotFound from "./not-found";
 import { api, Principle, Term } from "@/lib/api";
 import { PrincipleStatusBadge } from "@/components/PrincipleStatusBadge";
-
-function escapeHtml(text: string): string {
-  const htmlEscapes: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  };
-  return text.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char);
-}
-
-function renderMarkdown(text: string): string {
-  const escapedText = escapeHtml(text);
-  let html = escapedText
-    .replace(/^### (.*$)/gim, '<h3 class="text-lg font-header font-bold mt-6 mb-2">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-xl font-header font-bold mt-8 mb-3">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-header font-bold mt-8 mb-4">$1</h1>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^- (.*$)/gim, '<li class="ml-4">$1</li>')
-    .replace(/\n\n/g, '</p><p class="mb-4">')
-    .replace(/\n/g, '<br/>');
-  
-  return `<p class="mb-4">${html}</p>`;
-}
+import { TermCard } from "@/components/TermCard";
+import { EmptyState } from "@/components/EmptyState";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 
 export default function PrincipleDetail() {
   const [match, params] = useRoute("/principle/:slug");
@@ -48,6 +27,13 @@ export default function PrincipleDetail() {
     queryFn: () => api.principles.getTerms(principle?.id || ""),
     enabled: !!principle?.id,
   });
+
+  useEffect(() => {
+    if (principle) {
+      document.title = `${principle.title} — Katalyst Lexicon`;
+    }
+    return () => { document.title = "Katalyst Lexicon"; };
+  }, [principle]);
 
   if (!match) return <NotFound />;
 
@@ -82,7 +68,7 @@ export default function PrincipleDetail() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <PrincipleStatusBadge status={principle.status} />
-                <span className="text-xs font-mono text-muted-foreground px-2 py-0.5 border rounded">
+                <span className="text-xs font-mono text-muted-foreground px-2 py-0.5 border rounded" data-testid="text-principle-visibility">
                   {principle.visibility}
                 </span>
               </div>
@@ -99,7 +85,7 @@ export default function PrincipleDetail() {
           </div>
 
           {isArchived && (
-            <div className="bg-muted border border-border p-4 rounded-lg flex items-start gap-3">
+            <div className="bg-muted border border-border p-4 rounded-lg flex items-start gap-3" data-testid="banner-archived">
               <Eye className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-muted-foreground">This principle is Archived</h4>
@@ -115,19 +101,44 @@ export default function PrincipleDetail() {
           </p>
         </div>
 
-        <div className="py-8 border-b border-border">
-          <div
-            className="prose prose-lg max-w-none text-kat-charcoal leading-relaxed font-sans"
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(principle.body) }}
-            data-testid="text-principle-body"
-          />
-        </div>
+        {principle.body && (
+          <div className="py-8 border-b border-border">
+            <div
+              className="prose prose-lg max-w-none text-kat-charcoal leading-relaxed font-sans"
+              data-testid="text-principle-body"
+            >
+              <ReactMarkdown
+                rehypePlugins={[rehypeSanitize]}
+                components={{
+                  h1: ({ children }) => <h2 className="text-2xl font-header font-bold mt-8 mb-4">{children}</h2>,
+                  h2: ({ children }) => <h2 className="text-xl font-header font-bold mt-8 mb-3">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-lg font-header font-bold mt-6 mb-2">{children}</h3>,
+                  p: ({ children }) => <p className="mb-4">{children}</p>,
+                  ul: ({ children }) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
+                  li: ({ children }) => <li className="ml-0">{children}</li>,
+                  a: ({ href, children }) => (
+                    <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  ),
+                  strong: ({ children }) => <strong>{children}</strong>,
+                  em: ({ children }) => <em>{children}</em>,
+                  code: ({ children }) => <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>,
+                  pre: ({ children }) => <pre className="bg-muted p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
+                }}
+              >
+                {principle.body}
+              </ReactMarkdown>
+            </div>
+          </div>
+        )}
 
         {principle.tags.length > 0 && (
           <div className="py-6 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
               <Tag className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-bold text-sm text-muted-foreground uppercase tracking-wide">Tags</h3>
+              <h2 className="font-bold text-sm text-muted-foreground uppercase tracking-wide" data-testid="heading-tags">Tags</h2>
             </div>
             <div className="flex flex-wrap gap-2">
               {principle.tags.map(tag => (
@@ -143,25 +154,20 @@ export default function PrincipleDetail() {
           </div>
         )}
 
-        {relatedTerms.length > 0 && (
-          <div className="py-6 border-b border-border">
-            <h3 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-3">Related Terms</h3>
-            <div className="flex flex-wrap gap-2">
+        <div className="py-6 border-b border-border">
+          <h2 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-3" data-testid="heading-related-terms">Related Terms</h2>
+          {relatedTerms.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="related-terms-grid">
               {relatedTerms.map(term => (
-                <Link key={term.id} href={`/term/${term.id}`}>
-                  <span
-                    className="bg-primary/10 text-primary px-3 py-1 rounded-md text-sm font-medium border border-primary/20 hover:bg-primary/20 cursor-pointer transition-colors"
-                    data-testid={`link-term-${term.id}`}
-                  >
-                    {term.name}
-                  </span>
-                </Link>
+                <TermCard key={term.id} term={term} variant="card" />
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <EmptyState message="No terms linked to this principle yet" data-testid="empty-related-terms" />
+          )}
+        </div>
 
-        <div className="py-8 flex items-center justify-between text-sm text-muted-foreground bg-muted/20 px-6 rounded-lg mt-8 border border-border">
+        <div className="py-8 flex items-center justify-between text-sm text-muted-foreground bg-muted/20 px-6 rounded-lg mt-8 border border-border" data-testid="section-metadata">
           <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { Loader2 } from "lucide-react";
@@ -12,6 +13,11 @@ export default function BrowsePrinciples() {
     queryKey: ["/api/principles"],
     queryFn: () => api.principles.getAll() as Promise<PrincipleWithCount[]>,
   });
+
+  useEffect(() => {
+    document.title = "Principles — Katalyst Lexicon";
+    return () => { document.title = "Katalyst Lexicon"; };
+  }, []);
 
   return (
     <Layout>
@@ -44,7 +50,7 @@ export default function BrowsePrinciples() {
           )}
 
           {!isLoading && principles.length === 0 && (
-            <EmptyState message="No principles found yet." data-testid="empty-principles" />
+            <EmptyState message="Principles will appear here once they're published" data-testid="empty-principles" />
           )}
         </div>
       </div>

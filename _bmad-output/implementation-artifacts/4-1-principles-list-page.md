@@ -1,6 +1,6 @@
 # Story 4.1: Principles List Page
 
-Status: todo
+Status: review
 
 ## Story
 
@@ -104,3 +104,22 @@ So that I can discover the philosophies behind the organization's vocabulary.
 - Existing storage: `server/storage.ts` → `getPrinciples()`
 - Schema: `shared/schema.ts` → `principles`, `principleTermLinks`
 - Epic 1 retro Lesson 2 (variant pattern): `_bmad-output/implementation-artifacts/epic-1-retro-2026-02-10.md`
+
+## Dev Agent Record
+
+### Agent Model Used
+Claude 4.6 Opus (via Replit Agent)
+
+### Completion Notes
+Most of Story 4.1's ACs were already satisfied by Story 4.0 foundation work (PrincipleCard, PrincipleStatusBadge, linkedTermCount API enrichment, EmptyState component). Remaining gaps addressed:
+- Updated empty state message from "No principles found yet." to "Principles will appear here once they're published" (AC3)
+- Added `document.title = "Principles — Katalyst Lexicon"` with cleanup on unmount (AC6)
+
+### LSP Status
+Clean — no errors or warnings
+
+### Visual Verification
+Pending e2e test
+
+### File List
+- `client/src/pages/BrowsePrinciples.tsx` — MODIFIED (added useEffect for page title, updated empty state message)
