@@ -1,5 +1,5 @@
-import { 
-  type User, type InsertUser, 
+import {
+  type User, type InsertUser,
   type Category, type InsertCategory,
   type Term, type InsertTerm,
   type Proposal, type InsertProposal,
@@ -7,7 +7,8 @@ import {
   type Principle, type InsertPrinciple,
   type PrincipleTermLink, type InsertPrincipleTermLink,
   type TermVersion, type InsertTermVersion,
-  users, categories, terms, proposals, settings, principles, principleTermLinks, termVersions
+  type ProposalEvent, type InsertProposalEvent,
+  users, categories, terms, proposals, settings, principles, principleTermLinks, termVersions, proposalEvents
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, inArray, or, ilike, sql } from "drizzle-orm";
@@ -44,6 +45,9 @@ export interface IStorage {
   createProposal(proposal: InsertProposal): Promise<Proposal>;
   updateProposal(id: string, proposal: Partial<InsertProposal>): Promise<Proposal | undefined>;
   deleteProposal(id: string): Promise<boolean>;
+
+  createProposalEvent(event: InsertProposalEvent): Promise<ProposalEvent>;
+  getProposalEvents(proposalId: string): Promise<ProposalEvent[]>;
 
   getSettings(): Promise<Setting[]>;
   getSetting(key: string): Promise<Setting | undefined>;
@@ -237,7 +241,7 @@ export class DatabaseStorage implements IStorage {
   async getProposalsByStatus(status: string): Promise<Proposal[]> {
     return db.select().from(proposals)
       .where(eq(proposals.status, status as any))
-      .orderBy(desc(proposals.submittedAt));
+      .orderBy(asc(proposals.submittedAt));
   }
 
   async createProposal(proposal: InsertProposal): Promise<Proposal> {
@@ -253,6 +257,17 @@ export class DatabaseStorage implements IStorage {
   async deleteProposal(id: string): Promise<boolean> {
     const result = await db.delete(proposals).where(eq(proposals.id, id));
     return (result.rowCount ?? 0) > 0;
+  }
+
+  async createProposalEvent(event: InsertProposalEvent): Promise<ProposalEvent> {
+    const [created] = await db.insert(proposalEvents).values(event).returning();
+    return created;
+  }
+
+  async getProposalEvents(proposalId: string): Promise<ProposalEvent[]> {
+    return db.select().from(proposalEvents)
+      .where(eq(proposalEvents.proposalId, proposalId))
+      .orderBy(asc(proposalEvents.timestamp));
   }
 
   async getSettings(): Promise<Setting[]> {

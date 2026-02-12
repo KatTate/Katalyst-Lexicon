@@ -10,6 +10,7 @@ import TermDetail from "@/pages/TermDetail";
 import ProposeTerm from "@/pages/ProposeTerm";
 import DesignSystem from "@/pages/DesignSystem";
 import ReviewQueue from "@/pages/ReviewQueue";
+import MyProposals from "@/pages/MyProposals";
 import ManageCategories from "@/pages/ManageCategories";
 import Settings from "@/pages/Settings";
 import BrowsePrinciples from "@/pages/BrowsePrinciples";
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/term/:id" component={TermDetail} />
       <Route path="/design" component={DesignSystem} />
       <Route path="/review" component={ReviewQueue} />
+      <Route path="/my-proposals" component={MyProposals} />
       <Route path="/categories" component={ManageCategories} />
       <Route path="/settings" component={Settings} />
       <Route path="/principles" component={BrowsePrinciples} />

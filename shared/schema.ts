@@ -6,9 +6,10 @@ import { z } from "zod";
 export const termStatusEnum = pgEnum("term_status", ["Draft", "In Review", "Canonical", "Deprecated"]);
 export const visibilityEnum = pgEnum("visibility", ["Internal", "Client-Safe", "Public"]);
 export const userRoleEnum = pgEnum("user_role", ["Member", "Approver", "Admin"]);
-export const proposalStatusEnum = pgEnum("proposal_status", ["pending", "in_review", "changes_requested", "approved", "rejected"]);
+export const proposalStatusEnum = pgEnum("proposal_status", ["pending", "in_review", "changes_requested", "approved", "rejected", "withdrawn"]);
 export const proposalTypeEnum = pgEnum("proposal_type", ["new", "edit"]);
 export const principleStatusEnum = pgEnum("principle_status", ["Draft", "Published", "Archived"]);
+export const proposalEventTypeEnum = pgEnum("proposal_event_type", ["submitted", "changes_requested", "resubmitted", "approved", "rejected", "withdrawn"]);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -75,6 +76,15 @@ export const proposals = pgTable("proposals", {
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
 });
 
+export const proposalEvents = pgTable("proposal_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  proposalId: varchar("proposal_id").notNull(),
+  eventType: proposalEventTypeEnum("event_type").notNull(),
+  actorId: text("actor_id").notNull(),
+  comment: text("comment"),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
 export const settings = pgTable("settings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   key: text("key").notNull().unique(),
@@ -110,6 +120,7 @@ export const insertSettingSchema = createInsertSchema(settings).omit({ id: true 
 export const insertPrincipleSchema = createInsertSchema(principles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertPrincipleTermLinkSchema = createInsertSchema(principleTermLinks).omit({ id: true });
 export const insertTermVersionSchema = createInsertSchema(termVersions).omit({ id: true, changedAt: true });
+export const insertProposalEventSchema = createInsertSchema(proposalEvents).omit({ id: true, timestamp: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -127,3 +138,5 @@ export type InsertPrincipleTermLink = z.infer<typeof insertPrincipleTermLinkSche
 export type PrincipleTermLink = typeof principleTermLinks.$inferSelect;
 export type InsertTermVersion = z.infer<typeof insertTermVersionSchema>;
 export type TermVersion = typeof termVersions.$inferSelect;
+export type InsertProposalEvent = z.infer<typeof insertProposalEventSchema>;
+export type ProposalEvent = typeof proposalEvents.$inferSelect;

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog, BookOpen } from "lucide-react";
+import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog, BookOpen, FileEdit } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -83,13 +83,14 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex-1 overflow-y-auto py-6 px-4">
           <nav className="space-y-1">
             <Link href="/propose">
-              <Button className="w-full justify-start gap-2 mb-6 shadow-sm hover:shadow-md transition-all font-bold bg-primary text-white hover:bg-primary/90" variant="default" data-testid="nav-propose-term">
+              <Button className="w-full justify-start gap-2 mb-4 shadow-sm hover:shadow-md transition-all font-bold bg-primary text-white hover:bg-primary/90" variant="default" data-testid="nav-propose-term">
                 <Plus className="h-4 w-4" />
                 Propose Term
               </Button>
             </Link>
+            <NavItem href="/my-proposals" icon={FileEdit} label="My Proposals" />
 
-            <div className="pb-2">
+            <div className="pt-4 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Knowledge Base
               </p>
