@@ -75,7 +75,7 @@ development_status:
   epic-5: done
   5-1-proposal-form-for-new-terms: done
   5-2-propose-edits-to-existing-terms: done
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
 
   # Epic 6: Review & Approve (depends on Epic 5 - needs proposals to review)
   epic-6: backlog
