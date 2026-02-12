@@ -83,3 +83,17 @@ Preferred communication style: Simple, everyday language.
 - **Vite**: Build tool and dev server.
 - **tsx**: TypeScript execution for Node.js.
 - **drizzle-kit**: Database migration tool.
+
+## Recent Changes
+
+### Epic 6: Review & Approve Workflow (Feb 2026)
+- Stories 6.1-6.4 implemented: proposal review queue, review decisions, audit trail, proposer revision flow
+- BMAD code review completed, all HIGH and MEDIUM issues fixed:
+  - AC7 permission checks added to ReviewQueue and Layout sidebar
+  - Transaction boundaries corrected (inline tx.insert/tx.update instead of storage method calls)
+  - Audit events moved inside transaction scope for atomicity
+  - request-changes endpoint made symmetric with approve/reject
+- ProposalEvents table tracks full audit trail (submitted, changes_requested, resubmitted, approved, rejected, withdrawn)
+- LOW issues deferred: missing aria-live on empty state, missing aria-label on audit events, `as any` cast on withdrawn status, missing dedicated storage methods for resubmit/withdraw
+- TanStack Query uses staleTime: Infinity — full page reloads required after API mutations to see updated data
+- Mock auth uses MOCK_CURRENT_USER constant (duplicated in ReviewQueue and Layout)
