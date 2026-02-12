@@ -52,7 +52,7 @@ export function Layout({ children }: LayoutProps) {
             <span>{label}</span>
           </div>
           {badge !== undefined && badge > 0 && (
-            <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full" data-testid="review-badge-count">
               {badge}
             </span>
           )}

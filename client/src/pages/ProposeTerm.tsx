@@ -303,7 +303,7 @@ export default function ProposeTerm() {
         category: values.category,
         type: isEditMode ? "edit" : "new",
         status: "pending",
-        submittedBy: "Current User",
+        submittedBy: "Sarah Jenkins",
         changesSummary: isEditMode ? (values.change_note || `Edit proposal for: ${values.name}`) : `New term proposal: ${values.name}`,
         definition: values.definition,
         whyExists: values.why_exists,
