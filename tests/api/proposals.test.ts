@@ -14,6 +14,7 @@ afterAll(async () => {
 
 describe('Proposals API', () => {
   let proposalId: string;
+  let rejectProposalId: string;
   let withdrawProposalId: string;
 
   const baseProposal = {
@@ -42,6 +43,15 @@ describe('Proposals API', () => {
     expect(res.body.termName).toBe(baseProposal.termName);
     expect(res.body.status).toBe('pending');
     proposalId = res.body.id;
+  });
+
+  it('POST /api/proposals - creates proposal for reject test', async () => {
+    const res = await request.post('/api/proposals').send({
+      ...baseProposal,
+      termName: `QA Reject Term ${Date.now()}`,
+    });
+    expect(res.status).toBe(201);
+    rejectProposalId = res.body.id;
   });
 
   it('POST /api/proposals - creates another proposal for withdraw test', async () => {
@@ -109,6 +119,21 @@ describe('Proposals API', () => {
     expect(res.status).toBe(409);
   });
 
+  it('POST /api/proposals/:id/reject - rejects a proposal', async () => {
+    const res = await request.post(`/api/proposals/${rejectProposalId}/reject`).send({
+      comment: 'Does not meet standards',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it('POST /api/proposals/:id/reject - returns 409 for already rejected', async () => {
+    const res = await request.post(`/api/proposals/${rejectProposalId}/reject`).send({
+      comment: 'Trying again',
+    });
+    expect(res.status).toBe(409);
+  });
+
   it('POST /api/proposals/:id/withdraw - withdraws a pending proposal', async () => {
     const res = await request.post(`/api/proposals/${withdrawProposalId}/withdraw`);
     expect(res.status).toBe(200);
@@ -120,8 +145,18 @@ describe('Proposals API', () => {
     expect(res.status).toBe(409);
   });
 
-  it('DELETE /api/proposals/:id - deletes a proposal', async () => {
+  it('DELETE /api/proposals/:id - deletes withdrawn proposal', async () => {
     const res = await request.delete(`/api/proposals/${withdrawProposalId}`);
+    expect(res.status).toBe(204);
+  });
+
+  it('cleanup - delete approved proposal', async () => {
+    const res = await request.delete(`/api/proposals/${proposalId}`);
+    expect(res.status).toBe(204);
+  });
+
+  it('cleanup - delete rejected proposal', async () => {
+    const res = await request.delete(`/api/proposals/${rejectProposalId}`);
     expect(res.status).toBe(204);
   });
 });
