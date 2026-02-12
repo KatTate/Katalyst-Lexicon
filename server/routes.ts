@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks, proposals, proposalEvents } from "@shared/schema";
+import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks, proposals, proposalEvents, terms, termVersions } from "@shared/schema";
 import { z } from "zod";
 import { sql, asc, eq, and, or as drizzleOr } from "drizzle-orm";
 
@@ -238,10 +238,7 @@ export async function registerRoutes(
         return res.status(409).json({ error: "This proposal has already been reviewed" });
       }
 
-      // Wrap in transaction for atomicity with conditional status check
-      // to prevent race conditions between concurrent reviewers
       const result = await db.transaction(async (tx) => {
-        // Conditionally update only if status is still pending/changes_requested
         const updateResult = await tx.update(proposals).set({
           status: "approved",
           reviewComment: req.body.comment || null
@@ -255,7 +252,6 @@ export async function registerRoutes(
           )
         );
 
-        // If no rows affected, another reviewer got there first
         if ((updateResult.rowCount ?? 0) === 0) {
           return { conflict: true };
         }
@@ -266,7 +262,7 @@ export async function registerRoutes(
           : `Approved edit: ${proposal.changesSummary}`;
 
         if (proposal.type === "new") {
-          await storage.createTerm({
+          const [created] = await tx.insert(terms).values({
             name: proposal.termName,
             category: proposal.category,
             definition: proposal.definition,
@@ -280,37 +276,56 @@ export async function registerRoutes(
             examplesBad: proposal.examplesBad || [],
             synonyms: proposal.synonyms || [],
             version: 1
-          }, changeNote, approvedBy);
+          }).returning();
+
+          await tx.insert(termVersions).values({
+            termId: created.id,
+            versionNumber: 1,
+            snapshotJson: created,
+            changeNote,
+            changedBy: approvedBy
+          });
         } else if (proposal.termId) {
-          await storage.updateTerm(proposal.termId, {
-            category: proposal.category,
-            definition: proposal.definition,
-            whyExists: proposal.whyExists,
-            usedWhen: proposal.usedWhen,
-            notUsedWhen: proposal.notUsedWhen,
-            examplesGood: proposal.examplesGood || [],
-            examplesBad: proposal.examplesBad || [],
-            synonyms: proposal.synonyms || [],
-          }, changeNote, approvedBy);
+          const [existing] = await tx.select().from(terms).where(eq(terms.id, proposal.termId));
+          if (existing) {
+            const newVersion = existing.version + 1;
+            const [updated] = await tx.update(terms).set({
+              category: proposal.category,
+              definition: proposal.definition,
+              whyExists: proposal.whyExists,
+              usedWhen: proposal.usedWhen,
+              notUsedWhen: proposal.notUsedWhen,
+              examplesGood: proposal.examplesGood || [],
+              examplesBad: proposal.examplesBad || [],
+              synonyms: proposal.synonyms || [],
+              version: newVersion,
+              updatedAt: new Date()
+            }).where(eq(terms.id, proposal.termId)).returning();
+
+            if (updated) {
+              await tx.insert(termVersions).values({
+                termId: proposal.termId,
+                versionNumber: newVersion,
+                snapshotJson: updated,
+                changeNote,
+                changedBy: approvedBy
+              });
+            }
+          }
         }
+
+        await tx.insert(proposalEvents).values({
+          proposalId: req.params.id,
+          eventType: "approved",
+          actorId: approvedBy,
+          comment: req.body.comment || null,
+        });
 
         return { conflict: false };
       });
 
       if (result.conflict) {
         return res.status(409).json({ error: "This proposal has already been reviewed" });
-      }
-
-      // Record audit event (non-fatal — proposal update is the primary write)
-      try {
-        await storage.createProposalEvent({
-          proposalId: req.params.id,
-          eventType: "approved",
-          actorId: req.body.approvedBy || "Approver",
-          comment: req.body.comment || null,
-        });
-      } catch {
-        // Audit event failure should not fail the approval
       }
 
       res.json({ success: true });
@@ -355,7 +370,7 @@ export async function registerRoutes(
       if (!existing) {
         return res.status(404).json({ error: "Proposal not found" });
       }
-      if (existing.status !== "pending") {
+      if (existing.status !== "pending" && existing.status !== "changes_requested") {
         return res.status(409).json({ error: "This proposal has already been reviewed" });
       }
       await storage.updateProposal(req.params.id, {

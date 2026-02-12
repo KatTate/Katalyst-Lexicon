@@ -105,6 +105,8 @@ function DiffArrayField({ label, oldValue, newValue, testId }: { label: string; 
   );
 }
 
+const MOCK_CURRENT_USER = { name: "Sarah Jenkins", role: "Admin" as const };
+
 export default function ReviewQueue() {
   const [selectedItem, setSelectedItem] = useState<Proposal | null>(null);
   const [comment, setComment] = useState("");
@@ -112,9 +114,23 @@ export default function ReviewQueue() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const canReview = MOCK_CURRENT_USER.role === "Admin" || MOCK_CURRENT_USER.role === "Approver";
+
   useEffect(() => {
     document.title = "Review Queue — Katalyst Lexicon";
   }, []);
+
+  if (!canReview) {
+    return (
+      <Layout>
+        <div className="p-8 max-w-2xl mx-auto text-center" data-testid="permission-denied-review">
+          <ClipboardCheck className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+          <h2 className="text-xl font-header font-bold text-kat-charcoal mb-2">Access Restricted</h2>
+          <p className="text-muted-foreground">You don't have permission to review proposals.</p>
+        </div>
+      </Layout>
+    );
+  }
 
   const { data: allProposals = [], isLoading } = useQuery<Proposal[]>({
     queryKey: ["/api/proposals"],

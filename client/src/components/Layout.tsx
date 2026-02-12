@@ -12,6 +12,8 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const MOCK_CURRENT_USER = { name: "Sarah Jenkins", role: "Admin" as const };
+
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -99,12 +101,14 @@ export function Layout({ children }: LayoutProps) {
               <NavItem href="/principles" icon={BookOpen} label="Principles" />
             </div>
 
+            {(MOCK_CURRENT_USER.role === "Admin" || MOCK_CURRENT_USER.role === "Approver") && (
             <div className="pt-6 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Approver Tools
               </p>
               <NavItem href="/review" icon={ClipboardCheck} label="Review Queue" badge={pendingProposalsCount} />
             </div>
+            )}
 
             <div className="pt-6 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
