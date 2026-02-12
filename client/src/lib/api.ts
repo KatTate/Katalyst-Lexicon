@@ -36,13 +36,22 @@ export interface Category {
   sortOrder: number;
 }
 
+export interface ProposalEvent {
+  id: string;
+  proposalId: string;
+  eventType: "submitted" | "changes_requested" | "resubmitted" | "approved" | "rejected" | "withdrawn";
+  actorId: string;
+  comment: string | null;
+  timestamp: string;
+}
+
 export interface Proposal {
   id: string;
   termId: string | null;
   termName: string;
   category: string;
   type: "new" | "edit";
-  status: "pending" | "in_review" | "changes_requested" | "approved" | "rejected";
+  status: "pending" | "in_review" | "changes_requested" | "approved" | "rejected" | "withdrawn";
   submittedBy: string;
   assignedTo: string | null;
   changesSummary: string;
@@ -55,6 +64,7 @@ export interface Proposal {
   synonyms: string[];
   reviewComment: string | null;
   submittedAt: string;
+  events?: ProposalEvent[];
 }
 
 export interface User {
@@ -122,6 +132,8 @@ export const api = {
     approve: (id: string, comment?: string, approvedBy?: string) => fetchJson<{success: boolean}>("POST", `/api/proposals/${id}/approve`, { comment, approvedBy }),
     reject: (id: string, comment?: string) => fetchJson<{success: boolean}>("POST", `/api/proposals/${id}/reject`, { comment }),
     requestChanges: (id: string, comment?: string) => fetchJson<{success: boolean}>("POST", `/api/proposals/${id}/request-changes`, { comment }),
+    resubmit: (id: string, data: Partial<Proposal>) => fetchJson<Proposal>("POST", `/api/proposals/${id}/resubmit`, data),
+    withdraw: (id: string) => fetchJson<{success: boolean}>("POST", `/api/proposals/${id}/withdraw`),
     delete: (id: string) => fetchJson<void>("DELETE", `/api/proposals/${id}`),
   },
   users: {

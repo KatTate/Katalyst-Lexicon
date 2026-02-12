@@ -14,7 +14,7 @@ import { z } from "zod";
 import { ArrowLeft, Save, Loader2, Plus, X, Check, ChevronDown, ChevronRight, AlertTriangle, Info } from "lucide-react";
 import { Link, useLocation, useSearch } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { api, Category, Term } from "@/lib/api";
+import { api, Category, Proposal, Term } from "@/lib/api";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 
@@ -35,6 +35,7 @@ export default function ProposeTerm() {
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
   const editTermId = searchParams.get("editTermId");
+  const reviseProposalId = searchParams.get("reviseProposalId");
   const prefillName = searchParams.get("name");
   const prefillCategory = searchParams.get("category");
   const { toast } = useToast();
@@ -54,6 +55,7 @@ export default function ProposeTerm() {
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [noChangesError, setNoChangesError] = useState(false);
   const [changeNoteError, setChangeNoteError] = useState(false);
+  const [revisionPrefilled, setRevisionPrefilled] = useState(false);
   const formDirtyRef = useRef(false);
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -65,6 +67,15 @@ export default function ProposeTerm() {
     queryFn: () => api.terms.get(editTermId || ""),
     enabled: !!editTermId,
   });
+
+  // Fetch proposal for revision mode
+  const { data: reviseProposal } = useQuery<Proposal>({
+    queryKey: ["/api/proposals", reviseProposalId],
+    queryFn: () => api.proposals.get(reviseProposalId || ""),
+    enabled: !!reviseProposalId,
+  });
+
+  const isRevisionMode = !!reviseProposalId;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -84,13 +95,26 @@ export default function ProposeTerm() {
   const isEditMode = !!editTermId;
 
   useEffect(() => {
-    document.title = isEditMode
-      ? `Suggest changes to: ${editTerm?.name || "..."} — Katalyst Lexicon`
-      : "Propose a New Term — Katalyst Lexicon";
+    if (isRevisionMode) {
+      document.title = `Revise: ${reviseProposal?.termName || "..."} — Katalyst Lexicon`;
+    } else if (isEditMode) {
+      document.title = `Suggest changes to: ${editTerm?.name || "..."} — Katalyst Lexicon`;
+    } else {
+      document.title = "Propose a New Term — Katalyst Lexicon";
+    }
     return () => { document.title = "Katalyst Lexicon"; };
-  }, [isEditMode, editTerm?.name]);
+  }, [isEditMode, isRevisionMode, editTerm?.name, reviseProposal?.termName]);
 
   const hasFormChanges = useMemo(() => {
+    // Revision mode: compare against original proposal values
+    if (isRevisionMode && reviseProposal) {
+      const formChanged = form.formState.isDirty;
+      const arraysChanged =
+        JSON.stringify(examplesGood) !== JSON.stringify(reviseProposal.examplesGood || []) ||
+        JSON.stringify(examplesBad) !== JSON.stringify(reviseProposal.examplesBad || []) ||
+        JSON.stringify(synonyms) !== JSON.stringify(reviseProposal.synonyms || []);
+      return formChanged || arraysChanged;
+    }
     if (!isEditMode || !editTerm) return true;
     const formChanged = form.formState.isDirty;
     const arraysChanged =
@@ -98,7 +122,7 @@ export default function ProposeTerm() {
       JSON.stringify(examplesBad) !== JSON.stringify(editTerm.examplesBad || []) ||
       JSON.stringify(synonyms) !== JSON.stringify(editTerm.synonyms || []);
     return formChanged || arraysChanged;
-  }, [isEditMode, editTerm, form.formState.isDirty, examplesGood, examplesBad, synonyms]);
+  }, [isEditMode, isRevisionMode, editTerm, reviseProposal, form.formState.isDirty, examplesGood, examplesBad, synonyms]);
 
   useEffect(() => {
     if (isEditMode && editTerm && prefilled) {
@@ -151,6 +175,36 @@ export default function ProposeTerm() {
       }
     }
   }, [editTerm, prefilled, form]);
+
+  // Pre-fill form in revision mode
+  useEffect(() => {
+    if (reviseProposal && !revisionPrefilled) {
+      form.reset({
+        name: reviseProposal.termName,
+        category: reviseProposal.category,
+        definition: reviseProposal.definition,
+        why_exists: reviseProposal.whyExists,
+        used_when: reviseProposal.usedWhen || "",
+        not_used_when: reviseProposal.notUsedWhen || "",
+        change_note: "",
+      });
+      setExamplesGood(reviseProposal.examplesGood || []);
+      setExamplesBad(reviseProposal.examplesBad || []);
+      setSynonyms(reviseProposal.synonyms || []);
+      setRevisionPrefilled(true);
+
+      const hasOptionalContent = !!(
+        reviseProposal.usedWhen ||
+        reviseProposal.notUsedWhen ||
+        (reviseProposal.examplesGood && reviseProposal.examplesGood.length > 0) ||
+        (reviseProposal.examplesBad && reviseProposal.examplesBad.length > 0) ||
+        (reviseProposal.synonyms && reviseProposal.synonyms.length > 0)
+      );
+      if (hasOptionalContent) {
+        setDetailOpen(true);
+      }
+    }
+  }, [reviseProposal, revisionPrefilled, form]);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -273,9 +327,53 @@ export default function ProposeTerm() {
     },
   });
 
+  // Resubmit mutation for revision mode
+  const resubmitProposal = useMutation({
+    mutationFn: (values: FormValues) =>
+      api.proposals.resubmit(reviseProposalId!, {
+        termName: values.name,
+        category: values.category,
+        definition: values.definition,
+        whyExists: values.why_exists,
+        usedWhen: values.used_when || "",
+        notUsedWhen: values.not_used_when || "",
+        examplesGood,
+        examplesBad,
+        synonyms,
+        changesSummary: values.change_note || reviseProposal?.changesSummary || "",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
+      formDirtyRef.current = false;
+      toast({
+        title: "Proposal Resubmitted",
+        description: "Your revised proposal has been resubmitted for review",
+        duration: 4000,
+      });
+      setTimeout(() => setLocation("/my-proposals"), 1500);
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong",
+        description: "Failed to resubmit proposal. Please try again.",
+        variant: "destructive",
+        duration: 1000000,
+      });
+    },
+  });
+
   function onSubmit(values: FormValues) {
     setNoChangesError(false);
     setChangeNoteError(false);
+
+    if (isRevisionMode) {
+      if (!hasFormChanges) {
+        setNoChangesError(true);
+        return;
+      }
+      resubmitProposal.mutate(values);
+      return;
+    }
 
     if (isEditMode) {
       if (!hasFormChanges) {
@@ -329,7 +427,7 @@ export default function ProposeTerm() {
           <div
             onClick={(e) => {
               e.preventDefault();
-              navigateWithGuard(isEditMode ? `/term/${editTermId}` : "/");
+              navigateWithGuard(isRevisionMode ? "/my-proposals" : isEditMode ? `/term/${editTermId}` : "/");
             }}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-6"
             data-testid="link-back-home"
@@ -338,20 +436,26 @@ export default function ProposeTerm() {
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                navigateWithGuard(isEditMode ? `/term/${editTermId}` : "/");
+                navigateWithGuard(isRevisionMode ? "/my-proposals" : isEditMode ? `/term/${editTermId}` : "/");
               }
             }}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            {isEditMode ? "Back to term" : "Cancel and go back"}
+            {isRevisionMode ? "Back to My Proposals" : isEditMode ? "Back to term" : "Cancel and go back"}
           </div>
           <h1 className="text-3xl font-header text-primary" data-testid="text-propose-heading">
-            {isEditMode ? `Suggest changes to: ${editTerm?.name || "..."}` : "Propose a New Term"}
+            {isRevisionMode
+              ? `Revise: ${reviseProposal?.termName || "..."}`
+              : isEditMode
+                ? `Suggest changes to: ${editTerm?.name || "..."}`
+                : "Propose a New Term"}
           </h1>
           <p className="text-muted-foreground mt-2">
-            {isEditMode
-              ? "Propose changes to this term. Your edit will be reviewed before being applied."
-              : "Help grow the lexicon by proposing a new term. All proposals are reviewed before being added."}
+            {isRevisionMode
+              ? "Address the reviewer's feedback and resubmit your proposal."
+              : isEditMode
+                ? "Propose changes to this term. Your edit will be reviewed before being applied."
+                : "Help grow the lexicon by proposing a new term. All proposals are reviewed before being added."}
           </p>
         </div>
 
@@ -359,11 +463,21 @@ export default function ProposeTerm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
+              {/* Reviewer feedback banner for revision mode */}
+              {isRevisionMode && reviseProposal?.reviewComment && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg" data-testid="feedback-banner" role="alert">
+                  <p className="font-bold text-amber-800 text-xs uppercase tracking-wide mb-1">Reviewer feedback</p>
+                  <p className="text-amber-900 text-sm">{reviseProposal.reviewComment}</p>
+                </div>
+              )}
+
               {noChangesError && (
-                <Alert variant="destructive" data-testid="alert-no-changes">
+                <Alert variant="destructive" data-testid="no-changes-message">
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    No changes detected — please modify at least one field.
+                    {isRevisionMode
+                      ? "Please address the feedback before resubmitting"
+                      : "No changes detected — please modify at least one field."}
                   </AlertDescription>
                 </Alert>
               )}
@@ -716,16 +830,16 @@ export default function ProposeTerm() {
                   type="submit"
                   size="lg"
                   className="w-full md:w-auto"
-                  disabled={createProposal.isPending || !requiredFieldsFilled}
-                  aria-disabled={createProposal.isPending || !requiredFieldsFilled}
-                  data-testid="button-submit-proposal"
+                  disabled={(isRevisionMode ? resubmitProposal.isPending : createProposal.isPending) || !requiredFieldsFilled}
+                  aria-disabled={(isRevisionMode ? resubmitProposal.isPending : createProposal.isPending) || !requiredFieldsFilled}
+                  data-testid={isRevisionMode ? "resubmit-button" : "button-submit-proposal"}
                 >
-                  {createProposal.isPending ? (
+                  {(isRevisionMode ? resubmitProposal.isPending : createProposal.isPending) ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Save className="mr-2 h-4 w-4" />
                   )}
-                  {isEditMode ? "Submit Edit for Review" : "Submit Proposal"}
+                  {isRevisionMode ? "Resubmit" : isEditMode ? "Submit Edit for Review" : "Submit Proposal"}
                 </Button>
               </div>
 

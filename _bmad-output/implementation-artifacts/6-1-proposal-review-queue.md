@@ -1,6 +1,6 @@
 # Story 6.1: Proposal Review Queue
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -115,7 +115,11 @@ so that I can prioritize which proposals to review first.
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6
 
 ### Completion Notes
+Refined existing ReviewQueue.tsx: fixed queue ordering to oldest-first (ascending submittedAt) in both storage layer and client-side sort, updated empty state copy to "No proposals waiting for review — the team is all caught up!", added data-testid attributes (proposal-card-{id}, empty-state-review-queue), set document.title, added aria-label on proposal cards, added ClipboardCheck icon for empty state. Storage method getProposalsByStatus() now uses asc ordering.
 
 ### File List
+- server/storage.ts (MODIFIED — getProposalsByStatus ordering changed to ascending)
+- client/src/pages/ReviewQueue.tsx (MODIFIED — oldest-first sort, empty state, document.title, data-testid, aria-label)

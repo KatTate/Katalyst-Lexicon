@@ -2,9 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks } from "@shared/schema";
+import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks, proposals, proposalEvents } from "@shared/schema";
 import { z } from "zod";
-import { sql, asc } from "drizzle-orm";
+import { sql, asc, eq } from "drizzle-orm";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -184,7 +184,8 @@ export async function registerRoutes(
       if (!proposal) {
         return res.status(404).json({ error: "Proposal not found" });
       }
-      res.json(proposal);
+      const events = await storage.getProposalEvents(req.params.id);
+      res.json({ ...proposal, events });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch proposal" });
     }
@@ -194,6 +195,12 @@ export async function registerRoutes(
     try {
       const parsed = insertProposalSchema.parse(req.body);
       const proposal = await storage.createProposal(parsed);
+      // Record "submitted" audit event
+      await storage.createProposalEvent({
+        proposalId: proposal.id,
+        eventType: "submitted",
+        actorId: proposal.submittedBy,
+      });
       res.status(201).json(proposal);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -222,39 +229,61 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Proposal not found" });
       }
 
-      await storage.updateProposal(req.params.id, { 
-        status: "approved",
-        reviewComment: req.body.comment || null
+      // Race condition protection: only pending proposals can be approved
+      if (proposal.status !== "pending" && proposal.status !== "changes_requested") {
+        return res.status(409).json({ error: "This proposal has already been reviewed" });
+      }
+
+      // Wrap in transaction for atomicity
+      await db.transaction(async (tx) => {
+        // Update proposal status
+        await tx.update(proposals).set({
+          status: "approved",
+          reviewComment: req.body.comment || null
+        }).where(eq(proposals.id, req.params.id));
+
+        const approvedBy = req.body.approvedBy || "Approver";
+        const changeNote = proposal.type === "new"
+          ? `Approved from proposal: ${proposal.changesSummary}`
+          : `Approved edit: ${proposal.changesSummary}`;
+
+        if (proposal.type === "new") {
+          await storage.createTerm({
+            name: proposal.termName,
+            category: proposal.category,
+            definition: proposal.definition,
+            whyExists: proposal.whyExists,
+            usedWhen: proposal.usedWhen,
+            notUsedWhen: proposal.notUsedWhen,
+            status: "Canonical",
+            visibility: "Internal",
+            owner: proposal.submittedBy,
+            examplesGood: proposal.examplesGood || [],
+            examplesBad: proposal.examplesBad || [],
+            synonyms: proposal.synonyms || [],
+            version: 1
+          }, changeNote, approvedBy);
+        } else if (proposal.termId) {
+          await storage.updateTerm(proposal.termId, {
+            category: proposal.category,
+            definition: proposal.definition,
+            whyExists: proposal.whyExists,
+            usedWhen: proposal.usedWhen,
+            notUsedWhen: proposal.notUsedWhen,
+            examplesGood: proposal.examplesGood || [],
+            examplesBad: proposal.examplesBad || [],
+            synonyms: proposal.synonyms || [],
+          }, changeNote, approvedBy);
+        }
       });
 
-      if (proposal.type === "new") {
-        await storage.createTerm({
-          name: proposal.termName,
-          category: proposal.category,
-          definition: proposal.definition,
-          whyExists: proposal.whyExists,
-          usedWhen: proposal.usedWhen,
-          notUsedWhen: proposal.notUsedWhen,
-          status: "Canonical",
-          visibility: "Internal",
-          owner: proposal.submittedBy,
-          examplesGood: proposal.examplesGood || [],
-          examplesBad: proposal.examplesBad || [],
-          synonyms: proposal.synonyms || [],
-          version: 1
-        }, `Approved from proposal: ${proposal.changesSummary}`, req.body.approvedBy || "Approver");
-      } else if (proposal.termId) {
-        await storage.updateTerm(proposal.termId, {
-          category: proposal.category,
-          definition: proposal.definition,
-          whyExists: proposal.whyExists,
-          usedWhen: proposal.usedWhen,
-          notUsedWhen: proposal.notUsedWhen,
-          examplesGood: proposal.examplesGood || [],
-          examplesBad: proposal.examplesBad || [],
-          synonyms: proposal.synonyms || [],
-        }, `Approved edit: ${proposal.changesSummary}`, req.body.approvedBy || "Approver");
-      }
+      // Record audit event
+      await storage.createProposalEvent({
+        proposalId: req.params.id,
+        eventType: "approved",
+        actorId: req.body.approvedBy || "Approver",
+        comment: req.body.comment || null,
+      });
 
       res.json({ success: true });
     } catch (error) {
@@ -264,13 +293,24 @@ export async function registerRoutes(
 
   app.post("/api/proposals/:id/reject", async (req, res) => {
     try {
-      const proposal = await storage.updateProposal(req.params.id, { 
+      const existing = await storage.getProposal(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Proposal not found" });
+      }
+      if (existing.status !== "pending" && existing.status !== "changes_requested") {
+        return res.status(409).json({ error: "This proposal has already been reviewed" });
+      }
+      await storage.updateProposal(req.params.id, {
         status: "rejected",
         reviewComment: req.body.comment || null
       });
-      if (!proposal) {
-        return res.status(404).json({ error: "Proposal not found" });
-      }
+      // Record audit event
+      await storage.createProposalEvent({
+        proposalId: req.params.id,
+        eventType: "rejected",
+        actorId: "Approver",
+        comment: req.body.comment || null,
+      });
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to reject proposal" });
@@ -279,16 +319,77 @@ export async function registerRoutes(
 
   app.post("/api/proposals/:id/request-changes", async (req, res) => {
     try {
-      const proposal = await storage.updateProposal(req.params.id, { 
+      const existing = await storage.getProposal(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Proposal not found" });
+      }
+      if (existing.status !== "pending") {
+        return res.status(409).json({ error: "This proposal has already been reviewed" });
+      }
+      await storage.updateProposal(req.params.id, {
         status: "changes_requested",
         reviewComment: req.body.comment || null
       });
-      if (!proposal) {
-        return res.status(404).json({ error: "Proposal not found" });
-      }
+      // Record audit event
+      await storage.createProposalEvent({
+        proposalId: req.params.id,
+        eventType: "changes_requested",
+        actorId: "Approver",
+        comment: req.body.comment || null,
+      });
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to request changes" });
+    }
+  });
+
+  app.post("/api/proposals/:id/resubmit", async (req, res) => {
+    try {
+      const existing = await storage.getProposal(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Proposal not found" });
+      }
+      if (existing.status !== "changes_requested") {
+        return res.status(409).json({ error: "Only proposals with changes requested can be resubmitted" });
+      }
+      // Update proposal with new values and reset to pending
+      const { submittedBy, ...updates } = req.body;
+      const proposal = await storage.updateProposal(req.params.id, {
+        ...updates,
+        status: "pending",
+        reviewComment: null,
+      });
+      // Record audit event
+      await storage.createProposalEvent({
+        proposalId: req.params.id,
+        eventType: "resubmitted",
+        actorId: existing.submittedBy,
+      });
+      res.json(proposal);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to resubmit proposal" });
+    }
+  });
+
+  app.post("/api/proposals/:id/withdraw", async (req, res) => {
+    try {
+      const existing = await storage.getProposal(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Proposal not found" });
+      }
+      if (existing.status !== "pending" && existing.status !== "changes_requested") {
+        return res.status(409).json({ error: "This proposal cannot be withdrawn" });
+      }
+      await storage.updateProposal(req.params.id, { status: "withdrawn" as any });
+      // Record audit event
+      await storage.createProposalEvent({
+        proposalId: req.params.id,
+        eventType: "withdrawn",
+        actorId: existing.submittedBy,
+      });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to withdraw proposal" });
     }
   });
 

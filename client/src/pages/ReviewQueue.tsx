@@ -6,14 +6,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  CheckCircle2, XCircle, MessageSquare, Clock, Eye, 
-  ChevronRight, ArrowRight, User, Loader2
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  CheckCircle2, XCircle, MessageSquare, Clock, Eye,
+  ChevronRight, User, Loader2, ClipboardCheck
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
-import { api, Proposal, Term } from "@/lib/api";
+import { api, Proposal, ProposalEvent, Term } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 function DiffField({ label, oldValue, newValue, testId }: { label: string; oldValue: string; newValue: string; testId: string }) {
@@ -108,6 +112,10 @@ export default function ReviewQueue() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    document.title = "Review Queue — Katalyst Lexicon";
+  }, []);
+
   const { data: allProposals = [], isLoading } = useQuery<Proposal[]>({
     queryKey: ["/api/proposals"],
   });
@@ -118,9 +126,21 @@ export default function ReviewQueue() {
     enabled: !!selectedItem?.termId && selectedItem?.type === "edit",
   });
 
-  const proposals = activeTab === "all" 
-    ? allProposals
-    : allProposals.filter(p => {
+  // Fetch full proposal detail (with events) when selected
+  const { data: proposalDetail } = useQuery<Proposal & { events?: ProposalEvent[] }>({
+    queryKey: ["/api/proposals", selectedItem?.id],
+    queryFn: () => api.proposals.get(selectedItem?.id || ""),
+    enabled: !!selectedItem?.id,
+  });
+
+  // Sort oldest-first so nothing gets buried in the review queue
+  const sortedProposals = [...allProposals].sort(
+    (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+  );
+
+  const proposals = activeTab === "all"
+    ? sortedProposals
+    : sortedProposals.filter(p => {
         if (activeTab === "pending") return p.status === "pending";
         if (activeTab === "review") return p.status === "in_review";
         if (activeTab === "changes") return p.status === "changes_requested";
@@ -131,17 +151,33 @@ export default function ReviewQueue() {
   const inReviewCount = allProposals.filter(i => i.status === 'in_review').length;
   const changesCount = allProposals.filter(i => i.status === 'changes_requested').length;
 
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  const handle409Error = (error: unknown) => {
+    // Check for 409 Conflict (race condition)
+    const is409 = error instanceof Error && error.message?.includes("409");
+    if (is409) {
+      toast({ title: "Already reviewed", description: "This proposal has already been reviewed", variant: "destructive" });
+      queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
+      setSelectedItem(null);
+    }
+    return is409;
+  };
+
   const approveMutation = useMutation({
     mutationFn: ({ id, comment }: { id: string; comment?: string }) => api.proposals.approve(id, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/terms"] });
-      toast({ title: "Approved", description: "The proposal has been approved and the term is now canonical." });
+      toast({ title: "Proposal approved", description: "Proposal approved — term has been published" });
       setSelectedItem(null);
       setComment("");
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to approve proposal.", variant: "destructive" });
+    onError: (error) => {
+      if (!handle409Error(error)) {
+        toast({ title: "Error", description: "Failed to approve proposal.", variant: "destructive" });
+      }
     },
   });
 
@@ -149,12 +185,14 @@ export default function ReviewQueue() {
     mutationFn: ({ id, comment }: { id: string; comment?: string }) => api.proposals.reject(id, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
-      toast({ title: "Rejected", description: "The proposal has been rejected." });
+      toast({ title: "Proposal rejected", description: "Proposal rejected" });
       setSelectedItem(null);
       setComment("");
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to reject proposal.", variant: "destructive" });
+    onError: (error) => {
+      if (!handle409Error(error)) {
+        toast({ title: "Error", description: "Failed to reject proposal.", variant: "destructive" });
+      }
     },
   });
 
@@ -162,12 +200,14 @@ export default function ReviewQueue() {
     mutationFn: ({ id, comment }: { id: string; comment?: string }) => api.proposals.requestChanges(id, comment),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
-      toast({ title: "Changes Requested", description: "The submitter has been notified to make changes." });
+      toast({ title: "Feedback sent", description: "Feedback sent to the proposer" });
       setSelectedItem(null);
       setComment("");
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to request changes.", variant: "destructive" });
+    onError: (error) => {
+      if (!handle409Error(error)) {
+        toast({ title: "Error", description: "Failed to request changes.", variant: "destructive" });
+      }
     },
   });
 
@@ -178,6 +218,7 @@ export default function ReviewQueue() {
       'changes_requested': "bg-destructive/10 text-destructive border-destructive/20",
       'approved': "bg-primary/10 text-primary border-primary/20",
       'rejected': "bg-muted text-muted-foreground border-border",
+      'withdrawn': "bg-gray-100 text-gray-600 border-gray-300",
     };
     const labels: Record<string, string> = {
       'pending': "Pending",
@@ -185,6 +226,7 @@ export default function ReviewQueue() {
       'changes_requested': "Changes Requested",
       'approved': "Approved",
       'rejected': "Rejected",
+      'withdrawn': "Withdrawn",
     };
     return (
       <Badge variant="outline" className={cn("text-[10px] font-bold uppercase tracking-wide", styles[status])}>
@@ -234,7 +276,14 @@ export default function ReviewQueue() {
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : proposals.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No proposals in this category</p>
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center" data-testid="empty-state-review-queue">
+                  <ClipboardCheck className="h-12 w-12 text-primary/30 mb-4" />
+                  <p className="text-sm text-muted-foreground">
+                    {activeTab === "all"
+                      ? "No proposals waiting for review — the team is all caught up!"
+                      : "No proposals in this category"}
+                  </p>
+                </div>
               ) : (
                 proposals.map(item => (
                   <div 
@@ -246,7 +295,8 @@ export default function ReviewQueue() {
                         ? "border-primary bg-primary/5 shadow-sm" 
                         : "border-border bg-white hover:border-primary/50"
                     )}
-                    data-testid={`proposal-item-${item.id}`}
+                    data-testid={`proposal-card-${item.id}`}
+                    aria-label={`${item.type === 'new' ? 'New' : 'Edit'} proposal: ${item.termName}`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -472,6 +522,71 @@ export default function ReviewQueue() {
                 </CardContent>
               </Card>
 
+              {/* Audit Trail */}
+              {(() => {
+                const events = proposalDetail?.events || [];
+                // Fallback: if no events, show derived "Submitted" event
+                const displayEvents = events.length > 0 ? events : [{
+                  id: "fallback",
+                  proposalId: selectedItem.id,
+                  eventType: "submitted" as const,
+                  actorId: selectedItem.submittedBy,
+                  comment: null,
+                  timestamp: selectedItem.submittedAt,
+                }];
+
+                const eventStyles: Record<string, { icon: string; color: string; label: string }> = {
+                  submitted: { icon: "blue", color: "text-blue-600 bg-blue-100 border-blue-300", label: "Submitted" },
+                  changes_requested: { icon: "amber", color: "text-amber-600 bg-amber-100 border-amber-300", label: "Changes requested" },
+                  resubmitted: { icon: "blue", color: "text-blue-600 bg-blue-100 border-blue-300", label: "Resubmitted" },
+                  approved: { icon: "green", color: "text-green-600 bg-green-100 border-green-300", label: "Approved" },
+                  rejected: { icon: "red", color: "text-red-600 bg-red-100 border-red-300", label: "Rejected" },
+                  withdrawn: { icon: "gray", color: "text-gray-600 bg-gray-100 border-gray-300", label: "Withdrawn" },
+                };
+
+                return (
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-header">Audit Trail</CardTitle>
+                      <CardDescription>History of actions on this proposal</CardDescription>
+                    </CardHeader>
+                    <CardContent data-testid="audit-trail-section">
+                      <div className="relative">
+                        {/* Vertical timeline line */}
+                        {displayEvents.length > 1 && (
+                          <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-border" />
+                        )}
+                        <div className="space-y-4">
+                          {displayEvents.map((event, index) => {
+                            const style = eventStyles[event.eventType] || eventStyles.submitted;
+                            return (
+                              <div key={event.id} className="flex gap-3 relative" data-testid={`audit-event-${index}`}>
+                                <div className={cn("h-6 w-6 rounded-full border flex-shrink-0 z-10 flex items-center justify-center", style.color)}>
+                                  <div className="h-2 w-2 rounded-full bg-current" />
+                                </div>
+                                <div className="flex-1 min-w-0 pb-1">
+                                  <p className="text-sm font-medium text-kat-charcoal">
+                                    {style.label} by {event.actorId}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatDate(event.timestamp)}
+                                  </p>
+                                  {event.comment && (
+                                    <p className="text-sm text-muted-foreground mt-1 italic">
+                                      "{event.comment}"
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
               {/* Review Actions */}
               {selectedItem.status !== 'approved' && selectedItem.status !== 'rejected' && (
                 <Card className="border-primary/20 bg-white shadow-sm">
@@ -480,39 +595,51 @@ export default function ReviewQueue() {
                     <CardDescription>Add a comment and take action on this proposal</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Textarea 
-                      placeholder="Add a review comment (optional)..."
+                    <Textarea
+                      placeholder="Add a review comment..."
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       className="min-h-[100px]"
-                      data-testid="input-review-comment"
+                      data-testid="review-comment-textarea"
                     />
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <Button 
+                      <Button
                         className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold gap-2"
-                        onClick={() => approveMutation.mutate({ id: selectedItem.id, comment })}
+                        onClick={() => setApproveDialogOpen(true)}
                         disabled={isPending}
-                        data-testid="button-approve"
+                        data-testid="approve-button"
                       >
                         {approveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                        Approve & Publish
+                        Approve
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1 border-kat-warning text-yellow-800 hover:bg-kat-warning/10 font-bold gap-2"
-                        onClick={() => requestChangesMutation.mutate({ id: selectedItem.id, comment })}
+                        onClick={() => {
+                          if (!comment.trim()) {
+                            toast({ title: "Feedback required", description: "Please add feedback explaining what changes are needed.", variant: "destructive" });
+                            return;
+                          }
+                          requestChangesMutation.mutate({ id: selectedItem.id, comment });
+                        }}
                         disabled={isPending}
-                        data-testid="button-request-changes"
+                        data-testid="request-changes-button"
                       >
                         {requestChangesMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
                         Request Changes
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1 border-destructive text-destructive hover:bg-destructive/10 font-bold gap-2"
-                        onClick={() => rejectMutation.mutate({ id: selectedItem.id, comment })}
+                        onClick={() => {
+                          if (!comment.trim()) {
+                            toast({ title: "Reason required", description: "Please add a reason for rejecting this proposal.", variant: "destructive" });
+                            return;
+                          }
+                          rejectMutation.mutate({ id: selectedItem.id, comment });
+                        }}
                         disabled={isPending}
-                        data-testid="button-reject"
+                        data-testid="reject-button"
                       >
                         {rejectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
                         Reject
@@ -521,6 +648,32 @@ export default function ReviewQueue() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Approval Confirmation Dialog — Enter does NOT confirm (AR15) */}
+              <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+                <AlertDialogContent data-testid="approval-confirmation-dialog" onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Approve this proposal?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will {selectedItem?.type === "edit" ? "update the existing term with the proposed changes" : "create a new canonical term"}. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel ref={cancelRef} autoFocus>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-primary hover:bg-primary/90"
+                      onClick={() => {
+                        if (selectedItem) {
+                          approveMutation.mutate({ id: selectedItem.id, comment });
+                        }
+                      }}
+                      data-testid="confirm-approve-button"
+                    >
+                      Confirm Approve
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
               {(selectedItem.status === 'approved' || selectedItem.status === 'rejected') && (
                 <Card className="border-muted bg-muted/20">
@@ -535,8 +688,9 @@ export default function ReviewQueue() {
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              Select an item from the queue to review
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+              <ClipboardCheck className="h-8 w-8 text-muted-foreground/40" />
+              <p>Select a proposal from the queue to review</p>
             </div>
           )}
         </div>

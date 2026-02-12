@@ -79,10 +79,10 @@ development_status:
 
   # Epic 6: Review & Approve (depends on Epic 5 - needs proposals to review)
   epic-6: in-progress
-  6-1-proposal-review-queue: ready-for-dev
-  6-2-proposal-review-and-decision: ready-for-dev
-  6-3-proposal-audit-trail: ready-for-dev
-  6-4-proposer-revision-flow: ready-for-dev
+  6-1-proposal-review-queue: review
+  6-2-proposal-review-and-decision: review
+  6-3-proposal-audit-trail: review
+  6-4-proposer-revision-flow: review
   epic-6-retrospective: optional
 
   # Epic 7: Administration & Governance (no dependencies - can run in parallel)

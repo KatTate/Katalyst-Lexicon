@@ -1,6 +1,6 @@
 # Story 6.2: Proposal Review and Decision
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -132,7 +132,11 @@ so that I can make an informed decision and provide feedback to the contributor.
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6
 
 ### Completion Notes
+Added AlertDialog confirmation for approval with AR15 protection (Enter does NOT confirm, Cancel autoFocused). Reject and Request Changes now require comment text — validation toast shown if empty. All three decision endpoints now return 409 Conflict when proposal has already been reviewed (race condition protection). Approve endpoint wrapped in db.transaction() for atomicity. Toast messages updated to match spec: "Proposal approved — term has been published", "Proposal rejected", "Feedback sent to the proposer". Client-side 409 error handler shows "This proposal has already been reviewed" and refreshes data.
 
 ### File List
+- server/routes.ts (MODIFIED — approve wrapped in transaction, 409 protection on approve/reject/request-changes)
+- client/src/pages/ReviewQueue.tsx (MODIFIED — AlertDialog for approval, required comments for reject/request-changes, 409 error handling, updated toast messages, data-testid updates)

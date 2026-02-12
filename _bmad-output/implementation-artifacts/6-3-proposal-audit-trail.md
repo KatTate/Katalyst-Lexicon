@@ -1,6 +1,6 @@
 # Story 6.3: Proposal Audit Trail
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -111,7 +111,14 @@ so that I can understand who reviewed it and what feedback was given.
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6
 
 ### Completion Notes
+Created proposalEvents table in shared/schema.ts with proposalEventTypeEnum (submitted, changes_requested, resubmitted, approved, rejected, withdrawn). Added createProposalEvent() and getProposalEvents() to IStorage interface and DatabaseStorage. Modified all proposal action endpoints (create, approve, reject, request-changes) to record audit events. GET /api/proposals/:id now includes events array in response. Added audit trail UI section to ReviewQueue detail panel with chronological timeline, color-coded event types, actor names, timestamps, and comments. Fallback handles proposals without events by deriving a "Submitted" entry from proposal fields.
 
 ### File List
+- shared/schema.ts (MODIFIED — added proposalEventTypeEnum, proposalEvents table, insertProposalEventSchema, types)
+- server/storage.ts (MODIFIED — added createProposalEvent, getProposalEvents to interface and implementation)
+- server/routes.ts (MODIFIED — record events on create/approve/reject/request-changes, include events in GET :id)
+- client/src/lib/api.ts (MODIFIED — added ProposalEvent interface, events field on Proposal, "withdrawn" status)
+- client/src/pages/ReviewQueue.tsx (MODIFIED — added audit trail section with timeline UI, proposalDetail query)

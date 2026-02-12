@@ -1,6 +1,6 @@
 # Story 6.4: Proposer Revision Flow
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -141,7 +141,17 @@ so that I can address the reviewer's concerns without starting a new proposal fr
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.6
 
 ### Completion Notes
+Added "withdrawn" to proposalStatusEnum. Created POST /api/proposals/:id/resubmit (validates changes_requested status, updates fields, resets to pending, records resubmitted event) and POST /api/proposals/:id/withdraw (validates status, sets withdrawn, records event). Created MyProposals page showing user's proposals with status badges, feedback display, revise button for changes_requested, withdraw button with confirmation dialog (Enter does NOT confirm). Added revision mode to ProposeTerm via ?reviseProposalId= URL param — fetches proposal, pre-fills form, shows feedback banner, resubmit button with change detection ("Please address the feedback before resubmitting"), navigates to /my-proposals on success. Added "My Proposals" to sidebar navigation and /my-proposals route to App.tsx.
 
 ### File List
+- shared/schema.ts (MODIFIED — added "withdrawn" to proposalStatusEnum)
+- server/routes.ts (MODIFIED — added resubmit and withdraw endpoints with audit events)
+- client/src/lib/api.ts (MODIFIED — added resubmit and withdraw API methods)
+- client/src/pages/MyProposals.tsx (CREATED — My Proposals page with proposal list, status badges, feedback, withdraw)
+- client/src/pages/ProposeTerm.tsx (MODIFIED — revision mode: proposal query, pre-fill, feedback banner, resubmit mutation, change detection)
+- client/src/App.tsx (MODIFIED — registered /my-proposals route)
+- client/src/components/Layout.tsx (MODIFIED — added My Proposals nav item with FileEdit icon)
+- client/src/pages/ReviewQueue.tsx (MODIFIED — added "withdrawn" to StatusBadge styles/labels)
