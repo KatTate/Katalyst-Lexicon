@@ -1,6 +1,6 @@
 # Story 5.2: Propose Edits to Existing Terms
 
-Status: done
+Status: ready-for-dev
 
 ## Story
 

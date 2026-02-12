@@ -1,6 +1,6 @@
 # Story 5.1: Proposal Form for New Terms
 
-Status: done
+Status: ready-for-dev
 
 ## Story
 
