@@ -1,6 +1,6 @@
 # Story 6.3: Proposal Audit Trail
 
-Status: review
+Status: done
 
 ## Story
 

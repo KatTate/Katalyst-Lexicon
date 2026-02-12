@@ -257,11 +257,15 @@ export default function ReviewQueue() {
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffHours < 1) return "Just now";
     if (diffHours < 24) return `${diffHours} hours ago`;
     if (diffDays === 1) return "1 day ago";
     return `${diffDays} days ago`;
+  };
+
+  const formatAbsoluteDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString();
   };
 
   const isPending = approveMutation.isPending || rejectMutation.isPending || requestChangesMutation.isPending;
@@ -292,7 +296,7 @@ export default function ReviewQueue() {
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : proposals.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4 text-center" data-testid="empty-state-review-queue">
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center" data-testid="empty-state-review-queue" aria-live="polite">
                   <ClipboardCheck className="h-12 w-12 text-primary/30 mb-4" />
                   <p className="text-sm text-muted-foreground">
                     {activeTab === "all"
@@ -584,7 +588,7 @@ export default function ReviewQueue() {
                                   <p className="text-sm font-medium text-kat-charcoal">
                                     {style.label} by {event.actorId}
                                   </p>
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-xs text-muted-foreground" title={formatAbsoluteDate(event.timestamp)}>
                                     {formatDate(event.timestamp)}
                                   </p>
                                   {event.comment && (

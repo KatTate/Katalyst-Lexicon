@@ -1,6 +1,6 @@
 # Story 6.4: Proposer Revision Flow
 
-Status: review
+Status: done
 
 ## Story
 

@@ -1,6 +1,6 @@
 # Story 6.1: Proposal Review Queue
 
-Status: review
+Status: done
 
 ## Story
 

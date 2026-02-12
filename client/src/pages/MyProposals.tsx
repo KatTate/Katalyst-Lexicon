@@ -28,9 +28,9 @@ export default function MyProposals() {
     queryKey: ["/api/proposals"],
   });
 
-  // Filter to current user's proposals (since auth is not wired, all proposals are "Current User")
+  // Filter to current user's proposals (since auth is not wired, mock user is "Sarah Jenkins")
   const myProposals = allProposals
-    .filter(p => p.submittedBy === "Current User")
+    .filter(p => p.submittedBy === "Sarah Jenkins")
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
 
   const withdrawMutation = useMutation({

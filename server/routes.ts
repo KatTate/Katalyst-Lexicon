@@ -403,8 +403,20 @@ export async function registerRoutes(
       if (existing.status !== "changes_requested") {
         return res.status(409).json({ error: "Only proposals with changes requested can be resubmitted" });
       }
-      // Update proposal with new values and reset to pending
-      const { submittedBy, ...updates } = req.body;
+      // Validate and extract only permitted proposal fields
+      const resubmitSchema = insertProposalSchema.partial().pick({
+        termName: true,
+        category: true,
+        definition: true,
+        whyExists: true,
+        usedWhen: true,
+        notUsedWhen: true,
+        examplesGood: true,
+        examplesBad: true,
+        synonyms: true,
+        changesSummary: true,
+      });
+      const updates = resubmitSchema.parse(req.body);
       const proposal = await storage.updateProposal(req.params.id, {
         ...updates,
         status: "pending",
@@ -435,7 +447,7 @@ export async function registerRoutes(
       if (existing.status !== "pending" && existing.status !== "changes_requested") {
         return res.status(409).json({ error: "This proposal cannot be withdrawn" });
       }
-      await storage.updateProposal(req.params.id, { status: "withdrawn" as any });
+      await storage.updateProposal(req.params.id, { status: "withdrawn" });
       // Record audit event (non-fatal)
       try {
         await storage.createProposalEvent({

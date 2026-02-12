@@ -1,6 +1,6 @@
 # Story 6.2: Proposal Review and Decision
 
-Status: review
+Status: done
 
 ## Story
 
