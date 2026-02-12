@@ -83,6 +83,13 @@ export default function ProposeTerm() {
   const watchedValues = form.watch();
   const isEditMode = !!editTermId;
 
+  useEffect(() => {
+    document.title = isEditMode
+      ? `Suggest changes to: ${editTerm?.name || "..."} — Katalyst Lexicon`
+      : "Propose a New Term — Katalyst Lexicon";
+    return () => { document.title = "Katalyst Lexicon"; };
+  }, [isEditMode, editTerm?.name]);
+
   const hasFormChanges = useMemo(() => {
     if (!isEditMode || !editTerm) return true;
     const formChanged = form.formState.isDirty;
@@ -709,8 +716,8 @@ export default function ProposeTerm() {
                   type="submit"
                   size="lg"
                   className="w-full md:w-auto"
-                  disabled={createProposal.isPending || (!isEditMode && !requiredFieldsFilled)}
-                  aria-disabled={createProposal.isPending || (!isEditMode && !requiredFieldsFilled)}
+                  disabled={createProposal.isPending || !requiredFieldsFilled}
+                  aria-disabled={createProposal.isPending || !requiredFieldsFilled}
                   data-testid="button-submit-proposal"
                 >
                   {createProposal.isPending ? (
