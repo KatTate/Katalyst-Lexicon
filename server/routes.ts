@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks, proposals, proposalEvents } from "@shared/schema";
 import { z } from "zod";
-import { sql, asc, eq } from "drizzle-orm";
+import { sql, asc, eq, and, or as drizzleOr } from "drizzle-orm";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -195,12 +195,16 @@ export async function registerRoutes(
     try {
       const parsed = insertProposalSchema.parse(req.body);
       const proposal = await storage.createProposal(parsed);
-      // Record "submitted" audit event
-      await storage.createProposalEvent({
-        proposalId: proposal.id,
-        eventType: "submitted",
-        actorId: proposal.submittedBy,
-      });
+      // Record "submitted" audit event (non-fatal — proposal is the primary write)
+      try {
+        await storage.createProposalEvent({
+          proposalId: proposal.id,
+          eventType: "submitted",
+          actorId: proposal.submittedBy,
+        });
+      } catch {
+        // Audit event failure should not fail the proposal creation
+      }
       res.status(201).json(proposal);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -234,13 +238,27 @@ export async function registerRoutes(
         return res.status(409).json({ error: "This proposal has already been reviewed" });
       }
 
-      // Wrap in transaction for atomicity
-      await db.transaction(async (tx) => {
-        // Update proposal status
-        await tx.update(proposals).set({
+      // Wrap in transaction for atomicity with conditional status check
+      // to prevent race conditions between concurrent reviewers
+      const result = await db.transaction(async (tx) => {
+        // Conditionally update only if status is still pending/changes_requested
+        const updateResult = await tx.update(proposals).set({
           status: "approved",
           reviewComment: req.body.comment || null
-        }).where(eq(proposals.id, req.params.id));
+        }).where(
+          and(
+            eq(proposals.id, req.params.id),
+            drizzleOr(
+              eq(proposals.status, "pending"),
+              eq(proposals.status, "changes_requested")
+            )
+          )
+        );
+
+        // If no rows affected, another reviewer got there first
+        if ((updateResult.rowCount ?? 0) === 0) {
+          return { conflict: true };
+        }
 
         const approvedBy = req.body.approvedBy || "Approver";
         const changeNote = proposal.type === "new"
@@ -275,15 +293,25 @@ export async function registerRoutes(
             synonyms: proposal.synonyms || [],
           }, changeNote, approvedBy);
         }
+
+        return { conflict: false };
       });
 
-      // Record audit event
-      await storage.createProposalEvent({
-        proposalId: req.params.id,
-        eventType: "approved",
-        actorId: req.body.approvedBy || "Approver",
-        comment: req.body.comment || null,
-      });
+      if (result.conflict) {
+        return res.status(409).json({ error: "This proposal has already been reviewed" });
+      }
+
+      // Record audit event (non-fatal — proposal update is the primary write)
+      try {
+        await storage.createProposalEvent({
+          proposalId: req.params.id,
+          eventType: "approved",
+          actorId: req.body.approvedBy || "Approver",
+          comment: req.body.comment || null,
+        });
+      } catch {
+        // Audit event failure should not fail the approval
+      }
 
       res.json({ success: true });
     } catch (error) {
@@ -304,13 +332,17 @@ export async function registerRoutes(
         status: "rejected",
         reviewComment: req.body.comment || null
       });
-      // Record audit event
-      await storage.createProposalEvent({
-        proposalId: req.params.id,
-        eventType: "rejected",
-        actorId: "Approver",
-        comment: req.body.comment || null,
-      });
+      // Record audit event (non-fatal)
+      try {
+        await storage.createProposalEvent({
+          proposalId: req.params.id,
+          eventType: "rejected",
+          actorId: "Approver",
+          comment: req.body.comment || null,
+        });
+      } catch {
+        // Audit event failure should not fail the rejection
+      }
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to reject proposal" });
@@ -330,13 +362,17 @@ export async function registerRoutes(
         status: "changes_requested",
         reviewComment: req.body.comment || null
       });
-      // Record audit event
-      await storage.createProposalEvent({
-        proposalId: req.params.id,
-        eventType: "changes_requested",
-        actorId: "Approver",
-        comment: req.body.comment || null,
-      });
+      // Record audit event (non-fatal)
+      try {
+        await storage.createProposalEvent({
+          proposalId: req.params.id,
+          eventType: "changes_requested",
+          actorId: "Approver",
+          comment: req.body.comment || null,
+        });
+      } catch {
+        // Audit event failure should not fail the request-changes action
+      }
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to request changes" });
@@ -359,12 +395,16 @@ export async function registerRoutes(
         status: "pending",
         reviewComment: null,
       });
-      // Record audit event
-      await storage.createProposalEvent({
-        proposalId: req.params.id,
-        eventType: "resubmitted",
-        actorId: existing.submittedBy,
-      });
+      // Record audit event (non-fatal)
+      try {
+        await storage.createProposalEvent({
+          proposalId: req.params.id,
+          eventType: "resubmitted",
+          actorId: existing.submittedBy,
+        });
+      } catch {
+        // Audit event failure should not fail the resubmission
+      }
       res.json(proposal);
     } catch (error) {
       res.status(500).json({ error: "Failed to resubmit proposal" });
@@ -381,12 +421,16 @@ export async function registerRoutes(
         return res.status(409).json({ error: "This proposal cannot be withdrawn" });
       }
       await storage.updateProposal(req.params.id, { status: "withdrawn" as any });
-      // Record audit event
-      await storage.createProposalEvent({
-        proposalId: req.params.id,
-        eventType: "withdrawn",
-        actorId: existing.submittedBy,
-      });
+      // Record audit event (non-fatal)
+      try {
+        await storage.createProposalEvent({
+          proposalId: req.params.id,
+          eventType: "withdrawn",
+          actorId: existing.submittedBy,
+        });
+      } catch {
+        // Audit event failure should not fail the withdrawal
+      }
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to withdraw proposal" });

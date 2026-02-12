@@ -132,7 +132,15 @@ export default function ProposeTerm() {
         JSON.stringify(examplesBad) !== JSON.stringify(editTerm.examplesBad || []) ||
         JSON.stringify(synonyms) !== JSON.stringify(editTerm.synonyms || []);
       formDirtyRef.current = hasText || arraysChanged;
-    } else {
+    } else if (isRevisionMode && reviseProposal && revisionPrefilled) {
+      // Revision mode: compare against original proposal values so pre-fill doesn't trigger dirty
+      const hasText = form.formState.isDirty;
+      const arraysChanged =
+        JSON.stringify(examplesGood) !== JSON.stringify(reviseProposal.examplesGood || []) ||
+        JSON.stringify(examplesBad) !== JSON.stringify(reviseProposal.examplesBad || []) ||
+        JSON.stringify(synonyms) !== JSON.stringify(reviseProposal.synonyms || []);
+      formDirtyRef.current = hasText || arraysChanged;
+    } else if (!isRevisionMode) {
       const hasText = !!(
         watchedValues.name ||
         watchedValues.category ||
@@ -145,7 +153,7 @@ export default function ProposeTerm() {
       const hasArrays = examplesGood.length > 0 || examplesBad.length > 0 || synonyms.length > 0;
       formDirtyRef.current = hasText || hasArrays;
     }
-  }, [watchedValues, examplesGood, examplesBad, synonyms, isEditMode, editTerm, prefilled, form.formState.isDirty]);
+  }, [watchedValues, examplesGood, examplesBad, synonyms, isEditMode, isRevisionMode, editTerm, reviseProposal, prefilled, revisionPrefilled, form.formState.isDirty]);
 
   useEffect(() => {
     if (editTerm && !prefilled) {
