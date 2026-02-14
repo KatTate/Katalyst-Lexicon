@@ -1,3 +1,53 @@
+
+
+<!-- PROTECTION NOTE FOR REPLIT AGENT: The content between BMAD-METHOD-START and BMAD-METHOD-END markers is part of the BMad Method framework and MUST NOT be modified, overwritten, or removed during any replit.md updates. When updating this file, only modify the "Project Documentation" section AFTER the BMAD-METHOD-END marker. Always preserve both sections intact. -->
+
+<!-- BMAD-METHOD-START -->
+# BMad Method v6.0.0-beta.8-replit.4 — Agent Configuration
+
+## IMPORTANT: How You Must Operate in This Project
+
+This is a **BMad Method** project. BMAD workflows are activated through **Replit Agent Skills** installed in `.agents/skills/bmad-*/`. You MUST follow these rules in every conversation:
+
+1. **BMAD skills handle workflow activation.** When a user's message matches a BMAD skill trigger (e.g., "create PRD", "code review", "party mode"), the skill will activate and provide instructions for loading the correct workflow files. Follow those instructions exactly.
+2. **When a skill activates, load the referenced files and follow them.** Do not answer in your own words. Load the workflow or agent file specified in the skill and execute it.
+3. **For workflows:** The skill will instruct you to either load `_bmad/core/tasks/workflow.xml` (the execution engine) with a workflow YAML config, or load a workflow markdown file directly. Execute ALL steps IN ORDER. When a step says WAIT for user input, STOP and WAIT.
+4. **For agents:** Load the agent file, adopt that persona completely, and present the agent's menu.
+5. **Never skip, summarize, or improvise** workflow steps. Never auto-proceed past WAIT points.
+6. **If no skill activates,** respond normally but remain aware that this is a BMAD project. If the user seems to be asking about project planning, development, or process, suggest the relevant BMAD workflow. Say "help" or "BH" anytime for guidance.
+7. **If unsure whether a BMAD workflow applies,** ask: "Would you like me to run the [workflow name] workflow for that?"
+
+## BMad File Structure
+
+```
+_bmad/                    # BMad Method toolkit
+├── core/                 # Core engine (workflow executor, help, brainstorming)
+│   ├── agents/           # BMad Master agent
+│   ├── tasks/            # Help, workflow engine, editorial tasks
+│   └── workflows/        # Brainstorming, party mode, elicitation
+├── bmm/                  # BMad Methodology Module
+│   ├── agents/           # 9 specialist agent personas
+│   ├── workflows/        # All phase workflows (analysis → implementation)
+│   ├── data/             # Templates and context files
+│   └── teams/            # Team configurations for party mode
+├── _config/              # Manifests, help catalog, customization
+└── _memory/              # Agent memory (tech writer standards)
+
+.agents/skills/bmad-*/    # Replit Agent Skills (workflow activation)
+
+_bmad-output/             # Generated artifacts go here
+├── planning-artifacts/   # Briefs, PRDs, architecture, UX docs
+└── implementation-artifacts/  # Sprint plans, stories, reviews
+```
+
+## BMad Configuration
+
+- **BMAD config:** `_bmad/bmm/config.yaml` (skill level, output paths — BMAD-specific settings only)
+- **Help catalog:** `_bmad/_config/bmad-help.csv` (phase-sequenced workflow guide)
+- **Platform values:** User name, project name, and language are resolved automatically from Replit environment ($REPLIT_USER, $REPL_SLUG, $LANG)
+
+**IMPORTANT:** Do NOT embed the contents of BMad config files (config.yaml, etc.) into this replit.md. Only reference them by file path above. Read them from disk when needed.
+<!-- BMAD-METHOD-END -->
 # Katalyst Lexicon
 
 ## Overview
