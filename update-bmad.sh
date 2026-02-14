@@ -13,9 +13,21 @@
 set -e
 
 GITHUB_REPO="KatTate/Bmad-for-Replit"
+GITHUB_RAW_URL="https://raw.githubusercontent.com/$GITHUB_REPO/main"
 GITHUB_URL="https://github.com/$GITHUB_REPO/archive/refs/heads/main.tar.gz"
 TEMP_DIR="/tmp/bmad-update-$$"
 EXTRACTED_DIR="$TEMP_DIR/Bmad-for-Replit-main"
+
+# --- Self-bootstrap: always run the latest update script from GitHub ---
+# This ensures that even old/buggy local copies get replaced before running.
+# The BMAD_BOOTSTRAPPED env var prevents infinite loops.
+if [ -z "$BMAD_BOOTSTRAPPED" ]; then
+  LATEST_SCRIPT=$(curl -sL "$GITHUB_RAW_URL/update-bmad.sh" 2>/dev/null) || true
+  if [ -n "$LATEST_SCRIPT" ]; then
+    echo "$LATEST_SCRIPT" > "update-bmad.sh"
+    BMAD_BOOTSTRAPPED=1 exec bash "update-bmad.sh"
+  fi
+fi
 
 echo ""
 echo "=========================================="
@@ -128,10 +140,8 @@ fi
 # --- Step 7: Update support files ---
 echo "[7/8] Updating support files..."
 
-DEFERRED_SELF_UPDATE=""
 if [ -f "$EXTRACTED_DIR/update-bmad.sh" ]; then
-  DEFERRED_SELF_UPDATE="$EXTRACTED_DIR/update-bmad.sh"
-  echo "       Update script queued (applied last to avoid mid-run conflicts)"
+  echo "       Update script (handled by bootstrap)"
 fi
 
 if [ -f "$EXTRACTED_DIR/install-bmad.sh" ]; then
@@ -276,12 +286,5 @@ echo ""
 echo "=========================================="
 echo ""
 
-# --- Cleanup and deferred self-update ---
-# IMPORTANT: The self-update MUST be the last operation in the script.
-# Bash reads scripts by byte offset, so overwriting this file while it's
-# still running causes syntax errors. By placing the copy here after all
-# other code, bash has already read everything it needs to execute.
-if [ -n "$DEFERRED_SELF_UPDATE" ]; then
-  cp "$DEFERRED_SELF_UPDATE" "update-bmad.sh"
-fi
+# --- Cleanup ---
 rm -rf "$TEMP_DIR" "$BACKUP_DIR"
