@@ -13,7 +13,7 @@
 set -e
 
 GITHUB_REPO="KatTate/Bmad-for-Replit"
-GITHUB_URL="https://github.com/$GITHUB_REPO/archive/refs/heads/main.zip"
+GITHUB_URL="https://github.com/$GITHUB_REPO/archive/refs/heads/main.tar.gz"
 TEMP_DIR="/tmp/bmad-update-$$"
 EXTRACTED_DIR="$TEMP_DIR/Bmad-for-Replit-main"
 
@@ -54,7 +54,7 @@ echo "[3/8] Downloading latest version from GitHub..."
 
 mkdir -p "$TEMP_DIR"
 
-if ! curl -sL -o "$TEMP_DIR/bmad-latest.zip" "$GITHUB_URL"; then
+if ! curl -sL -o "$TEMP_DIR/bmad-latest.tar.gz" "$GITHUB_URL"; then
   echo "ERROR: Failed to download from GitHub."
   echo "Check your internet connection and that the repo is accessible:"
   echo "  $GITHUB_URL"
@@ -62,8 +62,8 @@ if ! curl -sL -o "$TEMP_DIR/bmad-latest.zip" "$GITHUB_URL"; then
   exit 1
 fi
 
-if ! unzip -qo "$TEMP_DIR/bmad-latest.zip" -d "$TEMP_DIR"; then
-  echo "ERROR: Failed to unzip the download."
+if ! tar -xzf "$TEMP_DIR/bmad-latest.tar.gz" -C "$TEMP_DIR"; then
+  echo "ERROR: Failed to extract the download."
   echo "The downloaded file may be corrupted or the repo may be private."
   rm -rf "$TEMP_DIR" "$BACKUP_DIR"
   exit 1
@@ -128,9 +128,10 @@ fi
 # --- Step 7: Update support files ---
 echo "[7/8] Updating support files..."
 
+DEFERRED_SELF_UPDATE=""
 if [ -f "$EXTRACTED_DIR/update-bmad.sh" ]; then
-  cp "$EXTRACTED_DIR/update-bmad.sh" "update-bmad.sh"
-  echo "       Updated update script"
+  DEFERRED_SELF_UPDATE="$EXTRACTED_DIR/update-bmad.sh"
+  echo "       Update script queued (applied last to avoid mid-run conflicts)"
 fi
 
 if [ -f "$EXTRACTED_DIR/install-bmad.sh" ]; then
@@ -255,9 +256,7 @@ else
   echo "[8/8] No replit.md found — run install-bmad.sh to create one"
 fi
 
-# --- Cleanup ---
-rm -rf "$TEMP_DIR" "$BACKUP_DIR"
-
+# --- Summary ---
 echo ""
 echo "=========================================="
 echo " Update complete!"
@@ -276,3 +275,13 @@ echo "  Start a NEW CHAT to pick up the changes."
 echo ""
 echo "=========================================="
 echo ""
+
+# --- Cleanup and deferred self-update ---
+# IMPORTANT: The self-update MUST be the last operation in the script.
+# Bash reads scripts by byte offset, so overwriting this file while it's
+# still running causes syntax errors. By placing the copy here after all
+# other code, bash has already read everything it needs to execute.
+if [ -n "$DEFERRED_SELF_UPDATE" ]; then
+  cp "$DEFERRED_SELF_UPDATE" "update-bmad.sh"
+fi
+rm -rf "$TEMP_DIR" "$BACKUP_DIR"

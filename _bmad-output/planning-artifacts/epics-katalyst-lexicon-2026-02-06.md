@@ -50,7 +50,7 @@ FR27: Principles can be linked to related terms (bidirectional)
 FR28: Term detail pages display linked principles
 FR29: Principle detail pages display linked terms
 FR30: Admins can view all system users
-FR31: Admins can invite new users with a specified role
+FR31: Users are auto-provisioned on first Google sign-in (restricted to @katgroupinc.com domain); admins can manage user roles
 FR32: Admins can change a user's role
 FR33: The system enforces role-based permissions for all write operations
 FR34: Public read access is available without authentication
@@ -168,7 +168,7 @@ NFR21: Responsive design supports desktop, tablet, and mobile viewports
 | FR28 | Epic 4 | Term detail shows linked principles |
 | FR29 | Epic 4 | Principle detail shows linked terms |
 | FR30 | Epic 7 | View all system users |
-| FR31 | Epic 7 | Invite new users with role |
+| FR31 | Epic 7 | Auto-provision users on Google sign-in (@katgroupinc.com); manage roles |
 | FR32 | Epic 7 | Change user roles |
 | FR33 | Epic 7 | Enforce role-based permissions |
 | FR34 | Epic 7 | Public read access without auth |
@@ -1200,7 +1200,7 @@ So that the lexicon stays organized as the vocabulary grows.
 ### Story 7.2: User Management [Size: M]
 
 As an admin,
-I want to view all users, create new users with a role, and change existing users' roles,
+I want to view all users and change their roles,
 So that the right people have the right permissions to contribute and review.
 
 **Acceptance Criteria:**
@@ -1208,11 +1208,17 @@ So that the right people have the right permissions to contribute and review.
 **Given** I am an admin on the user management page
 **When** the page loads
 **Then** I see a table of all users showing: name, email, role (Member/Approver/Admin), and join date
+**And** users are auto-provisioned on first Google sign-in with default role "Member"
 
-**Given** I click "Create User"
-**When** a form appears
-**Then** I can enter a name, email address, and select a role (Member, Approver, or Admin)
-**And** clicking "Create" adds the user to the system
+**Given** a new employee signs in with their @katgroupinc.com Google account for the first time
+**When** they complete the sign-in flow
+**Then** a user record is created automatically with role "Member"
+**And** they can immediately access the lexicon and propose terms
+
+**Given** a person attempts to sign in with a non-@katgroupinc.com Google account
+**When** they complete the Google sign-in flow
+**Then** they are rejected with a message: "Access is restricted to KAT Group employees (@katgroupinc.com)"
+**And** no user record is created
 
 **Given** I want to change a user's role
 **When** I click the role dropdown next to their name
@@ -1229,12 +1235,15 @@ So that the right people have the right permissions to contribute and review.
 **Then** I see a "Permission denied" message and the page is not accessible
 
 **Dev Notes:**
-- Endpoint: `GET /api/users`, `POST /api/users`, `PUT /api/users/:id/role`
-- "Create User" creates a user record directly — no email invitation system exists. User authenticates through whatever auth mechanism is in place.
+- **Auth: Replit Auth (OpenID Connect)** with Google sign-in. Domain restricted to @katgroupinc.com.
+- Users are auto-provisioned on first sign-in — no manual "Create User" flow needed. Admins only manage roles.
+- Domain check: after OIDC callback, validate `email` claim ends with `@katgroupinc.com`. Reject non-matching emails before creating a user record.
+- The first user to sign in should be auto-assigned "Admin" role (bootstrap problem). Subsequent users default to "Member".
+- Endpoint: `GET /api/users`, `PUT /api/users/:id/role`
 - Role enforcement: server-side middleware checks role before allowing access
-- Test: verify last-admin protection edge case
+- Test: verify last-admin protection edge case, verify domain restriction rejects non-@katgroupinc.com emails
 - Page title: "Manage Users — Katalyst Lexicon"
-- `data-testid` on: user table, create-user button, each user row, role dropdown, permission denied message
+- `data-testid` on: user table, each user row, role dropdown, permission denied message
 
 ---
 
@@ -1362,12 +1371,15 @@ So that only authorized users can propose, review, and administer the lexicon.
 **Then** navigation items are filtered by role: Members see Propose, Approvers see Propose + Review, Admins see Propose + Review + Admin
 
 **Dev Notes:**
-- Server middleware: `requireAuth` (checks session), `requireRole(role)` (checks user role)
+- **Auth: Replit Auth integration** provides `isAuthenticated` middleware and `useAuth()` hook. Auth routes: `/api/login`, `/api/logout`, `/api/auth/user`.
+- Server middleware: `isAuthenticated` (from Replit Auth — checks session), `requireRole(role)` (custom — checks user role from database)
+- Domain restriction: validate `email` claim ends with `@katgroupinc.com` during OIDC callback. Reject non-matching domains.
 - Create a shared permissions utility (`shared/permissions.ts`) used by both server middleware and client navigation — single source of truth for the role matrix. Don't duplicate permission logic in two places.
 - Permissions matrix: Read (all), Propose (Member+), Review (Approver+), Admin (Admin only)
+- Replace all hardcoded "Current User" / "Current Approver" strings with real user identity from `req.user.claims`
 - FR33, FR34, FR44 all addressed here
 - Test priority: e2e suite should test the full permission matrix (4 roles × key operations) — flag for Epic 8 test suite
-- `data-testid` on: permission-denied message, role-filtered navigation items
+- `data-testid` on: permission-denied message, role-filtered navigation items, login/logout buttons
 
 ---
 

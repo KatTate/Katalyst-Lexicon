@@ -80,7 +80,7 @@ Katalyst Lexicon is a single-server web application serving as the canonical sou
 | Dependency | Purpose | Integration |
 |------------|---------|-------------|
 | PostgreSQL (Neon) | Data persistence | Drizzle ORM via `DATABASE_URL` |
-| Google Workspace SSO | Authentication (planned) | Passport.js (installed, not wired) |
+| Google Workspace SSO | Authentication | Replit Auth (OpenID Connect with Google sign-in) + @katgroupinc.com domain restriction |
 
 ---
 
@@ -452,7 +452,7 @@ katalyst-lexicon/
 | POST | `/api/principles/:id/terms` | Yes* | Link term to principle |
 | DELETE | `/api/principles/:principleId/terms/:termId` | Yes* | Unlink term from principle |
 
-*\*Auth required per PRD but currently unprotected (auth not wired)*
+*\*Auth required per PRD but currently unprotected (auth not wired). Will use Replit Auth with Google sign-in, restricted to @katgroupinc.com domain. See Epic 7.*
 
 ---
 
@@ -856,7 +856,7 @@ client/src/
 
 | Gap | Impact | Priority | Recommended Resolution |
 |-----|--------|----------|----------------------|
-| Auth not wired | All write endpoints unprotected | High | Wire Passport.js middleware per AD-1 plan |
+| Auth not wired | All write endpoints unprotected | High | Wire Replit Auth (OpenID Connect) with @katgroupinc.com domain restriction — replaces original Passport.js plan. Users auto-provisioned on first Google sign-in; admins manage roles only. See Epic 7 stories 7.2, 7.5. |
 | No database transactions | Proposal approval is not atomic (multi-table) | Medium | Wrap approve flow in `db.transaction()` |
 | Search result ranking | Results not ranked by relevance | High | **Resolved in AD-11:** SQL `CASE WHEN` scoring specified — implement in `searchTerms()` |
 | Duplicate detection endpoint | No dedicated check for proposal duplicates | Medium | **Resolved in Pattern 8:** Reuse search endpoint with blur-triggered debounce and separate query key |

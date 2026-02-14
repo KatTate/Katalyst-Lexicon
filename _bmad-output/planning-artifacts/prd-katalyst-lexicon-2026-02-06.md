@@ -75,12 +75,12 @@ Katalyst Lexicon is an internal web application that serves as the canonical sou
 |--------|---------------|
 | Browse / search / view terms | No (public read) |
 | Browse / view principles | No (public read) |
-| Propose new term | Yes (Google Workspace SSO) |
-| Propose edit to existing term | Yes (Google Workspace SSO) |
-| Review / approve / reject proposals | Yes (Google Workspace SSO) |
-| Admin settings & user management | Yes (Google Workspace SSO) |
+| Propose new term | Yes (Google sign-in via Replit Auth) |
+| Propose edit to existing term | Yes (Google sign-in via Replit Auth) |
+| Review / approve / reject proposals | Yes (Google sign-in via Replit Auth) |
+| Admin settings & user management | Yes (Google sign-in via Replit Auth) |
 
-**Implementation Note:** Auth infrastructure (Passport.js) is installed but not wired. All routes currently unprotected. SSO implementation deferred to publish time.
+**Implementation Note:** Auth uses Replit Auth (OpenID Connect) with Google sign-in, restricted to @katgroupinc.com Google Workspace domain. Users are auto-provisioned on first sign-in with default role "Member". Admins promote users to Approver or Admin via user management. Non-@katgroupinc.com emails are rejected at sign-in.
 
 ---
 
@@ -409,7 +409,7 @@ Setting (system configuration, key-value)
 ### User & Role Management
 
 - FR30: Admins can view all system users
-- FR31: Admins can invite new users with a specified role
+- FR31: Users are auto-provisioned on first Google sign-in (restricted to @katgroupinc.com domain); admins can manage user roles
 - FR32: Admins can change a user's role
 - FR33: The system enforces role-based permissions for all write operations
 - FR34: Public read access is available without authentication
@@ -499,7 +499,7 @@ Setting (system configuration, key-value)
 
 | Feature | Rationale | Target |
 |---------|-----------|--------|
-| Google Workspace SSO | Core UX works without it | V1.1 (publish) |
+| Google Workspace SSO | **Moved to V1 (Epic 7)** — using Replit Auth with @katgroupinc.com domain restriction | V1 (Epic 7) |
 | AI-assisted approval analysis | Needs stable core first | V2 |
 | AI-driven natural language search | Enhancement after basic search | V2 |
 | Weekly digest emails | In-app access sufficient | V2 |

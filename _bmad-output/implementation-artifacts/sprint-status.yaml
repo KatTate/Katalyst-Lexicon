@@ -83,7 +83,7 @@ development_status:
   6-2-proposal-review-and-decision: done
   6-3-proposal-audit-trail: done
   6-4-proposer-revision-flow: done
-  epic-6-retrospective: optional
+  epic-6-retrospective: done
 
   # Epic 7: Administration & Governance (no dependencies - can run in parallel)
   epic-7: backlog
