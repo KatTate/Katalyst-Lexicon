@@ -86,12 +86,13 @@ development_status:
   epic-6-retrospective: done
 
   # Epic 7: Administration & Governance (no dependencies - can run in parallel)
+  # Reordered: 7.5 first (auth foundation), then 7.2 (users need auth), then 7.1/7.3/7.4 (admin pages)
   epic-7: backlog
-  7-1-category-management: backlog
+  7-5-role-based-access-enforcement: backlog
   7-2-user-management: backlog
+  7-1-category-management: backlog
   7-3-principles-authoring-admin: backlog
   7-4-system-settings-and-governance-controls: backlog
-  7-5-role-based-access-enforcement: backlog
   epic-7-retrospective: optional
 
   # Epic 8: Quality & Testing (depends on all others - should be last)
