@@ -96,9 +96,9 @@ development_status:
   epic-7-retrospective: done  # Completed 2026-02-15
 
   # Epic 8: Quality & Testing (depends on all others - should be last)
-  epic-8: in-progress
+  epic-8: done
   8-1-dark-mode-and-theme-system: done
   8-2-skip-link-page-titles-and-reduced-motion: done
   8-3-playwright-e2e-test-suite: done  # Completed 2026-02-15: all code review issues resolved, package.json fixed
   8-4-wcag-2-1-aa-compliance-audit: done  # Completed 2026-02-15: adversarial code review passed, all HIGH/MEDIUM issues fixed
-  epic-8-retrospective: optional
+  epic-8-retrospective: done  # Completed 2026-02-15
