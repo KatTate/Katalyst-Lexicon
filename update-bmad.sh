@@ -21,11 +21,14 @@ EXTRACTED_DIR="$TEMP_DIR/Bmad-for-Replit-main"
 # --- Self-bootstrap: always run the latest update script from GitHub ---
 # This ensures that even old/buggy local copies get replaced before running.
 # The BMAD_BOOTSTRAPPED env var prevents infinite loops.
+# Downloads to a temp file to avoid variable quoting issues with special chars.
 if [ -z "$BMAD_BOOTSTRAPPED" ]; then
-  LATEST_SCRIPT=$(curl -sL "$GITHUB_RAW_URL/update-bmad.sh" 2>/dev/null) || true
-  if [ -n "$LATEST_SCRIPT" ]; then
-    echo "$LATEST_SCRIPT" > "update-bmad.sh"
-    BMAD_BOOTSTRAPPED=1 exec bash "update-bmad.sh"
+  if curl -sL -o "update-bmad.sh.tmp" "$GITHUB_RAW_URL/update-bmad.sh" 2>/dev/null; then
+    if grep -q "BMad Method" "update-bmad.sh.tmp" 2>/dev/null; then
+      mv "update-bmad.sh.tmp" "update-bmad.sh"
+      BMAD_BOOTSTRAPPED=1 exec bash "update-bmad.sh"
+    fi
+    rm -f "update-bmad.sh.tmp"
   fi
 fi
 
