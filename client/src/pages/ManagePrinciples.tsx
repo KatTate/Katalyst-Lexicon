@@ -316,6 +316,11 @@ export default function ManagePrinciples() {
     }
   }, [form, editingPrinciple, createMutation, updateMutation]);
 
+  useEffect(() => {
+    document.title = "Manage Principles — Katalyst Lexicon";
+    return () => { document.title = "Katalyst Lexicon"; };
+  }, []);
+
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const userRole = user?.role || null;
   const isAdmin = userRole ? canAdmin(userRole) : false;

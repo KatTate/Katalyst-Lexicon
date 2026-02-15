@@ -1,6 +1,6 @@
 # Story 7.3: Principles Authoring (Admin)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -128,3 +128,14 @@ Implemented admin-only principles authoring page with full CRUD, markdown previe
 - **ACs covered**: AC1 (create form fields), AC2 (markdown preview), AC3 (save success), AC4 (term linking with search/chips), AC5 (archive with confirmation), AC6 (permission denied for non-admins), AC7 (principles list with all fields), AC8 (slug uniqueness handled server-side)
 - **All tests passing**: Yes
 - **LSP Status**: Clean — no errors or warnings
+
+### Code Review (2026-02-15)
+- **Reviewer**: Claude 4.6 Opus (Replit Agent)
+- **All 8 ACs**: SATISFIED
+- **Issues found**: 1 MEDIUM
+- **Issues fixed**:
+  - M1: Added `document.title = "Manage Principles — Katalyst Lexicon"` via useEffect (AR14 compliance)
+- **AR15 compliance**: Already correct — AlertDialogCancel has `autoFocus` on archive dialog
+- **Permission model**: Uses `canAdmin()` from `shared/permissions.ts`
+- **Term linker**: Properly filters already-linked terms from search results, invalidates both principle-specific and list queries on link/unlink
+- **Markdown preview**: Reuses same ReactMarkdown + rehype-sanitize setup as PrincipleDetail.tsx
