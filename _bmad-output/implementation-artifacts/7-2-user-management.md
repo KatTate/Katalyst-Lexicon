@@ -1,6 +1,6 @@
 # Story 7.2: User Management
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -100,9 +100,31 @@ so that the right people have the right permissions to contribute and review.
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus (Replit Agent)
 
 ### Completion Notes
+Implemented User Management story by refactoring the existing Settings.tsx Users & Roles tab and adding server-side protections:
+
+- **Server-side last-admin protection**: Added validation to `PATCH /api/users/:id` that counts admins before allowing role change away from Admin. Returns 400 with descriptive error message. Same protection added to `DELETE /api/users/:id` along with self-deletion prevention.
+- **Settings.tsx refactored**: Removed invite dialog, invite state, create user mutation, and "Resend Invite" menu option. Fixed all `user.name` references to use `firstName`/`lastName` via helper functions. Removed `user.status` references. Added `useAuth()` hook and `canAdmin()` check for permission-denied state. Users sorted by `createdAt` descending. Avatar initials derived from firstName/lastName.
+- **Error handling**: Added `parseApiError()` helper to extract server error messages from API responses for proper toast display (e.g., last-admin error shows exact server message).
+- **Permission denied**: Non-admin users see a ShieldAlert icon with "Permission Denied" message instead of the settings content.
 
 ### File List
+- `server/routes.ts` — MODIFIED: Added last-admin protection to PATCH and DELETE /api/users/:id routes
+- `client/src/pages/Settings.tsx` — MODIFIED: Full refactor of Users & Roles tab (removed invite flow, fixed schema references, added auth check, sort by join date, avatar initials)
+- `_bmad-output/implementation-artifacts/7-2-user-management.md` — MODIFIED: Story status updates
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — MODIFIED: Sprint status updates
 
 ### Testing Summary
+- **Test approach**: E2E testing via Playwright (run_test tool)
+- **ACs covered**:
+  - AC1: User table displays name, email, role badge, join date — verified visually via E2E
+  - AC2: Auto-provisioning via Replit Auth — verified (new OIDC login creates user with Member role)
+  - AC3: Role dropdown changes role — verified via API PATCH test
+  - AC4: Last-admin protection — verified: PATCH returns 400 with correct error message when demoting sole admin
+  - AC5: Permission denied for non-admin — verified: Member user sees "Permission Denied" with data-testid
+  - AC6: Role permissions legend — verified: 3 role cards visible
+  - AC7: Avatar initials and sort by join date — verified via E2E rendering check
+- **All tests passing**: Yes
+- **LSP Status**: Clean — no errors

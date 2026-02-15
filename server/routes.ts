@@ -512,20 +512,47 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/users/:id", requirePermission("admin"), async (req, res) => {
+  app.patch("/api/users/:id", requirePermission("admin"), async (req: any, res) => {
     try {
-      const user = await storage.updateUser(req.params.id, req.body);
-      if (!user) {
+      const targetUser = await storage.getUser(req.params.id);
+      if (!targetUser) {
         return res.status(404).json({ error: "User not found" });
       }
+
+      if (req.body.role && req.body.role !== "Admin" && targetUser.role === "Admin") {
+        const allUsers = await storage.getUsers();
+        const adminCount = allUsers.filter(u => u.role === "Admin").length;
+        if (adminCount <= 1) {
+          return res.status(400).json({ error: "Cannot remove the last admin — at least one admin is required" });
+        }
+      }
+
+      const user = await storage.updateUser(req.params.id, req.body);
       res.json(user);
     } catch (error) {
       res.status(500).json({ error: "Failed to update user" });
     }
   });
 
-  app.delete("/api/users/:id", requirePermission("admin"), async (req, res) => {
+  app.delete("/api/users/:id", requirePermission("admin"), async (req: any, res) => {
     try {
+      const targetUser = await storage.getUser(req.params.id);
+      if (!targetUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (req.dbUser && req.params.id === req.dbUser.id) {
+        return res.status(400).json({ error: "Cannot delete your own account" });
+      }
+
+      if (targetUser.role === "Admin") {
+        const allUsers = await storage.getUsers();
+        const adminCount = allUsers.filter(u => u.role === "Admin").length;
+        if (adminCount <= 1) {
+          return res.status(400).json({ error: "Cannot remove the last admin — at least one admin is required" });
+        }
+      }
+
       const success = await storage.deleteUser(req.params.id);
       if (!success) {
         return res.status(404).json({ error: "User not found" });

@@ -9,17 +9,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   Settings as SettingsIcon, Users, Shield, Bell, 
-  Globe, Save, Plus, Trash2, Mail, MoreVertical, Loader2
+  Globe, Save, Trash2, MoreVertical, Loader2, ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { api, User, Setting } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { canAdmin } from "@shared/permissions";
+
+function parseApiError(error: any, fallback: string): string {
+  const msg = error?.message || "";
+  const colonIdx = msg.indexOf(": ");
+  const jsonMatch = colonIdx > 0 ? [msg, msg.substring(colonIdx + 2)] : null;
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1]);
+      if (parsed.error) return typeof parsed.error === "string" ? parsed.error : fallback;
+    } catch {}
+  }
+  return msg || fallback;
+}
 
 const ROLE_COLORS: Record<User['role'], string> = {
   'Admin': 'bg-destructive/10 text-destructive border-destructive/20',
@@ -27,22 +41,54 @@ const ROLE_COLORS: Record<User['role'], string> = {
   'Member': 'bg-muted text-muted-foreground border-border',
 };
 
+function getUserDisplayName(user: User): string {
+  if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
+  if (user.firstName) return user.firstName;
+  if (user.email) return user.email;
+  return "Unknown User";
+}
+
+function getUserInitials(user: User): string {
+  if (user.firstName && user.lastName) {
+    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+  }
+  if (user.firstName) return user.firstName[0].toUpperCase();
+  if (user.email) return user.email[0].toUpperCase();
+  return "?";
+}
+
+function formatJoinDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "Member" as User["role"] });
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const [localSettings, setLocalSettings] = useState<Record<string, boolean>>({});
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
 
+  const isAdmin = authUser?.role ? canAdmin(authUser.role) : false;
+
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
+    enabled: isAdmin,
   });
+
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  }, [users]);
 
   const userToDelete = users.find(u => u.id === deleteUserId);
 
   const { data: settings = [], isLoading: settingsLoading } = useQuery<Setting[]>({
     queryKey: ["/api/settings"],
+    enabled: isAdmin,
   });
 
   const settingsInitialized = useRef(false);
@@ -60,28 +106,15 @@ export default function Settings() {
 
   const getSetting = (key: string) => localSettings[key] ?? false;
 
-  const createUserMutation = useMutation({
-    mutationFn: (data: { name: string; email: string; role: User["role"] }) => 
-      api.users.create({ name: data.name, email: data.email, role: data.role, status: "invited" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({ title: "Invitation Sent", description: "The user has been invited to join." });
-      setInviteOpen(false);
-      setInviteForm({ name: "", email: "", role: "Member" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to invite user.", variant: "destructive" });
-    },
-  });
-
   const updateUserMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: User["role"] }) => api.users.update(id, { role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      toast({ title: "Role Updated", description: "User role has been changed." });
+      toast({ title: "Role Updated", description: "User role has been changed successfully." });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update user role.", variant: "destructive" });
+    onError: (error: any) => {
+      const message = parseApiError(error, "Failed to update user role.");
+      toast({ title: "Error", description: message, variant: "destructive" });
     },
   });
 
@@ -91,8 +124,9 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({ title: "User Removed", description: "The user has been removed." });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to remove user.", variant: "destructive" });
+    onError: (error: any) => {
+      const message = parseApiError(error, "Failed to remove user.");
+      toast({ title: "Error", description: message, variant: "destructive" });
     },
   });
 
@@ -115,6 +149,32 @@ export default function Settings() {
     const settingsData = Object.entries(localSettings).map(([key, value]) => ({ key, value }));
     saveSettingsMutation.mutate(settingsData);
   };
+
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <Layout>
+        <div className="max-w-5xl mx-auto px-6 py-20" data-testid="permission-denied">
+          <div className="text-center space-y-4">
+            <ShieldAlert className="h-16 w-16 text-muted-foreground mx-auto" />
+            <h1 className="text-2xl font-header font-bold text-kat-black">Permission Denied</h1>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              You don't have permission to access system settings. Only administrators can manage users and configure the system.
+            </p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -152,71 +212,9 @@ export default function Settings() {
           {/* Users & Roles Tab */}
           <TabsContent value="users" className="space-y-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg font-header">Team Members</CardTitle>
-                  <CardDescription>Manage who has access to the Lexicon and their permissions.</CardDescription>
-                </div>
-                <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-primary text-white font-bold gap-2" data-testid="button-invite-user">
-                      <Plus className="h-4 w-4" />
-                      Invite User
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle className="font-header font-bold">Invite New User</DialogTitle>
-                      <DialogDescription>Send an invitation to join the Katalyst Lexicon.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label>Full Name</Label>
-                        <Input 
-                          placeholder="Jane Doe"
-                          value={inviteForm.name}
-                          onChange={(e) => setInviteForm(f => ({ ...f, name: e.target.value }))}
-                          data-testid="input-invite-name"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input 
-                          type="email"
-                          placeholder="jane@katalyst.com"
-                          value={inviteForm.email}
-                          onChange={(e) => setInviteForm(f => ({ ...f, email: e.target.value }))}
-                          data-testid="input-invite-email"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Role</Label>
-                        <Select value={inviteForm.role} onValueChange={(v) => setInviteForm(f => ({ ...f, role: v as User["role"] }))}>
-                          <SelectTrigger data-testid="select-invite-role">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Member">Member</SelectItem>
-                            <SelectItem value="Approver">Approver</SelectItem>
-                            <SelectItem value="Admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
-                      <Button 
-                        className="bg-primary text-white font-bold"
-                        onClick={() => createUserMutation.mutate(inviteForm)}
-                        disabled={createUserMutation.isPending || !inviteForm.name.trim() || !inviteForm.email.trim()}
-                        data-testid="button-send-invite"
-                      >
-                        {createUserMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
-                        Send Invitation
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+              <CardHeader>
+                <CardTitle className="text-lg font-header">Team Members</CardTitle>
+                <CardDescription>Users are auto-provisioned when they sign in via Replit Auth. Manage their roles below.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {usersLoading ? (
@@ -224,31 +222,24 @@ export default function Settings() {
                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   </div>
                 ) : (
-                  <div className="divide-y divide-border">
-                    {users.map(user => (
+                  <div className="divide-y divide-border" data-testid="user-table">
+                    {sortedUsers.map(user => (
                       <div key={user.id} className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors group" data-testid={`user-row-${user.id}`}>
                         <Avatar className="h-10 w-10">
-                          <AvatarFallback className={cn(
-                            "font-bold text-sm",
-                            user.status === 'invited' ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
-                          )}>
-                            {user.name.split(' ').map(n => n[0]).join('')}
+                          <AvatarFallback className="font-bold text-sm bg-primary/10 text-primary">
+                            {getUserInitials(user)}
                           </AvatarFallback>
                         </Avatar>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-kat-black">{user.name}</h3>
-                            {user.status === 'invited' && (
-                              <Badge variant="outline" className="text-[10px] bg-kat-warning/20 text-yellow-800">
-                                Pending
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {user.email}
-                          </p>
+                          <h3 className="font-bold text-kat-black">{getUserDisplayName(user)}</h3>
+                          {user.email && (
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                          )}
+                        </div>
+
+                        <div className="text-sm text-muted-foreground hidden sm:block">
+                          {user.createdAt && formatJoinDate(user.createdAt)}
                         </div>
 
                         <Select 
@@ -276,7 +267,6 @@ export default function Settings() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Resend Invite</DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-destructive"
                               onSelect={() => setDeleteUserId(user.id)}
@@ -299,7 +289,7 @@ export default function Settings() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Remove User?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will remove {userToDelete?.name || "this user"} from the Katalyst Lexicon. They will no longer have access.
+                    This will remove {userToDelete ? getUserDisplayName(userToDelete) : "this user"} from the Katalyst Lexicon. They will no longer have access.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -332,7 +322,7 @@ export default function Settings() {
                     { role: 'Approver', desc: 'Review proposals, approve or reject changes, publish terms' },
                     { role: 'Admin', desc: 'Full access including user management and system settings' },
                   ].map(({ role, desc }) => (
-                    <div key={role} className="p-4 bg-muted/30 rounded-lg border">
+                    <div key={role} className="p-4 bg-muted/30 rounded-lg border" data-testid={`role-legend-${role.toLowerCase()}`}>
                       <Badge variant="outline" className={cn("text-xs font-bold uppercase mb-2", ROLE_COLORS[role as User['role']])}>
                         {role}
                       </Badge>
