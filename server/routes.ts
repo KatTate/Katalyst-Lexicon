@@ -6,9 +6,26 @@ import { isAuthenticated } from "./replit_integrations/auth";
 import { requireRole, requirePermission, optionalAuth } from "./middleware/auth";
 import { requireAuthOrExtension, extensionOrSessionAuth } from "./middleware/extensionAuth";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks, proposals, proposalEvents, terms, termVersions } from "@shared/schema";
 import { z } from "zod";
 import { sql, asc, eq, and, or as drizzleOr } from "drizzle-orm";
+
+const termIndexLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+});
+
+const proposalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+});
 
 function getUserDisplayName(dbUser: any): string {
   if (dbUser.firstName && dbUser.lastName) return `${dbUser.firstName} ${dbUser.lastName}`;
@@ -32,7 +49,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/terms/index", async (req, res) => {
+  app.get("/api/terms/index", termIndexLimiter, async (req, res) => {
     try {
       const etagData = await storage.getTermIndexEtagData();
       const maxDate = etagData.maxUpdatedAt ? String(etagData.maxUpdatedAt) : 'none';
@@ -224,7 +241,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/proposals", requireAuthOrExtension("propose"), async (req: any, res) => {
+  app.post("/api/proposals", proposalLimiter, requireAuthOrExtension("propose"), async (req: any, res) => {
     try {
       const submittedBy = getUserDisplayName(req.dbUser);
       const parsed = insertProposalSchema.parse({ ...req.body, submittedBy });

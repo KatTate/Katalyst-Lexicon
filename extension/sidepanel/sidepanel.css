@@ -383,3 +383,30 @@ body {
 }
 .toast.success { background: var(--kat-green); }
 .toast.error { background: var(--kat-destructive); }
+
+/* ── Error State ──────────────────────────────── */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  gap: 8px;
+}
+.error-state .error-title {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--kat-black);
+  margin: 8px 0 0;
+}
+.error-state .error-detail {
+  font-size: 12px;
+  color: var(--kat-gauntlet);
+  max-width: 280px;
+  line-height: 1.5;
+}
+.error-state .error-retry {
+  margin-top: 8px;
+}

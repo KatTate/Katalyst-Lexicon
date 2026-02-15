@@ -1,6 +1,8 @@
 import { api, getUserEmail } from './shared/api-client.js';
 import { ALARM_NAMES, DEFAULTS, STORAGE_KEYS, MSG } from './shared/constants.js';
 
+const RETRY_DELAYS = [1, 5, 15];
+
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.contextMenus.create({
     id: 'search-lexicon',
@@ -157,13 +159,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === 'propose-term') {
     const url = tab.url || '';
     if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('edge://') || url.startsWith('about:')) {
-      const config = await chrome.storage.managed.get('apiBaseUrl').catch(() => ({}));
-      const syncData = await chrome.storage.sync.get({ [STORAGE_KEYS.API_BASE_URL]: '' });
-      const baseUrl = config?.apiBaseUrl || syncData[STORAGE_KEYS.API_BASE_URL] || '';
-      if (baseUrl) {
-        const proposalUrl = `${baseUrl}/proposals/new?name=${encodeURIComponent(info.selectionText || '')}`;
-        chrome.tabs.create({ url: proposalUrl });
-      }
+      await openProposeInWebApp(info.selectionText);
       return;
     }
 
@@ -192,22 +188,32 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 pageTitle: tab.title || '',
               },
             });
-          } catch { /* fallback below */ }
+          } catch {
+            await openProposeInWebApp(info.selectionText);
+          }
         }, 300);
       } catch {
-        const config = await chrome.storage.managed.get('apiBaseUrl').catch(() => ({}));
-        const syncData = await chrome.storage.sync.get({ [STORAGE_KEYS.API_BASE_URL]: '' });
-        const baseUrl = config?.apiBaseUrl || syncData[STORAGE_KEYS.API_BASE_URL] || '';
-        if (baseUrl) {
-          const proposalUrl = `${baseUrl}/proposals/new?name=${encodeURIComponent(info.selectionText || '')}`;
-          chrome.tabs.create({ url: proposalUrl });
-        }
+        await openProposeInWebApp(info.selectionText);
       }
     }
   }
 });
 
-async function refreshTermIndex() {
+async function openProposeInWebApp(termName) {
+  const baseUrl = await getBaseUrl();
+  if (baseUrl) {
+    const proposalUrl = `${baseUrl}/propose?name=${encodeURIComponent(termName || '')}`;
+    chrome.tabs.create({ url: proposalUrl });
+  }
+}
+
+async function getBaseUrl() {
+  const config = await chrome.storage.managed.get('apiBaseUrl').catch(() => ({}));
+  const syncData = await chrome.storage.sync.get({ [STORAGE_KEYS.API_BASE_URL]: '' });
+  return config?.apiBaseUrl || syncData[STORAGE_KEYS.API_BASE_URL] || '';
+}
+
+async function refreshTermIndex(retryCount = 0) {
   try {
     const stored = await chrome.storage.local.get(STORAGE_KEYS.TERM_INDEX_ETAG);
     const currentEtag = stored[STORAGE_KEYS.TERM_INDEX_ETAG] || null;
@@ -220,12 +226,23 @@ async function refreshTermIndex() {
       [STORAGE_KEYS.TERM_INDEX_ETAG]: result.etag || null,
       [STORAGE_KEYS.TERM_INDEX_UPDATED]: Date.now(),
     });
-  } catch { /* silently fail - cached data still works */ }
+  } catch {
+    if (retryCount < RETRY_DELAYS.length) {
+      const delay = RETRY_DELAYS[retryCount];
+      chrome.alarms.create(`retry-term-index-${retryCount}`, { delayInMinutes: delay });
+    }
+  }
 }
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === ALARM_NAMES.REFRESH_TERM_INDEX) {
     await refreshTermIndex();
+    return;
+  }
+
+  if (alarm.name.startsWith('retry-term-index-')) {
+    const retryCount = parseInt(alarm.name.split('-').pop(), 10) + 1;
+    await refreshTermIndex(retryCount);
     return;
   }
 
@@ -273,9 +290,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 });
 
 chrome.notifications.onClicked.addListener(async () => {
-  const config = await chrome.storage.managed.get('apiBaseUrl').catch(() => ({}));
-  const syncData = await chrome.storage.sync.get({ [STORAGE_KEYS.API_BASE_URL]: '' });
-  const baseUrl = config?.apiBaseUrl || syncData[STORAGE_KEYS.API_BASE_URL] || '';
+  const baseUrl = await getBaseUrl();
   if (baseUrl) {
     chrome.tabs.create({ url: `${baseUrl}/proposals` });
   }

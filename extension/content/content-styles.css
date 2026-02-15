@@ -1,0 +1,64 @@
+.katalyst-term-highlight {
+  background: rgba(120, 191, 38, 0.15);
+  border-bottom: 2px solid #78BF26;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.katalyst-term-highlight:hover {
+  background: rgba(120, 191, 38, 0.3);
+}
+#katalyst-term-tooltip {
+  position: fixed;
+  z-index: 2147483647;
+  background: #fff;
+  border: 1px solid #D0D1DB;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 12px 16px;
+  max-width: 360px;
+  font-family: 'Roboto', -apple-system, sans-serif;
+  font-size: 13px;
+  color: #50534C;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s, transform 0.15s;
+  pointer-events: none;
+}
+#katalyst-term-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+#katalyst-term-tooltip .tt-name {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #3D3936;
+  margin-bottom: 4px;
+}
+#katalyst-term-tooltip .tt-category {
+  font-size: 11px;
+  color: #8C898C;
+  margin-bottom: 6px;
+}
+#katalyst-term-tooltip .tt-definition {
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#katalyst-term-tooltip .tt-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: #78BF26;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+#katalyst-term-tooltip .tt-link:hover {
+  text-decoration: underline;
+}

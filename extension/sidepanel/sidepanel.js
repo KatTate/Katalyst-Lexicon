@@ -57,6 +57,22 @@ function switchTab(tabName) {
   if (tabName === 'principles') loadPrinciples();
 }
 
+function renderErrorState(container, err, retryFn) {
+  container.innerHTML = `
+    <div class="error-state" data-testid="error-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p class="error-title">Something went wrong</p>
+      <p class="error-detail">${escapeHtml(errorMsg(err))}</p>
+      <button class="btn btn-primary btn-sm error-retry" data-testid="button-error-retry">Retry</button>
+    </div>
+  `;
+  container.querySelector('.error-retry')?.addEventListener('click', retryFn);
+}
+
 async function loadBrowse() {
   const container = document.getElementById('category-list');
   const loading = document.getElementById('browse-loading');
@@ -69,7 +85,7 @@ async function loadBrowse() {
     renderCategories(container, categories);
   } catch (err) {
     loading.style.display = 'none';
-    container.innerHTML = `<div class="empty-state"><p>${escapeHtml(errorMsg(err))}</p></div>`;
+    renderErrorState(container, err, loadBrowse);
   }
 }
 
@@ -114,7 +130,7 @@ async function loadCategoryTerms(cat) {
     const terms = await sendMsg({ type: MSG.GET_TERMS_BY_CATEGORY, payload: { category: cat.name } });
     renderTermList(list, terms);
   } catch (err) {
-    list.innerHTML = `<div class="empty-state"><p>${escapeHtml(errorMsg(err))}</p></div>`;
+    renderErrorState(list, err, () => loadCategoryTerms(cat));
   }
 }
 
@@ -150,7 +166,7 @@ async function doSearch(query) {
     }
   } catch (err) {
     hide('sp-search-loading');
-    results.innerHTML = `<div class="empty-state"><p>${escapeHtml(errorMsg(err))}</p></div>`;
+    renderErrorState(results, err, () => doSearch(query));
   }
 }
 
@@ -171,7 +187,7 @@ async function loadPrinciples() {
     }
   } catch (err) {
     hide('principles-loading');
-    list.innerHTML = `<div class="empty-state"><p>${escapeHtml(errorMsg(err))}</p></div>`;
+    renderErrorState(list, err, loadPrinciples);
   }
 }
 
@@ -358,7 +374,7 @@ async function showTermDetail(termId) {
     loadVersionHistory(termId);
     loadLinkedPrinciples(termId);
   } catch (err) {
-    content.innerHTML = `<div class="empty-state"><p>${escapeHtml(errorMsg(err))}</p></div>`;
+    renderErrorState(content, err, () => showTermDetail(termId));
   }
 }
 
