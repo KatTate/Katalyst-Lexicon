@@ -72,9 +72,20 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
+    const claims = tokens.claims();
+    const email = claims?.["email"] as string | undefined;
+    const allowedDomain = process.env.ALLOWED_EMAIL_DOMAIN || "@katgroupinc.com";
+
+    if (allowedDomain !== "*" && email) {
+      const domain = allowedDomain.startsWith("@") ? allowedDomain : `@${allowedDomain}`;
+      if (!email.toLowerCase().endsWith(domain.toLowerCase())) {
+        return verified(null, false);
+      }
+    }
+
     const user = {};
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    await upsertUser(claims);
     verified(null, user);
   };
 
@@ -114,7 +125,7 @@ export async function setupAuth(app: Express) {
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+      failureRedirect: "/?auth_error=domain",
     })(req, res, next);
   });
 

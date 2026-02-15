@@ -25,7 +25,7 @@ export default function DesignSystem() {
         <p className="text-xs font-mono text-muted-foreground/70 mt-1">{font} • {size} • {weight}</p>
       </div>
       <div className="col-span-9">
-        <p className={cn(size, weight, font, "text-kat-black")}>{text}</p>
+        <p className={cn(size, weight, font, "text-foreground")}>{text}</p>
       </div>
     </div>
   );
@@ -35,8 +35,8 @@ export default function DesignSystem() {
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-16">
         
         <div className="space-y-4">
-          <h1 className="text-4xl font-bold text-kat-black font-header">Design System</h1>
-          <p className="text-lg text-kat-charcoal max-w-2xl">
+          <h1 className="text-4xl font-bold text-foreground font-header">Design System</h1>
+          <p className="text-lg text-muted-foreground max-w-2xl">
             This document outlines the official colors, typography, and spacing tokens for the Katalyst Lexicon application. 
             Adherence to these guidelines ensures consistency across the platform.
           </p>

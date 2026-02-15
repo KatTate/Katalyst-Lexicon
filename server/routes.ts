@@ -604,21 +604,7 @@ export async function registerRoutes(
   // ===== PRINCIPLES (Read = public, Write = Admin) =====
   app.get("/api/principles", async (req, res) => {
     try {
-      const list = await db.select({
-        id: principles.id,
-        title: principles.title,
-        slug: principles.slug,
-        summary: principles.summary,
-        body: principles.body,
-        status: principles.status,
-        visibility: principles.visibility,
-        owner: principles.owner,
-        tags: principles.tags,
-        sortOrder: principles.sortOrder,
-        createdAt: principles.createdAt,
-        updatedAt: principles.updatedAt,
-        linkedTermCount: sql<number>`COALESCE((SELECT COUNT(*)::int FROM ${principleTermLinks} WHERE ${principleTermLinks.principleId} = ${principles.id}), 0)`,
-      }).from(principles).orderBy(asc(principles.sortOrder));
+      const list = await storage.getPrinciplesWithCounts();
       res.json(list);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch principles" });

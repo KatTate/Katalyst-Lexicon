@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useId, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Search, Loader2, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -257,12 +257,12 @@ export function SearchHero() {
               <p className="text-sm text-muted-foreground mb-4">
                 No results for "<strong>{debouncedQuery}</strong>"
               </p>
-              <a href={`/propose?name=${encodeURIComponent(debouncedQuery)}`}>
+              <Link href={`/propose?name=${encodeURIComponent(debouncedQuery)}`}>
                 <Button variant="default" size="sm" className="font-bold" data-testid="button-propose-from-search">
                   <Plus className="mr-1.5 h-4 w-4" />
                   Propose this term
                 </Button>
-              </a>
+              </Link>
             </div>
           )}
         </div>

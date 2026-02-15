@@ -128,6 +128,7 @@ export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type Setting = typeof settings.$inferSelect;
 export type InsertPrinciple = z.infer<typeof insertPrincipleSchema>;
 export type Principle = typeof principles.$inferSelect;
+export type PrincipleWithCount = Principle & { linkedTermCount: number };
 export type InsertPrincipleTermLink = z.infer<typeof insertPrincipleTermLinkSchema>;
 export type PrincipleTermLink = typeof principleTermLinks.$inferSelect;
 export type InsertTermVersion = z.infer<typeof insertTermVersionSchema>;

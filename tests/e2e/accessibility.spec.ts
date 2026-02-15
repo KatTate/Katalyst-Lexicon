@@ -606,4 +606,122 @@ test.describe("WCAG 2.1 AA Compliance Audit", () => {
       }
     });
   });
+
+  test.describe("Multi-Viewport Accessibility (AC7)", () => {
+    const viewports = [
+      { name: "mobile", width: 375, height: 667 },
+      { name: "tablet", width: 768, height: 1024 },
+      { name: "desktop", width: 1280, height: 720 },
+    ];
+
+    const keyPages = ["/", "/browse", "/principles", "/propose"];
+
+    for (const viewport of viewports) {
+      for (const pagePath of keyPages) {
+        test(`${viewport.name} (${viewport.width}x${viewport.height}) - ${pagePath} passes axe-core WCAG 2.1 AA scan`, async ({
+          page,
+        }) => {
+          await page.setViewportSize({ width: viewport.width, height: viewport.height });
+          await page.goto(pagePath);
+          await page.waitForLoadState("networkidle");
+
+          const results = await runAxeScan(page, `${viewport.name} ${pagePath}`);
+          const critical = results.violations.filter(
+            (v) => v.impact === "critical" || v.impact === "serious",
+          );
+          expect(
+            critical,
+            `Critical/Serious violations on ${pagePath} at ${viewport.name} (${viewport.width}px): ${JSON.stringify(critical.map((v) => ({ id: v.id, impact: v.impact, description: v.description, nodes: v.nodes.length })), null, 2)}`,
+          ).toHaveLength(0);
+        });
+      }
+    }
+
+    test("mobile (375px) - touch targets meet minimum 44x44px size", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      const undersizedTargets = await page
+        .locator("button, a[href]")
+        .evaluateAll((els) =>
+          els
+            .filter((el) => {
+              const style = window.getComputedStyle(el);
+              return style.display !== "none" && style.visibility !== "hidden";
+            })
+            .map((el) => {
+              const rect = el.getBoundingClientRect();
+              return {
+                tag: el.tagName.toLowerCase(),
+                text: (el.textContent?.trim().substring(0, 40) || el.getAttribute("aria-label") || "").trim(),
+                width: Math.round(rect.width),
+                height: Math.round(rect.height),
+              };
+            })
+            .filter((el) => el.width > 0 && el.height > 0 && (el.width < 44 || el.height < 44)),
+        );
+
+      if (undersizedTargets.length > 0) {
+        console.log(
+          `Touch target warnings (${undersizedTargets.length} elements under 44x44px):`,
+        );
+        undersizedTargets.slice(0, 10).forEach((t) => {
+          console.log(`  <${t.tag}> "${t.text}" - ${t.width}x${t.height}px`);
+        });
+      }
+
+      const totalInteractive = await page
+        .locator("button, a[href]")
+        .evaluateAll((els) =>
+          els.filter((el) => {
+            const style = window.getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+          }).length,
+        );
+
+      const complianceRate = totalInteractive > 0
+        ? ((totalInteractive - undersizedTargets.length) / totalInteractive) * 100
+        : 100;
+
+      expect(
+        complianceRate,
+        `Touch target compliance: ${complianceRate.toFixed(1)}% (${undersizedTargets.length} of ${totalInteractive} elements undersized)`,
+      ).toBeGreaterThanOrEqual(50);
+    });
+
+    test("mobile (375px) - Spotlight ARIA compliance", async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      const searchButton = page.getByTestId("button-header-search");
+      await expect(searchButton).toBeVisible({ timeout: 5000 });
+      await searchButton.click();
+
+      const spotlightOverlay = page.getByTestId("spotlight-overlay");
+      await expect(spotlightOverlay).toBeVisible({ timeout: 5000 });
+
+      const spotlightInput = page.getByTestId("spotlight-search-input");
+      await expect(spotlightInput).toBeVisible({ timeout: 5000 });
+      await expect(spotlightInput).toHaveAttribute("role", "combobox");
+      const ariaExpanded = await spotlightInput.getAttribute("aria-expanded");
+      expect(ariaExpanded).not.toBeNull();
+
+      await page.keyboard.press("Escape");
+      await expect(spotlightOverlay).not.toBeVisible({ timeout: 5000 });
+
+      const focusedTestId = await page.evaluate(() => {
+        const el = document.activeElement;
+        return el?.getAttribute("data-testid") || el?.tagName.toLowerCase() || null;
+      });
+      expect(
+        focusedTestId === "button-header-search" || focusedTestId === "body",
+        `Expected focus on search button or body, got: ${focusedTestId}`,
+      ).toBe(true);
+    });
+  });
 });

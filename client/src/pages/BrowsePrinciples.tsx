@@ -2,16 +2,14 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { Loader2 } from "lucide-react";
-import { Principle, api } from "@/lib/api";
+import { api, type PrincipleWithCount } from "@/lib/api";
 import { PrincipleCard } from "@/components/PrincipleCard";
 import { EmptyState } from "@/components/EmptyState";
-
-type PrincipleWithCount = Principle & { linkedTermCount: number };
 
 export default function BrowsePrinciples() {
   const { data: principles = [], isLoading } = useQuery<PrincipleWithCount[]>({
     queryKey: ["/api/principles"],
-    queryFn: () => api.principles.getAll() as Promise<PrincipleWithCount[]>,
+    queryFn: () => api.principles.getAll(),
   });
 
   useEffect(() => {

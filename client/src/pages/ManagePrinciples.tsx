@@ -15,17 +15,13 @@ import {
 } from "lucide-react";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { api, Principle, Term } from "@/lib/api";
+import { api, Principle, Term, type PrincipleWithCount } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { canAdmin } from "@shared/permissions";
 import { PrincipleStatusBadge } from "@/components/PrincipleStatusBadge";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
-
-interface PrincipleWithCount extends Principle {
-  linkedTermCount?: number;
-}
 
 function slugify(text: string): string {
   return text

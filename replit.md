@@ -144,30 +144,54 @@ Preferred communication style: Simple, everyday language.
 - **Login/Logout**: Navigate to `/api/login` and `/api/logout` (no custom forms)
 - **Route protection**: All write routes require authentication; admin routes require Admin role; review routes require Approver+ role; read routes for terms/categories/principles are public
 
+### Theming & Accessibility
+- **Dark Mode**: System preference detection + manual toggle + localStorage persistence via `useTheme()` hook (`client/src/hooks/use-theme.ts`)
+- **FOWT Prevention**: Inline script in `client/index.html` applies dark class from localStorage before React hydrates
+- **Semantic Tokens**: All components use `text-foreground`, `text-muted-foreground`, `bg-card`, `bg-background` — never hardcoded brand tokens (`text-kat-black`, `bg-white`) directly
+- **Theme Toggle**: Sun/Moon icons in sidebar header (desktop) and mobile header bar
+- **Skip Link**: Skip-to-content link on all pages (`data-testid="skip-link"`)
+- **Page Titles**: Each page sets `document.title` via inline `useEffect` pattern
+- **Reduced Motion**: CSS `prefers-reduced-motion: reduce` disables transitions and animations (with targeted selectors, not blanket `*`)
+- **WCAG 2.1 AA**: Compliant — 48 issues found and fixed in comprehensive audit. Automated axe-core scans pass on all pages in light and dark mode
+
+### Domain Restriction
+- **Email Domain Validation**: Auth verify callback checks email domain against `ALLOWED_EMAIL_DOMAIN` env var (default: `@katgroupinc.com`)
+- **Development**: Set `ALLOWED_EMAIL_DOMAIN=*` to allow all domains during development
+- **Production**: Restricts sign-in to `@katgroupinc.com` emails only
+- **Failure Redirect**: Rejected users redirected to `/?auth_error=domain`
+
+### Testing
+- **E2E Tests**: Playwright test suite (`tests/e2e/`) covering 8 user journeys
+- **Accessibility Tests**: `tests/e2e/accessibility.spec.ts` — axe-core WCAG 2.1 AA scans at 3 viewports (375px, 768px, 1280px)
+- **Run Tests**: `npm run test:e2e` (requires running dev server on port 5000)
+
+### Shared Types
+- `PrincipleWithCount` type defined in both `shared/schema.ts` (server, Drizzle types with Date) and `client/src/lib/api.ts` (client, JSON types with string dates) — frontend pages import from `api.ts`
+
 ## Recent Changes
 
-### Story 8.1: Dark Mode and Theme System (Feb 2026)
-- Inline script in index.html prevents flash of wrong theme (FOWT) by applying dark class from localStorage before React hydrates
-- Custom `useTheme()` hook in `client/src/hooks/use-theme.ts` manages theme state (localStorage + prefers-color-scheme + toggle)
-- Heading colors fixed from hardcoded `text-kat-black` to semantic `text-foreground` so they adapt in dark mode
-- Text utility classes (text-intro, text-supporting, text-metadata) updated to use semantic tokens
-- Smooth CSS transitions (200ms) on background-color, border-color, color with prefers-reduced-motion: reduce support
-- Dark mode styles added for markdown content (code blocks, blockquotes, links, headings)
-- Theme toggle button (Sun/Moon icons) added to sidebar header (desktop) and mobile header bar
-- StatusBadge dark mode contrast fixed for Draft (dark:text-yellow-300) and In Review (dark:text-kat-mystical) statuses
+### Action Item Fixes (Feb 2026)
+- Domain restriction (AC8/AC9) resolved: email domain validation in auth verify callback with `ALLOWED_EMAIL_DOMAIN` env var
+- GET /api/principles refactored to use `storage.getPrinciplesWithCounts()` instead of direct DB query
+- `<a>` replaced with wouter `<Link>` in SearchHero.tsx "Propose this term" CTA
+- `PrincipleWithCount` type consolidated into `shared/schema.ts` (removed duplicate definitions)
+- Toast REMOVE_DELAY fixed from 1000000ms (16 min) to 5000ms (5 seconds)
+- DesignSystem.tsx hardcoded `text-kat-black`/`text-kat-charcoal` replaced with semantic tokens
+- Color picker buttons in ManageCategories.tsx given proper `aria-label` attributes
+- Multi-viewport axe-core accessibility tests added (375px, 768px, 1280px)
+- Mobile Spotlight ARIA compliance test added at 375px viewport
 
-### Story 7.5: Role-Based Access Enforcement (Feb 2026)
-- Replit Auth integration wired into server (setupAuth + registerAuthRoutes)
-- Users table updated: firstName/lastName/profileImageUrl/role/createdAt/updatedAt (replaces old name/status schema)
-- All write API routes protected with auth middleware (requirePermission/requireRole)
-- Hardcoded "Approver"/"System" strings replaced with real user identity from req.user.claims
-- MOCK_CURRENT_USER removed from Layout.tsx and ReviewQueue.tsx, replaced with useAuth() hook
-- Layout sidebar conditionally shows nav items based on user role permissions
-- Proposal submission uses server-side user identity (submittedBy set on server, not client)
-- MyProposals page filters by authenticated user's display name
+### Epic 8: Quality & Testing (Feb 2026)
+- Story 8.1: Dark mode system with theme toggle and localStorage persistence
+- Story 8.2: Skip-to-content link, page titles, and reduced motion support
+- Story 8.3: Playwright E2E test suite covering 8 user journeys
+- Story 8.4: WCAG 2.1 AA compliance audit — 48 issues found and fixed (28 Critical + 15 Major + 5 from code review)
+
+### Epic 7: Administration & Governance (Feb 2026)
+- Replit Auth (OIDC) integration with Google sign-in
+- Role-based access enforcement (Member, Approver, Admin)
+- User management, category management, principles authoring, system settings pages
 
 ### Epic 6: Review & Approve Workflow (Feb 2026)
-- Stories 6.1-6.4 implemented: proposal review queue, review decisions, audit trail, proposer revision flow
-- BMAD code review completed, all HIGH and MEDIUM issues fixed
-- ProposalEvents table tracks full audit trail (submitted, changes_requested, resubmitted, approved, rejected, withdrawn)
-- TanStack Query uses staleTime: Infinity — full page reloads required after API mutations to see updated data
+- Proposal review queue, review decisions, audit trail, proposer revision flow
+- ProposalEvents table tracks full audit trail

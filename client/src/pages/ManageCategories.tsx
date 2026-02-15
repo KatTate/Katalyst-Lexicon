@@ -50,6 +50,7 @@ function ColorPicker({ value, onChange, testIdPrefix }: { value: string; onChang
               style={{ backgroundColor: preset.hex }}
               onClick={() => onChange(preset.hex)}
               title={preset.label}
+              aria-label={`Select color: ${preset.label}`}
               data-testid={`${testIdPrefix}-color-preset-${preset.label.toLowerCase()}`}
             />
           ))}

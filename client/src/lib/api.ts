@@ -99,6 +99,8 @@ export interface Principle {
   updatedAt: string;
 }
 
+export type PrincipleWithCount = Principle & { linkedTermCount: number };
+
 async function fetchJson<T>(method: string, url: string, data?: unknown): Promise<T> {
   const res = await apiRequest(method, url, data);
   if (method === "DELETE") {
@@ -152,7 +154,7 @@ export const api = {
     saveBatch: (settingsData: {key: string; value: boolean}[]) => fetchJson<Setting[]>("POST", "/api/settings/batch", { settings: settingsData }),
   },
   principles: {
-    getAll: () => fetchJson<Principle[]>("GET", "/api/principles"),
+    getAll: () => fetchJson<PrincipleWithCount[]>("GET", "/api/principles"),
     get: (idOrSlug: string) => fetchJson<Principle>("GET", `/api/principles/${idOrSlug}`),
     getTerms: (id: string) => fetchJson<Term[]>("GET", `/api/principles/${id}/terms`),
     create: (data: Partial<Principle>) => fetchJson<Principle>("POST", "/api/principles", data),

@@ -54,6 +54,7 @@ export interface IStorage {
   upsertSetting(setting: InsertSetting): Promise<Setting>;
 
   getPrinciples(): Promise<Principle[]>;
+  getPrinciplesWithCounts(): Promise<(Principle & { linkedTermCount: number })[]>;
   getPrinciple(id: string): Promise<Principle | undefined>;
   getPrincipleBySlug(slug: string): Promise<Principle | undefined>;
   createPrinciple(principle: InsertPrinciple): Promise<Principle>;
@@ -291,6 +292,24 @@ export class DatabaseStorage implements IStorage {
 
   async getPrinciples(): Promise<Principle[]> {
     return db.select().from(principles).orderBy(asc(principles.sortOrder));
+  }
+
+  async getPrinciplesWithCounts(): Promise<(Principle & { linkedTermCount: number })[]> {
+    return db.select({
+      id: principles.id,
+      title: principles.title,
+      slug: principles.slug,
+      summary: principles.summary,
+      body: principles.body,
+      status: principles.status,
+      visibility: principles.visibility,
+      owner: principles.owner,
+      tags: principles.tags,
+      sortOrder: principles.sortOrder,
+      createdAt: principles.createdAt,
+      updatedAt: principles.updatedAt,
+      linkedTermCount: sql<number>`COALESCE((SELECT COUNT(*)::int FROM ${principleTermLinks} WHERE ${principleTermLinks.principleId} = ${principles.id}), 0)`,
+    }).from(principles).orderBy(asc(principles.sortOrder));
   }
 
   async getPrinciple(id: string): Promise<Principle | undefined> {
