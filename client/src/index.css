@@ -197,6 +197,12 @@ body *:not([style*="animation"]):not([data-framer-appear]):not([data-framer-exit
     animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
   }
+
+  .animate-spin {
+    animation-duration: 1s !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: infinite !important;
+  }
 }
 
 .dark .prose pre,

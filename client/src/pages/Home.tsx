@@ -11,6 +11,7 @@ import { useEffect } from "react";
 export default function Home() {
   useEffect(() => {
     document.title = "Katalyst Lexicon";
+    return () => { document.title = "Katalyst Lexicon"; };
   }, []);
   const { data: terms = [], isLoading: termsLoading } = useQuery<Term[]>({
     queryKey: ["/api/terms"],
