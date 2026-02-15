@@ -143,6 +143,74 @@
 | Positive auth: correct roles succeed | 6 | Member propose, Approver review, Admin CRUD |
 | AC12: Real user identity on proposals | 1 | submittedBy not spoofable |
 
+## Chrome Extension Backend Tests
+
+**Generated**: 2026-02-15 | **Framework**: Vitest + Supertest (API) | Playwright E2E (via platform run_test)
+
+### API Tests
+
+| File | Description | Tests | Status |
+|------|-------------|-------|--------|
+| `tests/api/extension-term-index.test.ts` | Term Index endpoint — ETag caching, rate limiting, response shape | 9 | **All Pass** |
+| `tests/api/extension-auth.test.ts` | Extension auth middleware — secret validation, domain checks, proposal creation | 9 | **All Pass** |
+
+**New Extension Tests**: 18/18 passing
+
+### Extension Term Index Coverage (9 tests)
+
+| Test Case | What It Verifies |
+|-----------|-----------------|
+| Returns array of entries | 200 status, JSON array response |
+| Returns ETag header | Weak ETag format (`W/"<hash>"`) present |
+| Returns Cache-Control: no-cache | Cache-Control header set correctly |
+| Returns 304 on If-None-Match match | Conditional request returns Not Modified |
+| Returns 200 on If-None-Match mismatch | Stale ETag gets fresh data |
+| ETag consistency | Same data produces same ETag |
+| Correct entry shape | Only `id`, `name`, `synonyms` — no `definition`/`status` leakage |
+| Consistent ordering | Repeated requests return same order |
+| Rate limit headers | `ratelimit-limit` and `ratelimit-remaining` present |
+
+### Extension Auth Coverage (9 tests)
+
+| Scenario | Expected | Result |
+|----------|----------|--------|
+| No auth headers | 401 | ✅ Pass |
+| Missing secret | 401/403 | ✅ Pass |
+| Wrong secret | 403 | ✅ Pass |
+| Wrong email domain | 403 | ✅ Pass |
+| Valid extension auth | 201 | ✅ Pass |
+| User auto-provisioning | New user created | ✅ Pass |
+| Wrong extension ID | 403 | ✅ Pass |
+| Missing required fields | 400 | ✅ Pass |
+| Full clipper payload | 201 | ✅ Pass |
+
+### Extension E2E Tests (Playwright)
+
+| Workflow | Description | Status |
+|----------|-------------|--------|
+| Term index endpoint | GET /api/terms/index — 200, ETag, Cache-Control, 304 caching | ✅ Pass |
+| Unauthenticated proposals | POST /api/proposals without auth — 401 rejection | ✅ Pass |
+| Propose page (fallback target) | /propose loads with form fields (term name, category, definition) | ✅ Pass |
+
+### Rate Limiting
+
+| Endpoint | Limit | Middleware | Headers Verified |
+|----------|-------|-----------|-----------------|
+| `/api/terms/index` | 60 req/min | `termIndexLimiter` | ✅ Yes |
+| `/api/proposals` | 10 req/min | `proposalLimiter` | Applied |
+
+### Run Commands
+
+```bash
+# Extension tests only
+EXTENSION_API_SECRET=test-secret ALLOWED_EMAIL_DOMAIN=katgroupinc.com npx vitest run tests/api/extension-*.test.ts
+
+# All API tests
+EXTENSION_API_SECRET=test-secret ALLOWED_EMAIL_DOMAIN=katgroupinc.com npx vitest run
+```
+
+---
+
 ## Endpoint Coverage Matrix
 
 | Endpoint | Methods Tested | Stories |
@@ -160,6 +228,8 @@
 | `/api/proposals/:id/request-changes` | POST | 7.5 |
 | `/api/terms` | GET, POST | 7.5 |
 | `/api/terms/search` | GET | 7.5 |
+| `/api/terms/index` | GET | Extension (ETag, rate limit, response shape) |
+| `/api/proposals` (ext auth) | POST | Extension (secret, domain, ext ID, clipper payload) |
 
 ## Findings
 
