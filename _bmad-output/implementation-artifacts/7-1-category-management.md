@@ -1,6 +1,6 @@
 # Story 7.1: Category Management
 
-Status: review
+Status: done
 
 ## Story
 
@@ -118,3 +118,12 @@ Enhanced ManageCategories.tsx with all required features:
 - **LSP Status**: Clean — no errors in ManageCategories.tsx or Browse.tsx (pre-existing Browse.tsx HTMLDivElement warning unrelated)
 - **Visual Verification**: Browse page category sections render with correct hex color border accents
 - **Note**: Full admin-flow E2E testing was limited because OIDC test users default to "Member" role (database-assigned), preventing admin page access in automated tests. Server-side API protection confirmed working.
+
+### Code Review (2026-02-15)
+- **Reviewer**: Claude 4.6 Opus (Replit Agent)
+- **All 7 ACs**: SATISFIED
+- **Issues found**: 2 MEDIUM, 2 LOW
+- **Issues fixed**:
+  - M1: Replaced hardcoded `user.role !== "Admin"` with `canAdmin(user.role as UserRole)` from `shared/permissions.ts` (single source of truth)
+  - M2: Added `document.title = "Manage Categories — Katalyst Lexicon"` via useEffect (AR14 compliance)
+- **Remaining LOW issues**: Browse.tsx pre-existing LSP type warning (not introduced by this story); reorder two-step mutation race (acceptable per MVP gotchas)

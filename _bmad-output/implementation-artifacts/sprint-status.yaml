@@ -90,7 +90,7 @@ development_status:
   epic-7: in-progress
   7-5-role-based-access-enforcement: review
   7-2-user-management: review
-  7-1-category-management: review
+  7-1-category-management: done
   7-3-principles-authoring-admin: review
   7-4-system-settings-and-governance-controls: review
   epic-7-retrospective: optional

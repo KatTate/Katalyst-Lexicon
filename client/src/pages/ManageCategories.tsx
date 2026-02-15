@@ -13,13 +13,14 @@ import {
   MoreVertical, Save, X, ChevronRight, Loader2,
   ArrowUp, ArrowDown, ShieldAlert
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { api, Category, Term } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { canAdmin, type UserRole } from "@shared/permissions";
 
 const COLOR_PRESETS = [
   { hex: "#78c026", label: "Green" },
@@ -90,6 +91,11 @@ export default function ManageCategories() {
   const sortedCategories = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
 
   const getTermCount = (catName: string) => terms.filter(t => t.category === catName).length;
+
+  useEffect(() => {
+    document.title = "Manage Categories — Katalyst Lexicon";
+    return () => { document.title = "Katalyst Lexicon"; };
+  }, []);
 
   const createMutation = useMutation({
     mutationFn: (data: { name: string; description: string; color: string; sortOrder: number }) => 
@@ -169,7 +175,7 @@ export default function ManageCategories() {
     );
   }
 
-  if (!user || user.role !== "Admin") {
+  if (!user || !canAdmin(user.role as UserRole)) {
     return (
       <Layout>
         <div className="max-w-4xl mx-auto px-6 py-24 text-center" data-testid="permission-denied">
