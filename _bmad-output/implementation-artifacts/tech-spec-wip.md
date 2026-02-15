@@ -63,6 +63,12 @@ Build a Chrome extension (Manifest V3) that brings the full lexicon experience i
 - Extension source code in `extension/` directory within the existing repo
 - Google Workspace deployment guide (already drafted)
 
+**Feature Tiers (Implementation Priority):**
+
+- **Tier 1 — Must Ship:** Term highlighting + hover tooltips (ambient discovery), popup search, context menus ("Search Lexicon for..." / "Propose as Lexicon Term"), managed storage config, backend CORS + extension auth middleware, `/api/terms/index` endpoint
+- **Tier 2 — Ship If Time:** Side panel browsing (Browse, Search, Principles tabs, term detail view), options page
+- **Tier 3 — Fast Follow:** In-page clipper overlay, notification polling + badge count
+
 **Out of Scope:**
 
 - Review queue in the extension (approvers use the full web app)
@@ -87,7 +93,7 @@ Build a Chrome extension (Manifest V3) that brings the full lexicon experience i
 - The prototype follows a clean architecture: service worker as central message router, separate popup/sidepanel/options pages, content script for in-page features.
 - All API calls from popup/sidepanel/options go through `chrome.runtime.sendMessage()` → service worker → `api-client.js` → fetch to backend. This centralizes error handling and keeps the service worker as the single point of API interaction.
 - Content script uses Shadow DOM for the clipper UI to avoid CSS conflicts with host pages.
-- Shared constants (`MSG`, `STORAGE_KEYS`, `STATUS_COLORS`, etc.) in `shared/constants.js` ensure consistency across all extension components.
+- Shared constants (`MSG`, `STORAGE_KEYS`, `STATUS_COLORS`, etc.) in `shared/constants.js` ensure consistency across all extension components. **Every `chrome.runtime.sendMessage` call must use a typed action constant from the `MSG` object** — untyped messages are a debugging nightmare in extensions.
 
 **Key data models consumed by the extension:**
 
@@ -132,10 +138,11 @@ The existing backend uses Replit OIDC session cookies (`httpOnly`, `secure`). Th
 **2. CORS Configuration**
 
 Add CORS middleware to `server/index.ts` that allows:
-- Origin: `chrome-extension://*` (or specific extension ID after publishing)
+- Origin: `chrome-extension://<EXTENSION_ID>` (pin to published extension ID in production; use wildcard `chrome-extension://*` only during development)
 - Methods: GET, POST
 - Headers: Content-Type, X-Extension-User-Email, X-Extension-Id
 - No credentials needed (extension doesn't use cookies)
+- **Security note:** CORS only prevents browser-originated cross-origin requests. The `X-Extension-User-Email` header is spoofable via non-browser HTTP clients (curl, Postman). This is acceptable for an internal tool behind a corporate network with force-installed extension, but the tradeoff should be documented.
 
 **3. Extension Auth Middleware**
 
@@ -143,6 +150,7 @@ New middleware in `server/middleware/extensionAuth.ts` that:
 - Checks for `X-Extension-User-Email` header
 - Validates email domain against `ALLOWED_EMAIL_DOMAIN`
 - Looks up user by email in the database (creates if not found, with "Member" role)
+- **Must reuse the existing `upsertUser` pattern** from `replitAuth.ts` to prevent duplicate user records when someone uses both the web app and extension
 - Attaches `req.dbUser` for downstream route handlers
 - Used as an alternative to `isAuthenticated` for extension-originated requests
 
@@ -156,8 +164,9 @@ New middleware in `server/middleware/extensionAuth.ts` that:
 **5. Term Index Cache for Highlighting**
 
 - New backend endpoint: `GET /api/terms/index` returns `[{id, name, synonyms}]` — lightweight (~1KB for 100 terms)
+- **ETag/If-None-Match support** on this endpoint for conditional requests — saves bandwidth when lexicon hasn't changed (which is most of the time)
 - Service worker fetches on install/update, then every 30 minutes via `chrome.alarms`
-- Stored in `chrome.storage.local` as `{termIndex: [...], lastUpdated: timestamp}`
+- Stored in `chrome.storage.local` as `{termIndex: [...], lastUpdated: timestamp, etag: string}`
 - Content script reads from `chrome.storage.local` on page load
 - Matching uses case-insensitive word-boundary matching to avoid partial matches
 
@@ -171,9 +180,16 @@ Single content script handles three responsibilities:
 Performance guardrails:
 - Use `TreeWalker` to traverse only text nodes
 - Skip `<input>`, `<textarea>`, `<code>`, `<pre>`, `<script>`, `<style>`, `[contenteditable]`
+- **Skip nodes inside foreign Shadow DOMs**: guard with `if (node.getRootNode() !== document) skip` to avoid unexpected behavior on pages with open Shadow roots
 - Scan only visible viewport using `IntersectionObserver`
-- Debounce rescans on scroll/DOM mutations (500ms)
+- Debounce rescans on scroll/DOM mutations (500ms) with a **hard cap of 1 scan per 2 seconds** to prevent CPU burn on mutation-heavy SPAs (Slack, Google Docs)
 - Per-site toggle stored in `chrome.storage.sync` keyed by hostname
+
+**CRITICAL: MV3 Service Worker Lifecycle**
+- Chrome kills MV3 service workers after ~30 seconds of inactivity
+- **All state must go through `chrome.storage`** — never use module-level variables for persistent state
+- Alarms, message listeners, and context menu handlers re-register on service worker activation
+- The prototype may have in-memory state patterns — these must be converted to `chrome.storage`
 
 **7. Notification Strategy**
 
