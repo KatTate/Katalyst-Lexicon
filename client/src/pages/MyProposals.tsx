@@ -12,13 +12,22 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { api, Proposal } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
+
+function getUserDisplayName(user: { firstName?: string | null; lastName?: string | null; email?: string | null } | null): string {
+  if (!user) return "";
+  if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
+  if (user.firstName) return user.firstName;
+  return user.email || "";
+}
 
 export default function MyProposals() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [withdrawId, setWithdrawId] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     document.title = "My Proposals — Katalyst Lexicon";
@@ -26,11 +35,12 @@ export default function MyProposals() {
 
   const { data: allProposals = [], isLoading } = useQuery<Proposal[]>({
     queryKey: ["/api/proposals"],
+    enabled: isAuthenticated,
   });
 
-  // Filter to current user's proposals (since auth is not wired, mock user is "Sarah Jenkins")
+  const currentUserName = getUserDisplayName(user);
   const myProposals = allProposals
-    .filter(p => p.submittedBy === "Sarah Jenkins")
+    .filter(p => p.submittedBy === currentUserName)
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
 
   const withdrawMutation = useMutation({

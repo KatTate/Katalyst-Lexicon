@@ -2,16 +2,25 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
+import { isAuthenticated } from "./replit_integrations/auth";
+import { requireRole, requirePermission, optionalAuth } from "./middleware/auth";
 import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks, proposals, proposalEvents, terms, termVersions } from "@shared/schema";
 import { z } from "zod";
 import { sql, asc, eq, and, or as drizzleOr } from "drizzle-orm";
+
+function getUserDisplayName(dbUser: any): string {
+  if (dbUser.firstName && dbUser.lastName) return `${dbUser.firstName} ${dbUser.lastName}`;
+  if (dbUser.firstName) return dbUser.firstName;
+  if (dbUser.email) return dbUser.email;
+  return "Unknown User";
+}
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
-  // ===== TERMS =====
+  // ===== TERMS (Read = public, Write = Admin) =====
   app.get("/api/terms", async (req, res) => {
     try {
       const terms = await storage.getTerms();
@@ -64,11 +73,11 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/terms", async (req, res) => {
+  app.post("/api/terms", requirePermission("admin"), async (req: any, res) => {
     try {
       const parsed = insertTermSchema.parse(req.body);
+      const changedBy = getUserDisplayName(req.dbUser);
       const changeNote = req.body.changeNote || "Initial creation";
-      const changedBy = req.body.changedBy || "System";
       const term = await storage.createTerm(parsed, changeNote, changedBy);
       res.status(201).json(term);
     } catch (error) {
@@ -79,10 +88,10 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/terms/:id", async (req, res) => {
+  app.patch("/api/terms/:id", requirePermission("admin"), async (req: any, res) => {
     try {
+      const changedBy = getUserDisplayName(req.dbUser);
       const changeNote = req.body.changeNote || "Updated";
-      const changedBy = req.body.changedBy || "System";
       const { changeNote: _, changedBy: __, ...termData } = req.body;
       const term = await storage.updateTerm(req.params.id, termData, changeNote, changedBy);
       if (!term) {
@@ -94,7 +103,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/terms/:id", async (req, res) => {
+  app.delete("/api/terms/:id", requirePermission("admin"), async (req, res) => {
     try {
       const success = await storage.deleteTerm(req.params.id);
       if (!success) {
@@ -106,7 +115,7 @@ export async function registerRoutes(
     }
   });
 
-  // ===== CATEGORIES =====
+  // ===== CATEGORIES (Read = public, Write = Admin) =====
   app.get("/api/categories", async (req, res) => {
     try {
       const cats = await storage.getCategories();
@@ -128,7 +137,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/categories", async (req, res) => {
+  app.post("/api/categories", requirePermission("admin"), async (req, res) => {
     try {
       const parsed = insertCategorySchema.parse(req.body);
       const category = await storage.createCategory(parsed);
@@ -141,7 +150,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/categories/:id", async (req, res) => {
+  app.patch("/api/categories/:id", requirePermission("admin"), async (req, res) => {
     try {
       const category = await storage.updateCategory(req.params.id, req.body);
       if (!category) {
@@ -153,7 +162,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/categories/:id", async (req, res) => {
+  app.delete("/api/categories/:id", requirePermission("admin"), async (req, res) => {
     try {
       const success = await storage.deleteCategory(req.params.id);
       if (!success) {
@@ -165,8 +174,8 @@ export async function registerRoutes(
     }
   });
 
-  // ===== PROPOSALS =====
-  app.get("/api/proposals", async (req, res) => {
+  // ===== PROPOSALS (Read = authenticated, Create = Member+, Review = Approver+) =====
+  app.get("/api/proposals", isAuthenticated, async (req, res) => {
     try {
       const status = req.query.status as string | undefined;
       const list = status 
@@ -178,7 +187,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/proposals/:id", async (req, res) => {
+  app.get("/api/proposals/:id", isAuthenticated, async (req, res) => {
     try {
       const proposal = await storage.getProposal(req.params.id);
       if (!proposal) {
@@ -191,19 +200,18 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/proposals", async (req, res) => {
+  app.post("/api/proposals", requirePermission("propose"), async (req: any, res) => {
     try {
-      const parsed = insertProposalSchema.parse(req.body);
+      const submittedBy = getUserDisplayName(req.dbUser);
+      const parsed = insertProposalSchema.parse({ ...req.body, submittedBy });
       const proposal = await storage.createProposal(parsed);
-      // Record "submitted" audit event (non-fatal — proposal is the primary write)
       try {
         await storage.createProposalEvent({
           proposalId: proposal.id,
           eventType: "submitted",
-          actorId: proposal.submittedBy,
+          actorId: submittedBy,
         });
       } catch {
-        // Audit event failure should not fail the proposal creation
       }
       res.status(201).json(proposal);
     } catch (error) {
@@ -214,7 +222,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/proposals/:id", async (req, res) => {
+  app.patch("/api/proposals/:id", isAuthenticated, async (req, res) => {
     try {
       const proposal = await storage.updateProposal(req.params.id, req.body);
       if (!proposal) {
@@ -226,17 +234,18 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/proposals/:id/approve", async (req, res) => {
+  app.post("/api/proposals/:id/approve", requirePermission("review"), async (req: any, res) => {
     try {
       const proposal = await storage.getProposal(req.params.id);
       if (!proposal) {
         return res.status(404).json({ error: "Proposal not found" });
       }
 
-      // Race condition protection: only pending proposals can be approved
       if (proposal.status !== "pending" && proposal.status !== "changes_requested") {
         return res.status(409).json({ error: "This proposal has already been reviewed" });
       }
+
+      const approvedBy = getUserDisplayName(req.dbUser);
 
       const result = await db.transaction(async (tx) => {
         const updateResult = await tx.update(proposals).set({
@@ -256,7 +265,6 @@ export async function registerRoutes(
           return { conflict: true };
         }
 
-        const approvedBy = req.body.approvedBy || "Approver";
         const changeNote = proposal.type === "new"
           ? `Approved from proposal: ${proposal.changesSummary}`
           : `Approved edit: ${proposal.changesSummary}`;
@@ -334,7 +342,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/proposals/:id/reject", async (req, res) => {
+  app.post("/api/proposals/:id/reject", requirePermission("review"), async (req: any, res) => {
     try {
       const existing = await storage.getProposal(req.params.id);
       if (!existing) {
@@ -343,20 +351,19 @@ export async function registerRoutes(
       if (existing.status !== "pending" && existing.status !== "changes_requested") {
         return res.status(409).json({ error: "This proposal has already been reviewed" });
       }
+      const actorName = getUserDisplayName(req.dbUser);
       await storage.updateProposal(req.params.id, {
         status: "rejected",
         reviewComment: req.body.comment || null
       });
-      // Record audit event (non-fatal)
       try {
         await storage.createProposalEvent({
           proposalId: req.params.id,
           eventType: "rejected",
-          actorId: "Approver",
+          actorId: actorName,
           comment: req.body.comment || null,
         });
       } catch {
-        // Audit event failure should not fail the rejection
       }
       res.json({ success: true });
     } catch (error) {
@@ -364,7 +371,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/proposals/:id/request-changes", async (req, res) => {
+  app.post("/api/proposals/:id/request-changes", requirePermission("review"), async (req: any, res) => {
     try {
       const existing = await storage.getProposal(req.params.id);
       if (!existing) {
@@ -373,20 +380,19 @@ export async function registerRoutes(
       if (existing.status !== "pending" && existing.status !== "changes_requested") {
         return res.status(409).json({ error: "This proposal has already been reviewed" });
       }
+      const actorName = getUserDisplayName(req.dbUser);
       await storage.updateProposal(req.params.id, {
         status: "changes_requested",
         reviewComment: req.body.comment || null
       });
-      // Record audit event (non-fatal)
       try {
         await storage.createProposalEvent({
           proposalId: req.params.id,
           eventType: "changes_requested",
-          actorId: "Approver",
+          actorId: actorName,
           comment: req.body.comment || null,
         });
       } catch {
-        // Audit event failure should not fail the request-changes action
       }
       res.json({ success: true });
     } catch (error) {
@@ -394,7 +400,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/proposals/:id/resubmit", async (req, res) => {
+  app.post("/api/proposals/:id/resubmit", requirePermission("propose"), async (req: any, res) => {
     try {
       const existing = await storage.getProposal(req.params.id);
       if (!existing) {
@@ -403,7 +409,6 @@ export async function registerRoutes(
       if (existing.status !== "changes_requested") {
         return res.status(409).json({ error: "Only proposals with changes requested can be resubmitted" });
       }
-      // Validate and extract only permitted proposal fields
       const resubmitSchema = insertProposalSchema.partial().pick({
         termName: true,
         category: true,
@@ -422,15 +427,13 @@ export async function registerRoutes(
         status: "pending",
         reviewComment: null,
       });
-      // Record audit event (non-fatal)
       try {
         await storage.createProposalEvent({
           proposalId: req.params.id,
           eventType: "resubmitted",
-          actorId: existing.submittedBy,
+          actorId: getUserDisplayName(req.dbUser),
         });
       } catch {
-        // Audit event failure should not fail the resubmission
       }
       res.json(proposal);
     } catch (error) {
@@ -438,7 +441,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/proposals/:id/withdraw", async (req, res) => {
+  app.post("/api/proposals/:id/withdraw", requirePermission("propose"), async (req: any, res) => {
     try {
       const existing = await storage.getProposal(req.params.id);
       if (!existing) {
@@ -448,15 +451,13 @@ export async function registerRoutes(
         return res.status(409).json({ error: "This proposal cannot be withdrawn" });
       }
       await storage.updateProposal(req.params.id, { status: "withdrawn" });
-      // Record audit event (non-fatal)
       try {
         await storage.createProposalEvent({
           proposalId: req.params.id,
           eventType: "withdrawn",
-          actorId: existing.submittedBy,
+          actorId: getUserDisplayName(req.dbUser),
         });
       } catch {
-        // Audit event failure should not fail the withdrawal
       }
       res.json({ success: true });
     } catch (error) {
@@ -464,7 +465,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/proposals/:id", async (req, res) => {
+  app.delete("/api/proposals/:id", requirePermission("admin"), async (req, res) => {
     try {
       const success = await storage.deleteProposal(req.params.id);
       if (!success) {
@@ -476,8 +477,8 @@ export async function registerRoutes(
     }
   });
 
-  // ===== USERS =====
-  app.get("/api/users", async (req, res) => {
+  // ===== USERS (Read = authenticated, Write = Admin) =====
+  app.get("/api/users", isAuthenticated, async (req, res) => {
     try {
       const list = await storage.getUsers();
       res.json(list);
@@ -486,7 +487,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/users/:id", async (req, res) => {
+  app.get("/api/users/:id", isAuthenticated, async (req, res) => {
     try {
       const user = await storage.getUser(req.params.id);
       if (!user) {
@@ -498,7 +499,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/users", async (req, res) => {
+  app.post("/api/users", requirePermission("admin"), async (req, res) => {
     try {
       const parsed = insertUserSchema.parse(req.body);
       const user = await storage.createUser(parsed);
@@ -511,7 +512,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/users/:id", async (req, res) => {
+  app.patch("/api/users/:id", requirePermission("admin"), async (req, res) => {
     try {
       const user = await storage.updateUser(req.params.id, req.body);
       if (!user) {
@@ -523,7 +524,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/users/:id", async (req, res) => {
+  app.delete("/api/users/:id", requirePermission("admin"), async (req, res) => {
     try {
       const success = await storage.deleteUser(req.params.id);
       if (!success) {
@@ -535,8 +536,8 @@ export async function registerRoutes(
     }
   });
 
-  // ===== SETTINGS =====
-  app.get("/api/settings", async (req, res) => {
+  // ===== SETTINGS (Read = authenticated, Write = Admin) =====
+  app.get("/api/settings", isAuthenticated, async (req, res) => {
     try {
       const list = await storage.getSettings();
       res.json(list);
@@ -545,7 +546,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/settings", async (req, res) => {
+  app.post("/api/settings", requirePermission("admin"), async (req, res) => {
     try {
       const parsed = insertSettingSchema.parse(req.body);
       const setting = await storage.upsertSetting(parsed);
@@ -558,7 +559,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/settings/batch", async (req, res) => {
+  app.post("/api/settings/batch", requirePermission("admin"), async (req, res) => {
     try {
       const { settings: settingsToSave } = req.body;
       const results = [];
@@ -573,7 +574,7 @@ export async function registerRoutes(
     }
   });
 
-  // ===== PRINCIPLES =====
+  // ===== PRINCIPLES (Read = public, Write = Admin) =====
   app.get("/api/principles", async (req, res) => {
     try {
       const list = await db.select({
@@ -613,7 +614,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/principles", async (req, res) => {
+  app.post("/api/principles", requirePermission("admin"), async (req, res) => {
     try {
       const parsed = insertPrincipleSchema.parse(req.body);
       const principle = await storage.createPrinciple(parsed);
@@ -626,7 +627,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/principles/:id", async (req, res) => {
+  app.patch("/api/principles/:id", requirePermission("admin"), async (req, res) => {
     try {
       const principle = await storage.updatePrinciple(req.params.id, req.body);
       if (!principle) {
@@ -638,7 +639,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/principles/:id", async (req, res) => {
+  app.delete("/api/principles/:id", requirePermission("admin"), async (req, res) => {
     try {
       const success = await storage.deletePrinciple(req.params.id);
       if (!success) {
@@ -659,7 +660,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/principles/:id/terms", async (req, res) => {
+  app.post("/api/principles/:id/terms", requirePermission("admin"), async (req, res) => {
     try {
       const { termId } = req.body;
       const link = await storage.linkPrincipleToTerm(req.params.id, termId);
@@ -669,7 +670,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/principles/:principleId/terms/:termId", async (req, res) => {
+  app.delete("/api/principles/:principleId/terms/:termId", requirePermission("admin"), async (req, res) => {
     try {
       const success = await storage.unlinkPrincipleFromTerm(req.params.principleId, req.params.termId);
       res.status(204).send();

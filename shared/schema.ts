@@ -3,21 +3,16 @@ import { pgTable, text, varchar, integer, boolean, timestamp, pgEnum, jsonb } fr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export * from "./models/auth";
+export { users, userRoleEnum } from "./models/auth";
+import { users } from "./models/auth";
+
 export const termStatusEnum = pgEnum("term_status", ["Draft", "In Review", "Canonical", "Deprecated"]);
 export const visibilityEnum = pgEnum("visibility", ["Internal", "Client-Safe", "Public"]);
-export const userRoleEnum = pgEnum("user_role", ["Member", "Approver", "Admin"]);
 export const proposalStatusEnum = pgEnum("proposal_status", ["pending", "in_review", "changes_requested", "approved", "rejected", "withdrawn"]);
 export const proposalTypeEnum = pgEnum("proposal_type", ["new", "edit"]);
 export const principleStatusEnum = pgEnum("principle_status", ["Draft", "Published", "Archived"]);
 export const proposalEventTypeEnum = pgEnum("proposal_event_type", ["submitted", "changes_requested", "resubmitted", "approved", "rejected", "withdrawn"]);
-
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  role: userRoleEnum("role").notNull().default("Member"),
-  status: text("status").notNull().default("active"),
-});
 
 export const categories = pgTable("categories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -112,7 +107,7 @@ export const principleTermLinks = pgTable("principle_term_links", {
   termId: varchar("term_id").notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertTermSchema = createInsertSchema(terms).omit({ id: true, updatedAt: true });
 export const insertProposalSchema = createInsertSchema(proposals).omit({ id: true, submittedAt: true });
@@ -123,7 +118,6 @@ export const insertTermVersionSchema = createInsertSchema(termVersions).omit({ i
 export const insertProposalEventSchema = createInsertSchema(proposalEvents).omit({ id: true, timestamp: true });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertTerm = z.infer<typeof insertTermSchema>;

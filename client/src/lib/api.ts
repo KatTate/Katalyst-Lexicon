@@ -69,10 +69,13 @@ export interface Proposal {
 
 export interface User {
   id: string;
-  name: string;
-  email: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
   role: "Member" | "Approver" | "Admin";
-  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Setting {

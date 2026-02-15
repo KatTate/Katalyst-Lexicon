@@ -134,16 +134,30 @@ Preferred communication style: Simple, everyday language.
 - **tsx**: TypeScript execution for Node.js.
 - **drizzle-kit**: Database migration tool.
 
+### Authentication & Authorization
+- **Auth Provider**: Replit Auth (OIDC) via `server/replit_integrations/auth/`
+- **Session**: Express sessions backed by PostgreSQL (`sessions` table)
+- **User provisioning**: First user to sign in gets Admin role; subsequent users default to Member
+- **Permissions**: `shared/permissions.ts` defines role-permission matrix (Read: public, Propose: Member+, Review: Approver+, Admin: Admin only)
+- **Middleware**: `server/middleware/auth.ts` provides `requireRole()`, `requirePermission()`, and `optionalAuth` middleware
+- **Frontend hook**: `useAuth()` from `client/src/hooks/use-auth.ts` returns user with role
+- **Login/Logout**: Navigate to `/api/login` and `/api/logout` (no custom forms)
+- **Route protection**: All write routes require authentication; admin routes require Admin role; review routes require Approver+ role; read routes for terms/categories/principles are public
+
 ## Recent Changes
+
+### Story 7.5: Role-Based Access Enforcement (Feb 2026)
+- Replit Auth integration wired into server (setupAuth + registerAuthRoutes)
+- Users table updated: firstName/lastName/profileImageUrl/role/createdAt/updatedAt (replaces old name/status schema)
+- All write API routes protected with auth middleware (requirePermission/requireRole)
+- Hardcoded "Approver"/"System" strings replaced with real user identity from req.user.claims
+- MOCK_CURRENT_USER removed from Layout.tsx and ReviewQueue.tsx, replaced with useAuth() hook
+- Layout sidebar conditionally shows nav items based on user role permissions
+- Proposal submission uses server-side user identity (submittedBy set on server, not client)
+- MyProposals page filters by authenticated user's display name
 
 ### Epic 6: Review & Approve Workflow (Feb 2026)
 - Stories 6.1-6.4 implemented: proposal review queue, review decisions, audit trail, proposer revision flow
-- BMAD code review completed, all HIGH and MEDIUM issues fixed:
-  - AC7 permission checks added to ReviewQueue and Layout sidebar
-  - Transaction boundaries corrected (inline tx.insert/tx.update instead of storage method calls)
-  - Audit events moved inside transaction scope for atomicity
-  - request-changes endpoint made symmetric with approve/reject
+- BMAD code review completed, all HIGH and MEDIUM issues fixed
 - ProposalEvents table tracks full audit trail (submitted, changes_requested, resubmitted, approved, rejected, withdrawn)
-- LOW issues deferred: missing aria-live on empty state, missing aria-label on audit events, `as any` cast on withdrawn status, missing dedicated storage methods for resubmit/withdraw
 - TanStack Query uses staleTime: Infinity — full page reloads required after API mutations to see updated data
-- Mock auth uses MOCK_CURRENT_USER constant (duplicated in ReviewQueue and Layout)

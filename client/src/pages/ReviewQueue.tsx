@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { api, Proposal, ProposalEvent, Term } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { canReview as checkCanReview } from "@shared/permissions";
 
 function DiffField({ label, oldValue, newValue, testId }: { label: string; oldValue: string; newValue: string; testId: string }) {
   const changed = oldValue !== newValue;
@@ -105,16 +107,15 @@ function DiffArrayField({ label, oldValue, newValue, testId }: { label: string; 
   );
 }
 
-const MOCK_CURRENT_USER = { name: "Sarah Jenkins", role: "Admin" as const };
-
 export default function ReviewQueue() {
   const [selectedItem, setSelectedItem] = useState<Proposal | null>(null);
   const [comment, setComment] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, isAuthenticated } = useAuth();
 
-  const canReview = MOCK_CURRENT_USER.role === "Admin" || MOCK_CURRENT_USER.role === "Approver";
+  const canReview = isAuthenticated && user?.role ? checkCanReview(user.role) : false;
 
   useEffect(() => {
     document.title = "Review Queue — Katalyst Lexicon";

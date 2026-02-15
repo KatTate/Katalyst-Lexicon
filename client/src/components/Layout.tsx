@@ -1,23 +1,39 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog, BookOpen, FileEdit } from "lucide-react";
+import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog, BookOpen, FileEdit, LogOut, LogIn } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Category, Proposal } from "@/lib/api";
 import { SpotlightSearch } from "./SpotlightSearch";
 import { SpotlightProvider } from "./SpotlightContext";
+import { useAuth } from "@/hooks/use-auth";
+import { canReview, canAdmin, canPropose } from "@shared/permissions";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const MOCK_CURRENT_USER = { name: "Sarah Jenkins", role: "Admin" as const };
+function getUserInitials(user: { firstName?: string | null; lastName?: string | null; email?: string | null } | null): string {
+  if (!user) return "?";
+  const f = user.firstName?.[0] || "";
+  const l = user.lastName?.[0] || "";
+  if (f || l) return `${f}${l}`.toUpperCase();
+  return (user.email?.[0] || "?").toUpperCase();
+}
+
+function getUserDisplayName(user: { firstName?: string | null; lastName?: string | null; email?: string | null } | null): string {
+  if (!user) return "Guest";
+  if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
+  if (user.firstName) return user.firstName;
+  return user.email || "User";
+}
 
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const openSpotlight = useCallback(() => setSpotlightOpen(true), []);
 
@@ -27,6 +43,7 @@ export function Layout({ children }: LayoutProps) {
 
   const { data: proposals = [] } = useQuery<Proposal[]>({
     queryKey: ["/api/proposals"],
+    enabled: isAuthenticated,
   });
 
   const pendingProposalsCount = proposals.filter(p => 
@@ -36,6 +53,11 @@ export function Layout({ children }: LayoutProps) {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
+
+  const userRole = user?.role || null;
+  const showReview = userRole ? canReview(userRole) : false;
+  const showAdmin = userRole ? canAdmin(userRole) : false;
+  const showPropose = userRole ? canPropose(userRole) : false;
 
   const NavItem = ({ href, icon: Icon, label, badge }: { href: string; icon: any; label: string; badge?: number }) => {
     const isActive = location === href;
@@ -84,13 +106,17 @@ export function Layout({ children }: LayoutProps) {
 
         <div className="flex-1 overflow-y-auto py-6 px-4">
           <nav className="space-y-1">
-            <Link href="/propose">
-              <Button className="w-full justify-start gap-2 mb-4 shadow-sm hover:shadow-md transition-all font-bold bg-primary text-white hover:bg-primary/90" variant="default" data-testid="nav-propose-term">
-                <Plus className="h-4 w-4" />
-                Propose Term
-              </Button>
-            </Link>
-            <NavItem href="/my-proposals" icon={FileEdit} label="My Proposals" />
+            {showPropose && (
+              <Link href="/propose">
+                <Button className="w-full justify-start gap-2 mb-4 shadow-sm hover:shadow-md transition-all font-bold bg-primary text-white hover:bg-primary/90" variant="default" data-testid="nav-propose-term">
+                  <Plus className="h-4 w-4" />
+                  Propose Term
+                </Button>
+              </Link>
+            )}
+            {isAuthenticated && (
+              <NavItem href="/my-proposals" icon={FileEdit} label="My Proposals" />
+            )}
 
             <div className="pt-4 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
@@ -101,7 +127,7 @@ export function Layout({ children }: LayoutProps) {
               <NavItem href="/principles" icon={BookOpen} label="Principles" />
             </div>
 
-            {(MOCK_CURRENT_USER.role === "Admin" || MOCK_CURRENT_USER.role === "Approver") && (
+            {showReview && (
             <div className="pt-6 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Approver Tools
@@ -110,6 +136,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
             )}
 
+            {showAdmin && (
             <div className="pt-6 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
                 Administration
@@ -118,6 +145,7 @@ export function Layout({ children }: LayoutProps) {
               <NavItem href="/settings" icon={Settings} label="System Settings" />
               <NavItem href="/design" icon={Palette} label="Design System" />
             </div>
+            )}
             
             <div className="pt-6 pb-2">
               <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">
@@ -140,16 +168,29 @@ export function Layout({ children }: LayoutProps) {
         </div>
 
         <div className="p-4 border-t border-sidebar-border bg-sidebar-accent/30">
-          <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent cursor-pointer transition-colors">
-            <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-header font-bold text-sm shadow-sm">
-              SJ
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-3 p-2 rounded-md">
+              <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-header font-bold text-sm shadow-sm overflow-hidden">
+                {user.profileImageUrl ? (
+                  <img src={user.profileImageUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  getUserInitials(user)
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-sidebar-foreground truncate" data-testid="text-username">{getUserDisplayName(user)}</p>
+                <p className="text-xs text-muted-foreground truncate" data-testid="text-user-role">{user.role}</p>
+              </div>
+              <a href="/api/logout" data-testid="button-logout">
+                <LogOut className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+              </a>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-sidebar-foreground truncate">Sarah Jenkins</p>
-              <p className="text-xs text-muted-foreground truncate">Admin</p>
-            </div>
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </div>
+          ) : (
+            <a href="/api/login" className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent cursor-pointer transition-colors" data-testid="button-login">
+              <LogIn className="h-5 w-5 text-primary" />
+              <span className="text-sm font-bold text-sidebar-foreground">Sign In</span>
+            </a>
+          )}
         </div>
       </aside>
 
