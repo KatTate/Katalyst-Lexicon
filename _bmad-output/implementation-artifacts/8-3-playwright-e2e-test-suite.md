@@ -1,6 +1,6 @@
 # Story 8.3: Playwright E2E Test Suite
 
-Status: in-progress
+Status: done
 
 ## Story
 
