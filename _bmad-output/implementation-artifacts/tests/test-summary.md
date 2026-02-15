@@ -16,11 +16,15 @@
 | tests/api/users.test.ts | Users CRUD, validation | 8 | Fail* |
 | tests/api/settings.test.ts | Settings upsert, batch save | 4 | Fail* |
 | tests/api/principles.test.ts | Principles CRUD, term linking/unlinking + cleanup | 9 | Fail* |
-| **tests/api/story-7-5-rbac.test.ts** | **Role-based access enforcement (AC1-AC5, AC12)** | **32** | **All Pass** |
+| **tests/api/story-7-1-categories.test.ts** | **Story 7.1: Category Management — CRUD, sort, color, auth** | **16** | **All Pass** |
+| **tests/api/story-7-2-users.test.ts** | **Story 7.2: User Management — roles, last-admin, permissions** | **14** | **All Pass** |
+| **tests/api/story-7-3-principles-authoring.test.ts** | **Story 7.3: Principles Authoring — CRUD, markdown, linking, archive** | **20** | **All Pass** |
+| **tests/api/story-7-4-settings.test.ts** | **Story 7.4: Settings & Governance — toggles, upsert, batch, permissions** | **17** | **All Pass** |
+| **tests/api/story-7-5-rbac.test.ts** | **Story 7.5: Role-based access enforcement (AC1-AC5, AC12)** | **32** | **All Pass** |
 
-*Pre-existing test files fail because they were written before Story 7.5 added auth middleware and do not mock authentication. 39 of 57 pre-existing tests fail. These need to be updated to use the mock auth pattern from `story-7-5-rbac.test.ts`.
+*Pre-existing test files fail because they were written before Story 7.5 added auth middleware and do not mock authentication. These need to be updated to use the mock auth pattern from the story-specific test files.
 
-**New RBAC Tests**: 32/32 passing
+**New Epic 7 Tests**: 99/99 passing
 
 ### E2E Tests (Playwright)
 
@@ -41,44 +45,81 @@
 
 **Total E2E Workflows**: 12 — All passing
 
-## Story 7.5 AC Coverage Matrix
+## Epic 7 Story Coverage Summary
 
-| AC | Description | API Test | E2E Test | Status |
-|---|---|---|---|---|
-| AC1 | 401 on unauthenticated write ops + "Please sign in" message | Yes (8 tests, response body verified) | — | Covered (API only; UI "Please sign in" message not E2E tested) |
-| AC2 | 403 for Member on admin pages + "Permission denied" | Yes (5 tests, response body verified) | — | Covered (API only; UI "Permission denied" page not E2E tested) |
-| AC3 | 403 for Member on review endpoints + "Permission denied" | Yes (3 tests, response body verified) | — | Covered (API only; UI "Permission denied" page not E2E tested) |
-| AC4 | 403 for Approver on admin actions | Yes (5 tests, response body verified) | — | Covered |
-| AC5 | Public read access | Yes (4 tests) | Yes (2 pages) | Fully Covered |
-| AC6 | Nav filtered by role | — | Yes (Admin only) | Partially Covered (Member/Approver nav not E2E tested) |
-| AC7 | Unauthenticated nav (no propose/review/admin in sidebar) | — | Yes | Covered |
-| AC8 | @katgroupinc.com domain restriction | — | — | Not Covered (feature deferred/not implemented) |
-| AC9 | Non-domain email rejection | — | — | Not Covered (feature deferred/not implemented) |
-| AC10 | First OIDC user gets Admin role | — | Yes | Covered |
-| AC11 | User identity display (name + sign out) | — | Yes | Covered |
-| AC12 | Proposal submittedBy uses real identity | Yes (1 test) | — | Covered |
-| AC13 | Reviewer identity in audit trail | — | — | Not Covered |
+### Story 7.1: Category Management (16 tests)
+| Acceptance Criteria | Tests | Coverage |
+|---|---|---|
+| Admin sees list of all categories | 1 | GET /api/categories returns array |
+| Admin creates category with name, color, sort position | 2 | POST with all fields + validation |
+| Admin edits category (name, color, description) | 4 | PATCH updates each field + 404 handling |
+| Admin retrieves specific category | 2 | GET by id + 404 |
+| Admin deletes category with no terms | 2 | DELETE + verify gone |
+| Categories support sortOrder field | 2 | Create with sortOrder + update via PATCH |
+| Auth enforcement on write operations | 3 | 401 for POST/PATCH/DELETE unauthenticated |
 
-## Story 7.5 Endpoint Coverage
+### Story 7.2: User Management (14 tests)
+| Acceptance Criteria | Tests | Coverage |
+|---|---|---|
+| Admin sees table of all users with fields | 2 | GET list + field verification |
+| Admin creates a new user | 2 | POST with all fields + edge case |
+| Admin changes user roles (Member ↔ Approver ↔ Admin) | 3 | Full role cycle verification |
+| Cannot remove the last admin | 1 | 400 response with error message |
+| Admin retrieves specific user | 2 | GET by id + 404 |
+| Admin deletes a user | 1 | DELETE + verify gone |
+| Permission enforcement | 3 | 401 unauthenticated, 403 Member |
 
-| Endpoint | Auth Required | Role Required | Test Coverage |
-|---|---|---|---|
-| GET /api/terms | No | — | AC5 |
-| GET /api/terms/search | No | — | AC5 |
-| GET /api/categories | No | — | AC5 |
-| GET /api/principles | No | — | AC5 |
-| GET /api/proposals | Yes | — | AC1 |
-| GET /api/users | Yes | — | AC1 |
-| GET /api/settings | Yes | — | AC1 |
-| POST /api/terms | Yes | Admin | AC1, AC2, AC4 |
-| POST /api/categories | Yes | Admin | AC1, AC2, AC4 |
-| POST /api/settings | Yes | Admin | AC1, AC2, AC4 |
-| POST /api/users | Yes | Admin | AC2, AC4 |
-| POST /api/principles | Yes | Admin | AC1, AC2, AC4 |
-| POST /api/proposals | Yes | Member+ | AC1, AC12, positive |
-| POST /api/proposals/:id/approve | Yes | Approver+ | AC3, positive |
-| POST /api/proposals/:id/reject | Yes | Approver+ | AC3 |
-| POST /api/proposals/:id/request-changes | Yes | Approver+ | AC3 |
+### Story 7.3: Principles Authoring (20 tests)
+| Acceptance Criteria | Tests | Coverage |
+|---|---|---|
+| Admin creates principle (title, body, status, visibility, tags) | 3 | Full fields + validation + duplicate slug |
+| Admin edits principle (title, body, status, visibility) | 5 | Each field update + 404 |
+| Admin archives a principle | 2 | Status → Archived + still viewable |
+| Admin links/unlinks terms (bidirectional) | 5 | Link 2 terms, verify, unlink, verify bidirectional |
+| Principle retrievable by slug | 1 | GET by slug |
+| Public read access | 1 | Unauthenticated GET succeeds |
+| Auth enforcement | 1 | 401 for unauthenticated POST |
+| Admin deletes principle | 1 | DELETE + verify gone |
+
+### Story 7.4: System Settings & Governance Controls (17 tests)
+| Acceptance Criteria | Tests | Coverage |
+|---|---|---|
+| Admin views all settings | 1 | GET returns array |
+| Governance toggles (3 settings) | 3 | require_approver_signoff, require_change_notes, allow_self_approval |
+| Notification toggles (3 settings) | 3 | weekly_digest, new_proposal_alerts, changes_requested_alerts |
+| Visibility toggles (2 settings) | 2 | enable_client_portal, enable_public_glossary |
+| Auto-save (upsert) behavior | 3 | Create → update → verify via GET |
+| Batch settings save | 1 | POST /api/settings/batch with 3 settings |
+| Permission enforcement | 4 | 401 unauthenticated GET/POST, 403 Member POST/batch |
+
+### Story 7.5: Role-Based Access Enforcement (32 tests) [pre-existing]
+| Acceptance Criteria | Tests | Coverage |
+|---|---|---|
+| AC1: 401 on unauthenticated write ops | 8 | All write endpoints verified |
+| AC2: 403 for Member on admin endpoints | 5 | All admin endpoints verified |
+| AC3: 403 for Member on review endpoints | 3 | Approve/reject/request-changes |
+| AC4: 403 for Approver on admin actions | 5 | All admin endpoints verified |
+| AC5: Public read access | 4 | Terms, search, categories, principles |
+| Positive auth: correct roles succeed | 6 | Member propose, Approver review, Admin CRUD |
+| AC12: Real user identity on proposals | 1 | submittedBy not spoofable |
+
+## Endpoint Coverage Matrix
+
+| Endpoint | Methods Tested | Stories |
+|----------|---------------|---------|
+| `/api/categories` | GET, POST, PATCH, DELETE | 7.1, 7.5 |
+| `/api/users` | GET, POST, PATCH, DELETE | 7.2, 7.5 |
+| `/api/principles` | GET, POST, PATCH, DELETE | 7.3, 7.5 |
+| `/api/principles/:id/terms` | GET, POST, DELETE | 7.3 |
+| `/api/terms/:id/principles` | GET | 7.3 |
+| `/api/settings` | GET, POST | 7.4, 7.5 |
+| `/api/settings/batch` | POST | 7.4 |
+| `/api/proposals` | GET, POST | 7.5 |
+| `/api/proposals/:id/approve` | POST | 7.5 |
+| `/api/proposals/:id/reject` | POST | 7.5 |
+| `/api/proposals/:id/request-changes` | POST | 7.5 |
+| `/api/terms` | GET, POST | 7.5 |
+| `/api/terms/search` | GET | 7.5 |
 
 ## Findings
 
@@ -103,9 +144,9 @@
 
 - **Config**: `vitest.config.ts` — path aliases, test include/exclude patterns
 - **Setup**: `tests/api/setup.ts` — reusable Express test app factory with Supertest (no auth)
-- **RBAC Pattern**: `tests/api/story-7-5-rbac.test.ts` — mock auth middleware for simulating unauthenticated/Member/Approver/Admin states; creates real DB users for role lookups
+- **Auth Pattern**: Story-specific test files use mock auth middleware for simulating unauthenticated/Member/Approver/Admin states; creates real DB users for role lookups
 - **Run Commands**:
-  - RBAC tests only: `npx vitest run tests/api/story-7-5-rbac.test.ts`
+  - Epic 7 tests only: `npx vitest run tests/api/story-7-*.test.ts`
   - All tests: `npx vitest run` (note: 39 pre-existing failures due to missing auth)
 
 ## Next Steps
