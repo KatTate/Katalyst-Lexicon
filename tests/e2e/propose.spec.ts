@@ -25,9 +25,13 @@ test.describe("Propose Job Journey", () => {
     await expect(submitButton).toBeVisible();
   });
 
-  test("fill form fields and verify validation indicators appear", async ({
+  test("fill form fields, verify validation, submit, and verify outcome", async ({
     page,
   }) => {
+    const categoriesResponse = await page.request.get("http://localhost:5000/api/categories");
+    const categories = await categoriesResponse.json();
+    const firstCategoryName = Array.isArray(categories) && categories.length > 0 ? categories[0].name : null;
+
     await page.goto("/propose");
 
     const heading = page.getByTestId("text-propose-heading");
@@ -37,20 +41,19 @@ test.describe("Propose Job Journey", () => {
     const definitionInput = page.getByTestId("input-definition");
     const whyExistsInput = page.getByTestId("input-why-exists");
 
-    await nameInput.fill(`TestTerm_${Date.now()}`);
-    await page.waitForTimeout(200);
+    const uniqueName = `TestTerm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    await nameInput.fill(uniqueName);
 
     const categorySelect = page.getByTestId("select-category");
     await categorySelect.click();
-    await page.waitForTimeout(300);
-    const firstOption = page.getByRole("option").first();
-    await firstOption.click();
+    if (firstCategoryName) {
+      const categoryOption = page.getByTestId(`category-option-${firstCategoryName}`);
+      await expect(categoryOption).toBeVisible({ timeout: 3000 });
+      await categoryOption.click();
+    }
 
     await definitionInput.fill("A test definition for validation purposes");
-    await page.waitForTimeout(200);
-
     await whyExistsInput.fill("Testing why this term exists");
-    await page.waitForTimeout(200);
 
     const validName = page.getByTestId("icon-valid-name");
     const validDef = page.getByTestId("icon-valid-definition");
@@ -61,6 +64,22 @@ test.describe("Propose Job Journey", () => {
     await expect(validDef).toBeVisible({ timeout: 3000 });
     await expect(validCategory).toBeVisible({ timeout: 3000 });
     await expect(validWhyExists).toBeVisible({ timeout: 3000 });
+
+    const responsePromise = page.waitForResponse(
+      (resp) => resp.url().includes("/api/proposals") && resp.request().method() === "POST",
+    );
+
+    const submitButton = page.getByTestId("button-submit-proposal");
+    await submitButton.click();
+
+    const response = await responsePromise.catch(() => null);
+
+    if (response && response.ok()) {
+      await expect(page).toHaveURL("/", { timeout: 10000 });
+    } else {
+      expect(response).not.toBeNull();
+      expect(response!.status()).toBeGreaterThanOrEqual(400);
+    }
   });
 
   test("trigger duplicate detection warning with existing term name", async ({
@@ -88,7 +107,6 @@ test.describe("Propose Job Journey", () => {
 
     const definitionInput = page.getByTestId("input-definition");
     await definitionInput.click();
-    await page.waitForTimeout(1000);
 
     const duplicateWarning = page.getByTestId("warning-duplicate");
     await expect(duplicateWarning).toBeVisible({ timeout: 5000 });

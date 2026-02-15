@@ -8,8 +8,15 @@ test.describe("Browse Job Journey", () => {
       "http://localhost:5000/api/terms",
     );
     const terms = await termsResponse.json();
-    const firstTermId =
-      Array.isArray(terms) && terms.length > 0 ? terms[0].id : null;
+    const firstTerm =
+      Array.isArray(terms) && terms.length > 0 ? terms[0] : null;
+
+    const categoriesResponse = await page.request.get(
+      "http://localhost:5000/api/categories",
+    );
+    const categories = await categoriesResponse.json();
+    const firstCategory =
+      Array.isArray(categories) && categories.length > 0 ? categories[0] : null;
 
     await page.goto("/browse");
 
@@ -21,36 +28,42 @@ test.describe("Browse Job Journey", () => {
     if (!isMobile) {
       const sidebar = page.getByTestId("browse-sidebar");
       await expect(sidebar).toBeVisible();
+
+      if (firstCategory) {
+        const categoryLink = page.getByTestId(`sidebar-category-${firstCategory.id}`);
+        if (await categoryLink.isVisible().catch(() => false)) {
+          await categoryLink.click();
+          const categorySection = page.getByTestId(`category-section-${firstCategory.id}`);
+          if (await categorySection.isVisible({ timeout: 3000 }).catch(() => false)) {
+            await expect(categorySection).toBeVisible();
+          }
+        }
+      }
     }
 
     const filterBar = page.getByTestId("filter-bar");
     await expect(filterBar).toBeVisible({ timeout: 5000 });
 
-    if (firstTermId) {
-      const termCard = page.getByTestId(`card-term-${firstTermId}`);
-      await expect(termCard).toBeVisible({ timeout: 5000 });
-    }
-
     const canonicalFilter = page.getByTestId("filter-status-canonical");
     if (await canonicalFilter.isVisible().catch(() => false)) {
       await canonicalFilter.click();
-      await page.waitForTimeout(500);
 
       const activeFilterBadge = page.getByTestId("badge-active-filter-count");
-      if (await activeFilterBadge.isVisible().catch(() => false)) {
-        await expect(activeFilterBadge).toBeVisible();
-      }
+      await expect(activeFilterBadge).toBeVisible({ timeout: 3000 });
     }
 
-    if (firstTermId) {
-      const termCard = page.getByTestId(`card-term-${firstTermId}`);
-      const visible = await termCard.isVisible().catch(() => false);
-      if (visible) {
-        await termCard.click();
-        await page.waitForURL(/\/term\//);
-        const termName = page.getByTestId("text-term-name");
-        await expect(termName).toBeVisible();
-      }
+    const clearFilters = page.getByTestId("button-clear-filters");
+    if (await clearFilters.isVisible().catch(() => false)) {
+      await clearFilters.click();
+    }
+
+    if (firstTerm) {
+      const termCard = page.getByTestId(`card-term-${firstTerm.id}`);
+      await expect(termCard).toBeVisible({ timeout: 5000 });
+      await termCard.click();
+      await page.waitForURL(/\/term\//, { timeout: 5000 });
+      const termName = page.getByTestId("text-term-name");
+      await expect(termName).toBeVisible();
     }
   });
 });

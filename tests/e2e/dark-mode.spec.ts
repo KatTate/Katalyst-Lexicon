@@ -11,7 +11,7 @@ test.describe("Dark Mode Tests", () => {
     page,
   }) => {
     await page.goto("/");
-    await page.waitForTimeout(500);
+    await expect(page.getByTestId("search-hero")).toBeVisible({ timeout: 5000 });
 
     const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
     const toggleTestId = isMobile
@@ -21,7 +21,6 @@ test.describe("Dark Mode Tests", () => {
     const themeToggle = page.getByTestId(toggleTestId);
     await expect(themeToggle).toBeVisible();
     await themeToggle.click();
-    await page.waitForTimeout(300);
 
     const isDark = await page.evaluate(() =>
       document.documentElement.classList.contains("dark"),
@@ -53,7 +52,7 @@ test.describe("Dark Mode Tests", () => {
       Array.isArray(terms) && terms.length > 0 ? terms[0].id : null;
 
     await page.goto("/browse");
-    await page.waitForTimeout(500);
+    await expect(page.getByTestId("heading-browse")).toBeVisible({ timeout: 5000 });
 
     const isMobile = (page.viewportSize()?.width ?? 1280) < 768;
     const toggleTestId = isMobile
@@ -63,7 +62,6 @@ test.describe("Dark Mode Tests", () => {
     const themeToggle = page.getByTestId(toggleTestId);
     await expect(themeToggle).toBeVisible();
     await themeToggle.click();
-    await page.waitForTimeout(300);
 
     const isDark = await page.evaluate(() =>
       document.documentElement.classList.contains("dark"),

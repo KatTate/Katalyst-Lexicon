@@ -556,7 +556,7 @@ export default function ProposeTerm() {
                         </FormControl>
                         <SelectContent>
                           {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                            <SelectItem key={cat.id} value={cat.name} data-testid={`category-option-${cat.name}`}>{cat.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

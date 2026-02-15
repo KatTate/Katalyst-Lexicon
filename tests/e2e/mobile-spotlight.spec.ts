@@ -29,7 +29,6 @@ test.describe("Mobile Spotlight Search", () => {
     await expect(searchInput).toBeFocused();
 
     await searchInput.fill("term");
-    await page.waitForTimeout(400);
 
     const results = page.getByTestId("spotlight-results");
     await expect(results).toBeVisible({ timeout: 5000 });
@@ -38,16 +37,11 @@ test.describe("Mobile Spotlight Search", () => {
       const firstResult = page.getByTestId(
         `spotlight-result-${firstTermId}`,
       );
-      const visible = await firstResult.isVisible().catch(() => false);
-      if (visible) {
-        await firstResult.click();
-      } else {
-        const anyResult = results.locator("[data-testid]").first();
-        await anyResult.click();
-      }
+      await expect(firstResult).toBeVisible({ timeout: 5000 });
+      await firstResult.click();
     }
 
-    await page.waitForURL(/\/term\//);
+    await page.waitForURL(/\/term\//, { timeout: 5000 });
 
     const termName = page.getByTestId("text-term-name");
     await expect(termName).toBeVisible();
@@ -61,7 +55,6 @@ test.describe("Mobile Spotlight Search", () => {
 
     const searchInput = page.getByTestId("spotlight-search-input");
     await searchInput.fill("xyznonexistentterm999");
-    await page.waitForTimeout(400);
 
     const emptyState = page.getByTestId("spotlight-empty-state");
     await expect(emptyState).toBeVisible({ timeout: 5000 });

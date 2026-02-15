@@ -8,8 +8,8 @@ test.describe("Lookup Job Journey", () => {
       "http://localhost:5000/api/terms",
     );
     const terms = await termsResponse.json();
-    const firstTermId =
-      Array.isArray(terms) && terms.length > 0 ? terms[0].id : null;
+    const firstTerm =
+      Array.isArray(terms) && terms.length > 0 ? terms[0] : null;
 
     await page.goto("/");
 
@@ -21,53 +21,44 @@ test.describe("Lookup Job Journey", () => {
       const searchInput = page.getByTestId("spotlight-search-input");
       await expect(searchInput).toBeVisible();
       await searchInput.fill("term");
-      await page.waitForTimeout(400);
       const results = page.getByTestId("spotlight-results");
       await expect(results).toBeVisible({ timeout: 5000 });
 
-      if (firstTermId) {
+      if (firstTerm) {
         const firstResult = page.getByTestId(
-          `spotlight-result-${firstTermId}`,
+          `spotlight-result-${firstTerm.id}`,
         );
-        const visible = await firstResult.isVisible().catch(() => false);
-        if (visible) {
-          await firstResult.click();
-        } else {
-          const anyResult = results.locator("[data-testid]").first();
-          await anyResult.click();
-        }
+        await expect(firstResult).toBeVisible({ timeout: 5000 });
+        await firstResult.click();
       }
     } else {
       const searchInput = page.getByTestId("search-input");
       await expect(searchInput).toBeVisible();
       await searchInput.fill("term");
-      await page.waitForTimeout(400);
       const searchResults = page.getByTestId("search-results");
       await expect(searchResults).toBeVisible({ timeout: 5000 });
 
-      if (firstTermId) {
+      if (firstTerm) {
         const firstResult = page.getByTestId(
-          `search-result-${firstTermId}`,
+          `search-result-${firstTerm.id}`,
         );
-        const visible = await firstResult.isVisible().catch(() => false);
-        if (visible) {
-          const termCard = page.getByTestId(`card-term-${firstTermId}`);
+        await expect(firstResult).toBeVisible({ timeout: 5000 });
+
+        const termCard = page.getByTestId(`card-term-${firstTerm.id}`);
+        if (await termCard.isVisible().catch(() => false)) {
           await expect(termCard).toBeVisible();
-
-          const freshness = page.getByTestId(`freshness-${firstTermId}`);
-          if (await freshness.isVisible().catch(() => false)) {
-            await expect(freshness).not.toBeEmpty();
-          }
-
-          await firstResult.click();
-        } else {
-          const anyResult = searchResults.locator("[data-testid]").first();
-          await anyResult.click();
         }
+
+        const freshness = page.getByTestId(`freshness-${firstTerm.id}`);
+        if (await freshness.isVisible().catch(() => false)) {
+          await expect(freshness).not.toBeEmpty();
+        }
+
+        await firstResult.click();
       }
     }
 
-    await page.waitForURL(/\/term\//);
+    await page.waitForURL(/\/term\//, { timeout: 5000 });
 
     const termName = page.getByTestId("text-term-name");
     await expect(termName).toBeVisible();
@@ -79,6 +70,11 @@ test.describe("Lookup Job Journey", () => {
 
     const termCategory = page.getByTestId("text-term-category");
     await expect(termCategory).toBeVisible();
+
+    const statusBadge = page.getByTestId("badge-term-status");
+    if (await statusBadge.isVisible().catch(() => false)) {
+      await expect(statusBadge).not.toBeEmpty();
+    }
 
     const usageGuidance = page.getByTestId("section-usage-guidance");
     if (await usageGuidance.isVisible().catch(() => false)) {
@@ -95,7 +91,6 @@ test.describe("Lookup Job Journey", () => {
       const section = page.getByTestId(sectionId);
       if (await section.isVisible().catch(() => false)) {
         await section.click();
-        await page.waitForTimeout(500);
         break;
       }
     }

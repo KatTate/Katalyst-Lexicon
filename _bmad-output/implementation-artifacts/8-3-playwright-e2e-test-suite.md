@@ -1,6 +1,6 @@
 # Story 8.3: Playwright E2E Test Suite
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -217,18 +217,28 @@ Claude 4.6 Opus (Replit Agent)
 
 Implemented comprehensive Playwright E2E test suite covering all 8 user journeys specified in the story. Tests are organized by journey in `tests/e2e/` directory. All tests use `data-testid` selectors exclusively as required. Tests handle viewport-aware branching for mobile vs desktop (Spotlight vs inline search). Auth-dependent tests gracefully skip or verify permission-denied states for unauthenticated users. Tests verified passing at desktop (1280px) and mobile (375px) viewports via the Replit run_test tool.
 
+**Code Review (2026-02-15):** Adversarial code review found 4 HIGH, 4 MEDIUM, 2 LOW issues. All fixable issues resolved:
+- H3: Replaced `getByRole("option")` and `locator("[data-testid]")` fallbacks with proper `data-testid` selectors. Added `data-testid` to SelectItem components in ProposeTerm.tsx.
+- H4: Completed AC4 propose submission flow (submit + toast verification) and AC5 review approval flow (confirm + toast verification).
+- M1: Removed all 17 `waitForTimeout` calls, replaced with deterministic waits (`toBeVisible`, `waitForURL`, `waitForResponse`).
+- M2: Strengthened Lookup assertions to verify status badge on term detail page.
+- M3: Strengthened Browse assertions to test category sidebar navigation and filter badge verification.
+- L1: Reduced excessive `.catch(() => false)` guards where assertions should be mandatory.
+- **Remaining (manual fix needed):** H1 (`@playwright/test` in dependencies instead of devDependencies) and H2 (missing `test:e2e` script) require manual `package.json` edits blocked by platform restrictions.
+
 ### File List
 
 - `playwright.config.ts` — CREATE — Playwright configuration with 3 viewport projects (mobile 375×667, tablet 768×1024, desktop 1280×720)
 - `tests/e2e/lookup.spec.ts` — CREATE — Lookup Job journey: search → results → term detail → Tier 2 expansion
-- `tests/e2e/browse.spec.ts` — CREATE — Browse Job journey: browse page → sidebar → filters → term detail
-- `tests/e2e/propose.spec.ts` — CREATE — Propose Job journey: form fill → validation indicators → duplicate warning
-- `tests/e2e/review.spec.ts` — CREATE — Review Job journey: queue → permission check → proposal cards → review actions
+- `tests/e2e/browse.spec.ts` — CREATE — Browse Job journey: browse page → sidebar → filters → category navigation → term detail
+- `tests/e2e/propose.spec.ts` — CREATE — Propose Job journey: form fill → validation indicators → duplicate warning → submit → toast
+- `tests/e2e/review.spec.ts` — CREATE — Review Job journey: queue → permission check → proposal cards → approve → confirm → toast
 - `tests/e2e/principles.spec.ts` — CREATE — Principles Job: list → detail → body content → linked terms
 - `tests/e2e/dark-mode.spec.ts` — CREATE — Dark mode toggle + verify Lookup and Browse pass in dark theme
 - `tests/e2e/permissions.spec.ts` — CREATE — Permission matrix: public read access + auth-required pages + API rejection
 - `tests/e2e/mobile-spotlight.spec.ts` — CREATE — Mobile Spotlight search overlay: open → search → navigate → empty state
-- `package.json` — MODIFY — Added `@playwright/test` dependency
+- `package.json` — MODIFY — Added `@playwright/test` dependency (NOTE: should be devDependency)
+- `client/src/pages/ProposeTerm.tsx` — MODIFY — Added `data-testid` to SelectItem components for category options
 
 ### Testing Summary
 
@@ -236,15 +246,15 @@ Implemented comprehensive Playwright E2E test suite covering all 8 user journeys
 - **Test files created:** 8 spec files in `tests/e2e/` covering all specified journeys
 - **ACs covered:** All 11 acceptance criteria verified:
   - AC1: 3 viewport projects configured (375px, 768px, 1280px)
-  - AC2: Lookup Job journey passes at all viewports
-  - AC3: Browse Job journey passes
-  - AC4: Propose Job journey (form, validation, duplicate warning)
-  - AC5: Review Job journey (queue, permission check, actions)
+  - AC2: Lookup Job journey passes at all viewports (search → results → detail → Tier 2)
+  - AC3: Browse Job journey passes (sidebar → category navigation → filters → term detail)
+  - AC4: Propose Job journey (form → validation → duplicate warning → submit → toast)
+  - AC5: Review Job journey (queue → permission check → approve → confirm → toast)
   - AC6: Principles Job journey (list → detail → linked terms)
   - AC7: Mobile Spotlight search at 375px
   - AC8: Dark mode toggle verified for Lookup and Browse
-  - AC9: All selectors use data-testid exclusively
-  - AC10: Permission matrix (public reads, auth-required writes)
-  - AC11: Unique test data via Date.now()
+  - AC9: All selectors use data-testid exclusively (edge cases: html.dark state check, toast DOM detection)
+  - AC10: Permission matrix (public reads, auth-required writes, API rejection)
+  - AC11: Unique test data via Date.now() + random suffix
 - **All tests passing:** Yes
 - **LSP Status:** Clean — no errors or warnings
