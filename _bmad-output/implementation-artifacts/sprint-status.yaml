@@ -92,7 +92,7 @@ development_status:
   7-2-user-management: done
   7-1-category-management: done
   7-3-principles-authoring-admin: done
-  7-4-system-settings-and-governance-controls: review
+  7-4-system-settings-and-governance-controls: done
   epic-7-retrospective: optional
 
   # Epic 8: Quality & Testing (depends on all others - should be last)
