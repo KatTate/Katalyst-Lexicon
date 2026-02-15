@@ -1,8 +1,8 @@
 # Test Automation Summary
 
 **Generated**: 2026-02-15 (updated from 2026-02-12)
-**Framework**: Vitest + Supertest (API) | Playwright (E2E)
-**Agent**: Quinn QA (BMAD Automate)
+**Framework**: Vitest + Supertest (API) | Playwright (E2E via platform run_test)
+**Agent**: Quinn QA (BMAD Automate) | Story 8.1 QA: Claude 4.6 Opus (Replit Agent)
 
 ## Generated Tests
 
@@ -44,6 +44,46 @@
 | **Admin login + full sidebar (AC6, AC10, AC11)** | **OIDC login → Admin role → all nav sections visible** | **Pass** |
 
 **Total E2E Workflows**: 12 — All passing
+
+## Story 8.1: Dark Mode and Theme System (E2E Only)
+
+**Generated**: 2026-02-15 | **Test method**: Playwright E2E via platform run_test (no persisted test files — no Playwright dependency in project)
+
+| # | Test Case | AC Covered | Result |
+|---|-----------|-----------|--------|
+| 1 | System preference detection — dark mode | AC1: OS dark → app dark on first visit | ✅ Pass |
+| 2 | System preference detection — light mode | AC2: OS light → app light on first visit | ✅ Pass |
+| 3 | Desktop theme toggle visibility and icon | AC3: Toggle in sidebar with correct Sun/Moon icon | ✅ Pass |
+| 4 | Toggle switches from light to dark | AC5: Click toggle → theme switches | ✅ Pass |
+| 5 | Toggle switches back from dark to light | AC5: Click toggle again → reverts theme | ✅ Pass |
+| 6 | localStorage persistence across page reload | AC5+AC6: Preference saved, persists on reload | ✅ Pass |
+| 7 | localStorage overrides system preference | AC6: Stored dark overrides OS light on new session | ✅ Pass |
+| 8 | Dark mode on Browse page — badges and cards | AC7+AC8: Status badges visible, cards styled in dark mode | ✅ Pass (visual) |
+| 9 | Dark mode on Principles page | AC9: Markdown content legible in dark mode | ✅ Pass (visual) |
+| 10 | Mobile theme toggle visibility | AC4: Mobile toggle visible, 44px touch target, functional | ✅ Pass |
+| 11 | Dark mode cross-page navigation persistence | AC5: Theme persists across client-side navigation | ✅ Pass |
+
+### Story 8.1 — Acceptance Criteria Coverage
+
+| AC | Description | Status | Notes |
+|----|-------------|--------|-------|
+| AC1 | OS dark mode → app renders dark on first visit | ✅ Automated | Test 1 |
+| AC2 | OS light mode → app renders light on first visit | ✅ Automated | Test 2 |
+| AC3 | Desktop sidebar toggle with Sun/Moon icon | ✅ Automated | Test 3 |
+| AC4 | Mobile header toggle with Sun/Moon icon | ✅ Automated | Test 10 |
+| AC5 | Toggle switches theme, smooth transition, localStorage persistence | ✅ Automated | Tests 4, 5, 6, 11 |
+| AC6 | localStorage overrides system preference on return visit | ✅ Automated | Test 7 |
+| AC7 | Status badges maintain WCAG AA contrast in dark mode | ⚠️ Visual only | No automated contrast ratio measurement — defer to Story 8.4 |
+| AC8 | All UI components render with proper dark mode styling | ⚠️ Visual only | Screenshots verified, no pixel-level automation |
+| AC9 | Markdown content legible in dark mode | ⚠️ Visual only | Test 9 confirmed rendering, no contrast measurement |
+| AC10 | Category color swatches distinguishable in dark mode | ❌ Not tested | Requires per-swatch contrast measurement tooling |
+| Reduced motion | Transitions disabled when prefers-reduced-motion: reduce | ❌ Not tested | Code review confirmed CSS media query present; browser emulation not attempted |
+
+### Story 8.1 — Limitations
+
+- **No persisted test files**: Tests run via platform Playwright tool, not saved as project test files. Playwright is not a project dependency.
+- **No automated contrast measurement**: WCAG AA compliance (4.5:1 / 3:1 ratios) not programmatically verified. Visual screenshots confirm readability. Formal audit deferred to Story 8.4.
+- **Reduced motion not tested**: `prefers-reduced-motion: reduce` emulation not performed. Implementation verified via code review of `client/src/index.css` media query.
 
 ## Epic 7 Story Coverage Summary
 
@@ -157,6 +197,9 @@
 4. Add API test for AC13 (reviewer identity in audit trail)
 5. Add E2E tests for "Permission denied" and "Please sign in" UI messages (AC1-AC3)
 6. Implement and test domain restriction (AC8/AC9) when ready
+7. **Story 8.1**: Run automated WCAG contrast measurement for dark mode badges/text (deferred to Story 8.4)
+8. **Story 8.1**: Test `prefers-reduced-motion: reduce` via Playwright browser emulation
+9. **Story 8.3**: Add Playwright as a project dependency to enable persisted E2E test files
 
 ---
 
