@@ -216,7 +216,7 @@ export default function Settings() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-header">Team Members</CardTitle>
-                <CardDescription>Users are auto-provisioned when they sign in via Replit Auth. Manage their roles below.</CardDescription>
+                <CardDescription>Users are auto-provisioned when they sign in with Google. Manage their roles below.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {usersLoading ? (
