@@ -287,12 +287,51 @@ export async function registerRoutes(
       }
 
       const approvedBy = getUserDisplayName(req.dbUser);
+      const reviewerEdits = req.body.edits || null;
+
+      const finalTermName = reviewerEdits?.termName ?? proposal.termName;
+      const finalCategory = reviewerEdits?.category ?? proposal.category;
+      const finalDefinition = reviewerEdits?.definition ?? proposal.definition;
+      const finalWhyExists = reviewerEdits?.whyExists ?? proposal.whyExists;
+      const finalUsedWhen = reviewerEdits?.usedWhen ?? proposal.usedWhen;
+      const finalNotUsedWhen = reviewerEdits?.notUsedWhen ?? proposal.notUsedWhen;
+      const finalExamplesGood = reviewerEdits?.examplesGood ?? proposal.examplesGood ?? [];
+      const finalExamplesBad = reviewerEdits?.examplesBad ?? proposal.examplesBad ?? [];
+      const finalSynonyms = reviewerEdits?.synonyms ?? proposal.synonyms ?? [];
+
+      const editedFields: string[] = [];
+      if (reviewerEdits) {
+        if (reviewerEdits.termName !== undefined && reviewerEdits.termName !== proposal.termName) editedFields.push("termName");
+        if (reviewerEdits.category !== undefined && reviewerEdits.category !== proposal.category) editedFields.push("category");
+        if (reviewerEdits.definition !== undefined && reviewerEdits.definition !== proposal.definition) editedFields.push("definition");
+        if (reviewerEdits.whyExists !== undefined && reviewerEdits.whyExists !== proposal.whyExists) editedFields.push("whyExists");
+        if (reviewerEdits.usedWhen !== undefined && reviewerEdits.usedWhen !== proposal.usedWhen) editedFields.push("usedWhen");
+        if (reviewerEdits.notUsedWhen !== undefined && reviewerEdits.notUsedWhen !== proposal.notUsedWhen) editedFields.push("notUsedWhen");
+        if (reviewerEdits.examplesGood !== undefined && JSON.stringify(reviewerEdits.examplesGood) !== JSON.stringify(proposal.examplesGood)) editedFields.push("examplesGood");
+        if (reviewerEdits.examplesBad !== undefined && JSON.stringify(reviewerEdits.examplesBad) !== JSON.stringify(proposal.examplesBad)) editedFields.push("examplesBad");
+        if (reviewerEdits.synonyms !== undefined && JSON.stringify(reviewerEdits.synonyms) !== JSON.stringify(proposal.synonyms)) editedFields.push("synonyms");
+      }
+
+      const hasEdits = editedFields.length > 0;
 
       const result = await db.transaction(async (tx) => {
-        const updateResult = await tx.update(proposals).set({
+        const proposalUpdate: Record<string, any> = {
           status: "approved",
-          reviewComment: req.body.comment || null
-        }).where(
+          reviewComment: req.body.comment || null,
+        };
+        if (hasEdits) {
+          proposalUpdate.termName = finalTermName;
+          proposalUpdate.category = finalCategory;
+          proposalUpdate.definition = finalDefinition;
+          proposalUpdate.whyExists = finalWhyExists;
+          proposalUpdate.usedWhen = finalUsedWhen;
+          proposalUpdate.notUsedWhen = finalNotUsedWhen;
+          proposalUpdate.examplesGood = finalExamplesGood;
+          proposalUpdate.examplesBad = finalExamplesBad;
+          proposalUpdate.synonyms = finalSynonyms;
+        }
+
+        const updateResult = await tx.update(proposals).set(proposalUpdate).where(
           and(
             eq(proposals.id, req.params.id),
             drizzleOr(
@@ -306,24 +345,25 @@ export async function registerRoutes(
           return { conflict: true };
         }
 
+        const approvalType = hasEdits ? "Approved with edits" : "Approved";
         const changeNote = proposal.type === "new"
-          ? `Approved from proposal: ${proposal.changesSummary}`
-          : `Approved edit: ${proposal.changesSummary}`;
+          ? `${approvalType} from proposal: ${proposal.changesSummary}`
+          : `${approvalType} edit: ${proposal.changesSummary}`;
 
         if (proposal.type === "new") {
           const [created] = await tx.insert(terms).values({
-            name: proposal.termName,
-            category: proposal.category,
-            definition: proposal.definition,
-            whyExists: proposal.whyExists,
-            usedWhen: proposal.usedWhen,
-            notUsedWhen: proposal.notUsedWhen,
+            name: finalTermName,
+            category: finalCategory,
+            definition: finalDefinition,
+            whyExists: finalWhyExists,
+            usedWhen: finalUsedWhen,
+            notUsedWhen: finalNotUsedWhen,
             status: "Canonical",
             visibility: "Internal",
             owner: proposal.submittedBy,
-            examplesGood: proposal.examplesGood || [],
-            examplesBad: proposal.examplesBad || [],
-            synonyms: proposal.synonyms || [],
+            examplesGood: finalExamplesGood,
+            examplesBad: finalExamplesBad,
+            synonyms: finalSynonyms,
             version: 1
           }).returning();
 
@@ -339,14 +379,14 @@ export async function registerRoutes(
           if (existing) {
             const newVersion = existing.version + 1;
             const [updated] = await tx.update(terms).set({
-              category: proposal.category,
-              definition: proposal.definition,
-              whyExists: proposal.whyExists,
-              usedWhen: proposal.usedWhen,
-              notUsedWhen: proposal.notUsedWhen,
-              examplesGood: proposal.examplesGood || [],
-              examplesBad: proposal.examplesBad || [],
-              synonyms: proposal.synonyms || [],
+              category: finalCategory,
+              definition: finalDefinition,
+              whyExists: finalWhyExists,
+              usedWhen: finalUsedWhen,
+              notUsedWhen: finalNotUsedWhen,
+              examplesGood: finalExamplesGood,
+              examplesBad: finalExamplesBad,
+              synonyms: finalSynonyms,
               version: newVersion,
               updatedAt: new Date()
             }).where(eq(terms.id, proposal.termId)).returning();
@@ -363,11 +403,17 @@ export async function registerRoutes(
           }
         }
 
+        let eventComment = req.body.comment || null;
+        if (hasEdits) {
+          const editsDetail = `Reviewer edited fields: ${editedFields.join(", ")}`;
+          eventComment = eventComment ? `${eventComment}\n\n${editsDetail}` : editsDetail;
+        }
+
         await tx.insert(proposalEvents).values({
           proposalId: req.params.id,
           eventType: "approved",
           actorId: approvedBy,
-          comment: req.body.comment || null,
+          comment: eventComment,
         });
 
         return { conflict: false };
@@ -377,7 +423,7 @@ export async function registerRoutes(
         return res.status(409).json({ error: "This proposal has already been reviewed" });
       }
 
-      res.json({ success: true });
+      res.json({ success: true, approvedWithEdits: hasEdits, editedFields });
     } catch (error) {
       res.status(500).json({ error: "Failed to approve proposal" });
     }

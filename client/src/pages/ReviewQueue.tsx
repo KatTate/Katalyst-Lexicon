@@ -6,21 +6,231 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
   CheckCircle2, XCircle, MessageSquare, Clock, Eye,
-  ChevronRight, User, Loader2, ClipboardCheck
+  ChevronRight, User, Loader2, ClipboardCheck, Pencil, RotateCcw, Plus, X
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
-import { api, Proposal, ProposalEvent, Term } from "@/lib/api";
+import { api, Proposal, ProposalEvent, Term, Category } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { canReview as checkCanReview } from "@shared/permissions";
+
+interface ReviewerEdits {
+  termName: string;
+  category: string;
+  definition: string;
+  whyExists: string;
+  usedWhen: string;
+  notUsedWhen: string;
+  examplesGood: string[];
+  examplesBad: string[];
+  synonyms: string[];
+}
+
+function useReviewerEdits(proposal: Proposal | null) {
+  const [edits, setEdits] = useState<ReviewerEdits | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (proposal) {
+      setEdits({
+        termName: proposal.termName,
+        category: proposal.category,
+        definition: proposal.definition,
+        whyExists: proposal.whyExists,
+        usedWhen: proposal.usedWhen,
+        notUsedWhen: proposal.notUsedWhen,
+        examplesGood: [...(proposal.examplesGood || [])],
+        examplesBad: [...(proposal.examplesBad || [])],
+        synonyms: [...(proposal.synonyms || [])],
+      });
+      setIsEditing(false);
+    } else {
+      setEdits(null);
+      setIsEditing(false);
+    }
+  }, [proposal?.id]);
+
+  const hasChanges = useMemo(() => {
+    if (!edits || !proposal) return false;
+    return (
+      edits.termName !== proposal.termName ||
+      edits.category !== proposal.category ||
+      edits.definition !== proposal.definition ||
+      edits.whyExists !== proposal.whyExists ||
+      edits.usedWhen !== proposal.usedWhen ||
+      edits.notUsedWhen !== proposal.notUsedWhen ||
+      JSON.stringify(edits.examplesGood) !== JSON.stringify(proposal.examplesGood || []) ||
+      JSON.stringify(edits.examplesBad) !== JSON.stringify(proposal.examplesBad || []) ||
+      JSON.stringify(edits.synonyms) !== JSON.stringify(proposal.synonyms || [])
+    );
+  }, [edits, proposal]);
+
+  const changedFields = useMemo(() => {
+    if (!edits || !proposal) return [];
+    const fields: string[] = [];
+    if (edits.termName !== proposal.termName) fields.push("Term Name");
+    if (edits.category !== proposal.category) fields.push("Category");
+    if (edits.definition !== proposal.definition) fields.push("Definition");
+    if (edits.whyExists !== proposal.whyExists) fields.push("Why It Exists");
+    if (edits.usedWhen !== proposal.usedWhen) fields.push("Used When");
+    if (edits.notUsedWhen !== proposal.notUsedWhen) fields.push("Not Used When");
+    if (JSON.stringify(edits.examplesGood) !== JSON.stringify(proposal.examplesGood || [])) fields.push("Good Examples");
+    if (JSON.stringify(edits.examplesBad) !== JSON.stringify(proposal.examplesBad || [])) fields.push("Bad Examples");
+    if (JSON.stringify(edits.synonyms) !== JSON.stringify(proposal.synonyms || [])) fields.push("Synonyms");
+    return fields;
+  }, [edits, proposal]);
+
+  const resetEdits = useCallback(() => {
+    if (proposal) {
+      setEdits({
+        termName: proposal.termName,
+        category: proposal.category,
+        definition: proposal.definition,
+        whyExists: proposal.whyExists,
+        usedWhen: proposal.usedWhen,
+        notUsedWhen: proposal.notUsedWhen,
+        examplesGood: [...(proposal.examplesGood || [])],
+        examplesBad: [...(proposal.examplesBad || [])],
+        synonyms: [...(proposal.synonyms || [])],
+      });
+    }
+  }, [proposal]);
+
+  const updateField = useCallback((field: keyof ReviewerEdits, value: any) => {
+    setEdits((prev) => prev ? { ...prev, [field]: value } : prev);
+  }, []);
+
+  return { edits, isEditing, setIsEditing, hasChanges, changedFields, resetEdits, updateField };
+}
+
+function EditableTextField({
+  label,
+  value,
+  originalValue,
+  onChange,
+  isEditing,
+  multiline,
+  testId,
+}: {
+  label: string;
+  value: string;
+  originalValue: string;
+  onChange: (v: string) => void;
+  isEditing: boolean;
+  multiline?: boolean;
+  testId: string;
+}) {
+  const changed = value !== originalValue;
+  return (
+    <div data-testid={testId} className="space-y-1">
+      <div className="flex items-center gap-2">
+        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide">{label}</h4>
+        {changed && <Badge variant="outline" className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700">Edited</Badge>}
+      </div>
+      {isEditing ? (
+        multiline ? (
+          <Textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={cn("min-h-[80px]", changed && "border-amber-400 dark:border-amber-600")}
+            data-testid={`${testId}-input`}
+          />
+        ) : (
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={cn(changed && "border-amber-400 dark:border-amber-600")}
+            data-testid={`${testId}-input`}
+          />
+        )
+      ) : (
+        <p className="text-foreground/80 text-sm">{value || <span className="italic text-muted-foreground">empty</span>}</p>
+      )}
+    </div>
+  );
+}
+
+function EditableArrayField({
+  label,
+  values,
+  originalValues,
+  onChange,
+  isEditing,
+  testId,
+}: {
+  label: string;
+  values: string[];
+  originalValues: string[];
+  onChange: (v: string[]) => void;
+  isEditing: boolean;
+  testId: string;
+}) {
+  const changed = JSON.stringify(values) !== JSON.stringify(originalValues);
+
+  const addItem = () => onChange([...values, ""]);
+  const removeItem = (index: number) => onChange(values.filter((_, i) => i !== index));
+  const updateItem = (index: number, val: string) => {
+    const updated = [...values];
+    updated[index] = val;
+    onChange(updated);
+  };
+
+  if (!isEditing && values.length === 0) return null;
+
+  return (
+    <div data-testid={testId} className="space-y-1">
+      <div className="flex items-center gap-2">
+        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide">{label}</h4>
+        {changed && <Badge variant="outline" className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700">Edited</Badge>}
+      </div>
+      {isEditing ? (
+        <div className="space-y-2">
+          {values.map((val, i) => (
+            <div key={i} className="flex gap-2">
+              <Input
+                value={val}
+                onChange={(e) => updateItem(i, e.target.value)}
+                className={cn("flex-1", changed && "border-amber-400 dark:border-amber-600")}
+                data-testid={`${testId}-input-${i}`}
+              />
+              <Button variant="ghost" size="icon" onClick={() => removeItem(i)} className="shrink-0 text-muted-foreground hover:text-destructive" data-testid={`${testId}-remove-${i}`}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={addItem} className="gap-1 text-xs" data-testid={`${testId}-add`}>
+            <Plus className="h-3 w-3" /> Add
+          </Button>
+        </div>
+      ) : label === "Synonyms" ? (
+        <div className="flex flex-wrap gap-2">
+          {values.map((v, i) => (
+            <Badge key={i} variant="secondary" className="text-sm">{v}</Badge>
+          ))}
+        </div>
+      ) : (
+        <ul className="list-disc list-inside space-y-1">
+          {values.map((v, i) => (
+            <li key={i} className="text-foreground/80 text-sm">{v}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function DiffField({ label, oldValue, newValue, testId }: { label: string; oldValue: string; newValue: string; testId: string }) {
   const changed = oldValue !== newValue;
@@ -117,62 +327,38 @@ export default function ReviewQueue() {
 
   const canReview = isAuthenticated && user?.role ? checkCanReview(user.role) : false;
 
+  const { edits, isEditing, setIsEditing, hasChanges, changedFields, resetEdits, updateField } = useReviewerEdits(selectedItem);
+
   useEffect(() => {
     document.title = "Review Queue — Katalyst Lexicon";
   }, []);
 
-  if (!canReview) {
-    return (
-      <Layout>
-        <div className="p-8 max-w-2xl mx-auto text-center" data-testid="permission-denied-review">
-          <ClipboardCheck className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-          <h2 className="text-xl font-header font-bold text-foreground mb-2">Access Restricted</h2>
-          <p className="text-muted-foreground">You don't have permission to review proposals.</p>
-        </div>
-      </Layout>
-    );
-  }
-
   const { data: allProposals = [], isLoading } = useQuery<Proposal[]>({
     queryKey: ["/api/proposals"],
+    enabled: canReview,
+  });
+
+  const { data: allCategories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+    enabled: canReview,
   });
 
   const { data: originalTerm } = useQuery<Term>({
     queryKey: ["/api/terms", selectedItem?.termId],
     queryFn: () => api.terms.get(selectedItem?.termId || ""),
-    enabled: !!selectedItem?.termId && selectedItem?.type === "edit",
+    enabled: canReview && !!selectedItem?.termId && selectedItem?.type === "edit",
   });
 
-  // Fetch full proposal detail (with events) when selected
   const { data: proposalDetail } = useQuery<Proposal & { events?: ProposalEvent[] }>({
     queryKey: ["/api/proposals", selectedItem?.id],
     queryFn: () => api.proposals.get(selectedItem?.id || ""),
-    enabled: !!selectedItem?.id,
+    enabled: canReview && !!selectedItem?.id,
   });
-
-  // Sort oldest-first so nothing gets buried in the review queue
-  const sortedProposals = [...allProposals].sort(
-    (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
-  );
-
-  const proposals = activeTab === "all"
-    ? sortedProposals
-    : sortedProposals.filter(p => {
-        if (activeTab === "pending") return p.status === "pending";
-        if (activeTab === "review") return p.status === "in_review";
-        if (activeTab === "changes") return p.status === "changes_requested";
-        return true;
-      });
-
-  const pendingCount = allProposals.filter(i => i.status === 'pending').length;
-  const inReviewCount = allProposals.filter(i => i.status === 'in_review').length;
-  const changesCount = allProposals.filter(i => i.status === 'changes_requested').length;
 
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
   const handle409Error = (error: unknown) => {
-    // Check for 409 Conflict (race condition)
     const is409 = error instanceof Error && error.message?.includes("409");
     if (is409) {
       toast({ title: "Already reviewed", description: "This proposal has already been reviewed", variant: "destructive" });
@@ -183,11 +369,15 @@ export default function ReviewQueue() {
   };
 
   const approveMutation = useMutation({
-    mutationFn: ({ id, comment }: { id: string; comment?: string }) => api.proposals.approve(id, comment),
-    onSuccess: () => {
+    mutationFn: ({ id, comment, edits }: { id: string; comment?: string; edits?: Partial<ReviewerEdits> }) =>
+      api.proposals.approve(id, comment, edits),
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/proposals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/terms"] });
-      toast({ title: "Proposal approved", description: "Proposal approved — term has been published" });
+      const msg = data.approvedWithEdits
+        ? "Proposal approved with reviewer edits — term has been published"
+        : "Proposal approved — term has been published";
+      toast({ title: data.approvedWithEdits ? "Approved with edits" : "Proposal approved", description: msg });
       setSelectedItem(null);
       setComment("");
     },
@@ -227,6 +417,35 @@ export default function ReviewQueue() {
       }
     },
   });
+
+  if (!canReview) {
+    return (
+      <Layout>
+        <div className="p-8 max-w-2xl mx-auto text-center" data-testid="permission-denied-review">
+          <ClipboardCheck className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+          <h2 className="text-xl font-header font-bold text-foreground mb-2">Access Restricted</h2>
+          <p className="text-muted-foreground">You don't have permission to review proposals.</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  const sortedProposals = [...allProposals].sort(
+    (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+  );
+
+  const proposals = activeTab === "all"
+    ? sortedProposals
+    : sortedProposals.filter(p => {
+        if (activeTab === "pending") return p.status === "pending";
+        if (activeTab === "review") return p.status === "in_review";
+        if (activeTab === "changes") return p.status === "changes_requested";
+        return true;
+      });
+
+  const pendingCount = allProposals.filter(i => i.status === 'pending').length;
+  const inReviewCount = allProposals.filter(i => i.status === 'in_review').length;
+  const changesCount = allProposals.filter(i => i.status === 'changes_requested').length;
 
   const StatusBadge = ({ status }: { status: Proposal['status'] }) => {
     const styles: Record<string, string> = {
@@ -271,6 +490,7 @@ export default function ReviewQueue() {
 
   const isPending = approveMutation.isPending || rejectMutation.isPending || requestChangesMutation.isPending;
   const isEditProposal = selectedItem?.type === "edit" && originalTerm;
+  const canEdit = selectedItem && selectedItem.status !== 'approved' && selectedItem.status !== 'rejected';
 
   return (
     <Layout>
@@ -309,7 +529,7 @@ export default function ReviewQueue() {
                 proposals.map(item => (
                   <div 
                     key={item.id}
-                    onClick={() => setSelectedItem(item)}
+                    onClick={() => { setSelectedItem(item); setIsEditing(false); }}
                     className={cn(
                       "p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
                       selectedItem?.id === item.id 
@@ -352,7 +572,7 @@ export default function ReviewQueue() {
 
         {/* Right Panel - Detail View */}
         <div className="flex-1 bg-background overflow-y-auto">
-          {selectedItem ? (
+          {selectedItem && edits ? (
             <div className="max-w-3xl mx-auto p-8">
               <div className="flex items-center justify-between mb-8">
                 <div className="space-y-2">
@@ -364,18 +584,69 @@ export default function ReviewQueue() {
                       {selectedItem.type === 'new' ? 'New Term Proposal' : 'Edit Proposal'}
                     </Badge>
                     <StatusBadge status={selectedItem.status} />
+                    {hasChanges && (
+                      <Badge variant="outline" className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700">
+                        {changedFields.length} field{changedFields.length !== 1 ? 's' : ''} edited
+                      </Badge>
+                    )}
                   </div>
-                  <h2 className="text-3xl font-header font-bold text-foreground" data-testid="text-proposal-name">{selectedItem.termName}</h2>
-                  <p className="text-sm text-muted-foreground">{selectedItem.category}</p>
+                  {isEditing ? (
+                    <Input
+                      value={edits.termName}
+                      onChange={(e) => updateField("termName", e.target.value)}
+                      className={cn("text-2xl font-header font-bold h-auto py-1", edits.termName !== selectedItem.termName && "border-amber-400 dark:border-amber-600")}
+                      data-testid="edit-term-name"
+                    />
+                  ) : (
+                    <h2 className="text-3xl font-header font-bold text-foreground" data-testid="text-proposal-name">
+                      {edits.termName}
+                      {edits.termName !== selectedItem.termName && (
+                        <Badge variant="outline" className="ml-2 text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 align-middle">Edited</Badge>
+                      )}
+                    </h2>
+                  )}
+                  {isEditing ? (
+                    <Select value={edits.category} onValueChange={(v) => updateField("category", v)}>
+                      <SelectTrigger className={cn("w-64", edits.category !== selectedItem.category && "border-amber-400 dark:border-amber-600")} data-testid="edit-category-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allCategories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{edits.category}</p>
+                  )}
                 </div>
-                {selectedItem.termId && (
-                  <Link href={`/term/${selectedItem.termId}`}>
-                    <Button variant="outline" size="sm" className="gap-2" data-testid="button-view-term">
-                      <Eye className="h-4 w-4" />
-                      View Current Term
-                    </Button>
-                  </Link>
-                )}
+                <div className="flex items-center gap-2">
+                  {canEdit && (
+                    <>
+                      {isEditing ? (
+                        <>
+                          <Button variant="outline" size="sm" className="gap-2" onClick={() => { resetEdits(); setIsEditing(false); }} data-testid="cancel-edit-button">
+                            <RotateCcw className="h-4 w-4" />
+                            Cancel Edits
+                          </Button>
+                        </>
+                      ) : (
+                        <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsEditing(true)} data-testid="edit-fields-button">
+                          <Pencil className="h-4 w-4" />
+                          Edit Fields
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {selectedItem.termId && (
+                    <Link href={`/term/${selectedItem.termId}`}>
+                      <Button variant="outline" size="sm" className="gap-2" data-testid="button-view-term">
+                        <Eye className="h-4 w-4" />
+                        View Current Term
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {/* Changes Summary / Change Note */}
@@ -394,131 +665,119 @@ export default function ReviewQueue() {
               </Card>
 
               {/* Edit Proposal: Diff View */}
-              {isEditProposal && (
+              {isEditProposal && !isEditing && (
                 <Card className="mb-6 border-amber-200 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20">
                   <CardHeader>
                     <CardTitle className="text-lg font-header">Proposed Changes</CardTitle>
                     <CardDescription>Comparing current term with proposed edits. Changed fields are highlighted.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <DiffField 
-                      label="Category" 
-                      oldValue={originalTerm.category} 
-                      newValue={selectedItem.category} 
-                      testId="diff-category" 
+                    <DiffField label="Category" oldValue={originalTerm.category} newValue={edits.category} testId="diff-category" />
+                    <DiffField label="Definition" oldValue={originalTerm.definition} newValue={edits.definition} testId="diff-definition" />
+                    <DiffField label="Why This Term Exists" oldValue={originalTerm.whyExists} newValue={edits.whyExists} testId="diff-why-exists" />
+                    <DiffField label="Used When" oldValue={originalTerm.usedWhen} newValue={edits.usedWhen} testId="diff-used-when" />
+                    <DiffField label="Not Used When" oldValue={originalTerm.notUsedWhen} newValue={edits.notUsedWhen} testId="diff-not-used-when" />
+                    <DiffArrayField label="Good Examples" oldValue={originalTerm.examplesGood} newValue={edits.examplesGood} testId="diff-good-examples" />
+                    <DiffArrayField label="Bad Examples" oldValue={originalTerm.examplesBad} newValue={edits.examplesBad} testId="diff-bad-examples" />
+                    <DiffArrayField label="Synonyms" oldValue={originalTerm.synonyms} newValue={edits.synonyms} testId="diff-synonyms" />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Editable Term Details (new proposals or editing mode) */}
+              {(selectedItem.type === "new" || isEditing) && (
+                <Card className={cn("mb-6", isEditing && "border-amber-200 dark:border-amber-700")}>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-header">
+                      {isEditing ? "Edit Term Details" : "Proposed Term Details"}
+                    </CardTitle>
+                    <CardDescription>
+                      {isEditing ? "Make any changes needed before approving" : "All fields submitted for review"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <EditableTextField
+                      label="Definition"
+                      value={edits.definition}
+                      originalValue={selectedItem.definition}
+                      onChange={(v) => updateField("definition", v)}
+                      isEditing={isEditing}
+                      multiline
+                      testId="section-definition"
                     />
-                    <DiffField 
-                      label="Definition" 
-                      oldValue={originalTerm.definition} 
-                      newValue={selectedItem.definition} 
-                      testId="diff-definition" 
+                    <EditableTextField
+                      label="Why This Term Exists"
+                      value={edits.whyExists}
+                      originalValue={selectedItem.whyExists}
+                      onChange={(v) => updateField("whyExists", v)}
+                      isEditing={isEditing}
+                      multiline
+                      testId="section-why-exists"
                     />
-                    <DiffField 
-                      label="Why This Term Exists" 
-                      oldValue={originalTerm.whyExists} 
-                      newValue={selectedItem.whyExists} 
-                      testId="diff-why-exists" 
+                    <EditableTextField
+                      label="Used When"
+                      value={edits.usedWhen}
+                      originalValue={selectedItem.usedWhen}
+                      onChange={(v) => updateField("usedWhen", v)}
+                      isEditing={isEditing}
+                      multiline
+                      testId="section-used-when"
                     />
-                    <DiffField 
-                      label="Used When" 
-                      oldValue={originalTerm.usedWhen} 
-                      newValue={selectedItem.usedWhen} 
-                      testId="diff-used-when" 
+                    <EditableTextField
+                      label="Not Used When"
+                      value={edits.notUsedWhen}
+                      originalValue={selectedItem.notUsedWhen}
+                      onChange={(v) => updateField("notUsedWhen", v)}
+                      isEditing={isEditing}
+                      multiline
+                      testId="section-not-used-when"
                     />
-                    <DiffField 
-                      label="Not Used When" 
-                      oldValue={originalTerm.notUsedWhen} 
-                      newValue={selectedItem.notUsedWhen} 
-                      testId="diff-not-used-when" 
+                    <EditableArrayField
+                      label="Good Examples"
+                      values={edits.examplesGood}
+                      originalValues={selectedItem.examplesGood || []}
+                      onChange={(v) => updateField("examplesGood", v)}
+                      isEditing={isEditing}
+                      testId="section-good-examples"
                     />
-                    <DiffArrayField 
-                      label="Good Examples" 
-                      oldValue={originalTerm.examplesGood} 
-                      newValue={selectedItem.examplesGood} 
-                      testId="diff-good-examples" 
+                    <EditableArrayField
+                      label="Bad Examples"
+                      values={edits.examplesBad}
+                      originalValues={selectedItem.examplesBad || []}
+                      onChange={(v) => updateField("examplesBad", v)}
+                      isEditing={isEditing}
+                      testId="section-bad-examples"
                     />
-                    <DiffArrayField 
-                      label="Bad Examples" 
-                      oldValue={originalTerm.examplesBad} 
-                      newValue={selectedItem.examplesBad} 
-                      testId="diff-bad-examples" 
-                    />
-                    <DiffArrayField 
-                      label="Synonyms" 
-                      oldValue={originalTerm.synonyms} 
-                      newValue={selectedItem.synonyms} 
-                      testId="diff-synonyms" 
+                    <EditableArrayField
+                      label="Synonyms"
+                      values={edits.synonyms}
+                      originalValues={selectedItem.synonyms || []}
+                      onChange={(v) => updateField("synonyms", v)}
+                      isEditing={isEditing}
+                      testId="section-synonyms"
                     />
                   </CardContent>
                 </Card>
               )}
 
-              {/* New Term Proposal: Full Content View */}
-              {selectedItem.type === "new" && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-header">Proposed Term Details</CardTitle>
-                    <CardDescription>All fields submitted for review</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div data-testid="section-definition">
-                      <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Definition</h4>
-                      <p className="text-foreground/80">{selectedItem.definition}</p>
+              {/* Reviewer edits summary banner */}
+              {hasChanges && (
+                <Card className="mb-6 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30">
+                  <CardContent className="py-4">
+                    <div className="flex items-start gap-3">
+                      <Pencil className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-amber-800 dark:text-amber-300 text-sm">
+                          You've edited {changedFields.length} field{changedFields.length !== 1 ? 's' : ''}
+                        </p>
+                        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                          Changed: {changedFields.join(", ")}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          The Approve button will record these as "Approved with Edits" in the audit trail.
+                        </p>
+                      </div>
                     </div>
-
-                    {selectedItem.whyExists && (
-                      <div data-testid="section-why-exists">
-                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Why This Term Exists</h4>
-                        <p className="text-foreground/80">{selectedItem.whyExists}</p>
-                      </div>
-                    )}
-
-                    {selectedItem.usedWhen && (
-                      <div data-testid="section-used-when">
-                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Used When</h4>
-                        <p className="text-foreground/80">{selectedItem.usedWhen}</p>
-                      </div>
-                    )}
-
-                    {selectedItem.notUsedWhen && (
-                      <div data-testid="section-not-used-when">
-                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Not Used When</h4>
-                        <p className="text-foreground/80">{selectedItem.notUsedWhen}</p>
-                      </div>
-                    )}
-
-                    {selectedItem.examplesGood && selectedItem.examplesGood.length > 0 && (
-                      <div data-testid="section-good-examples">
-                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Good Examples</h4>
-                        <ul className="list-disc list-inside space-y-1">
-                          {selectedItem.examplesGood.map((ex, i) => (
-                            <li key={i} className="text-foreground/80 text-sm">{ex}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {selectedItem.examplesBad && selectedItem.examplesBad.length > 0 && (
-                      <div data-testid="section-bad-examples">
-                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Bad Examples</h4>
-                        <ul className="list-disc list-inside space-y-1">
-                          {selectedItem.examplesBad.map((ex, i) => (
-                            <li key={i} className="text-foreground/80 text-sm">{ex}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {selectedItem.synonyms && selectedItem.synonyms.length > 0 && (
-                      <div data-testid="section-synonyms">
-                        <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Synonyms</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedItem.synonyms.map((syn, i) => (
-                            <Badge key={i} variant="secondary" className="text-sm">{syn}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               )}
@@ -546,7 +805,6 @@ export default function ReviewQueue() {
               {/* Audit Trail */}
               {(() => {
                 const events = proposalDetail?.events || [];
-                // Fallback: if no events, show derived "Submitted" event
                 const displayEvents = events.length > 0 ? events : [{
                   id: "fallback",
                   proposalId: selectedItem.id,
@@ -573,7 +831,6 @@ export default function ReviewQueue() {
                     </CardHeader>
                     <CardContent data-testid="audit-trail-section">
                       <div className="relative">
-                        {/* Vertical timeline line */}
                         {displayEvents.length > 1 && (
                           <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-border" />
                         )}
@@ -593,7 +850,7 @@ export default function ReviewQueue() {
                                     {formatDate(event.timestamp)}
                                   </p>
                                   {event.comment && (
-                                    <p className="text-sm text-muted-foreground mt-1 italic">
+                                    <p className="text-sm text-muted-foreground mt-1 italic whitespace-pre-line">
                                       "{event.comment}"
                                     </p>
                                   )}
@@ -625,13 +882,24 @@ export default function ReviewQueue() {
                     />
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Button
-                        className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold gap-2"
+                        className={cn(
+                          "flex-1 font-bold gap-2 text-white",
+                          hasChanges
+                            ? "bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700"
+                            : "bg-primary hover:bg-primary/90"
+                        )}
                         onClick={() => setApproveDialogOpen(true)}
                         disabled={isPending}
                         data-testid="approve-button"
                       >
-                        {approveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                        Approve
+                        {approveMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : hasChanges ? (
+                          <Pencil className="h-4 w-4" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4" />
+                        )}
+                        {hasChanges ? "Approve with Edits" : "Approve"}
                       </Button>
                       <Button
                         variant="outline"
@@ -670,27 +938,39 @@ export default function ReviewQueue() {
                 </Card>
               )}
 
-              {/* Approval Confirmation Dialog — Enter does NOT confirm (AR15) */}
+              {/* Approval Confirmation Dialog */}
               <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
                 <AlertDialogContent data-testid="approval-confirmation-dialog" onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Approve this proposal?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      {hasChanges ? "Approve with edits?" : "Approve this proposal?"}
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will {selectedItem?.type === "edit" ? "update the existing term with the proposed changes" : "create a new canonical term"}. This action cannot be undone.
+                      {hasChanges ? (
+                        <>
+                          This will create a new canonical term with your edits applied. The following fields were modified: {changedFields.join(", ")}.
+                          {" "}Your edits will be recorded in the audit trail.
+                        </>
+                      ) : (
+                        <>
+                          This will {selectedItem?.type === "edit" ? "update the existing term with the proposed changes" : "create a new canonical term"}. This action cannot be undone.
+                        </>
+                      )}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel ref={cancelRef} autoFocus>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      className="bg-primary hover:bg-primary/90"
+                      className={cn(hasChanges ? "bg-amber-600 hover:bg-amber-700" : "bg-primary hover:bg-primary/90")}
                       onClick={() => {
                         if (selectedItem) {
-                          approveMutation.mutate({ id: selectedItem.id, comment });
+                          const editsToSend = hasChanges ? edits : undefined;
+                          approveMutation.mutate({ id: selectedItem.id, comment, edits: editsToSend || undefined });
                         }
                       }}
                       data-testid="confirm-approve-button"
                     >
-                      Confirm Approve
+                      {hasChanges ? "Confirm Approve with Edits" : "Confirm Approve"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
