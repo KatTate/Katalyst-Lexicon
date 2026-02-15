@@ -98,7 +98,7 @@ development_status:
   # Epic 8: Quality & Testing (depends on all others - should be last)
   epic-8: in-progress
   8-1-dark-mode-and-theme-system: done
-  8-2-skip-link-page-titles-and-reduced-motion: ready-for-dev
+  8-2-skip-link-page-titles-and-reduced-motion: review
   8-3-playwright-e2e-test-suite: in-progress  # API tests (36 Vitest) + E2E (Playwright) for Epics 1,2,4 completed 2026-02-11
   8-4-wcag-2-1-aa-compliance-audit: backlog
   epic-8-retrospective: optional

@@ -1,7 +1,12 @@
 import { Layout } from "@/components/Layout";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 export default function DesignSystem() {
+  useEffect(() => {
+    document.title = "Design System — Katalyst Lexicon";
+    return () => { document.title = "Katalyst Lexicon"; };
+  }, []);
   const ColorCard = ({ name, colorClass, hex, variable }: { name: string, colorClass: string, hex: string, variable: string }) => (
     <div className="space-y-2">
       <div className={cn("h-20 w-full rounded-md shadow-sm border border-border/50", colorClass)} />

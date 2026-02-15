@@ -1,6 +1,6 @@
 # Story 8.2: Skip Link, Page Titles, and Reduced Motion
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -110,10 +110,32 @@ so that I can navigate efficiently and comfortably.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude 4.6 Opus (via Replit Agent)
 
 ### Completion Notes
 
+Implemented all 3 features for accessibility story 8.2:
+1. **Skip link**: Added visually-hidden anchor as first child in Layout.tsx. Uses Tailwind `sr-only` with `focus:not-sr-only` to reveal on focus. Links to `#main-content` with `id` and `tabIndex={-1}` on `<main>`.
+2. **Page titles**: Added `document.title` via `useEffect` to 3 missing pages (Home, not-found, DesignSystem). All 13 pages now set titles following the `{PageName} — Katalyst Lexicon` pattern, with Home using just "Katalyst Lexicon".
+3. **Reduced motion**: Extended existing `@media (prefers-reduced-motion: reduce)` in index.css to also zero out `animation-duration`, `animation-delay`, and `animation-iteration-count`. This covers shadcn/ui `animate-in`/`animate-out` keyframe animations that were NOT covered by the existing `transition-duration: 0ms` rule.
+
+Key decisions:
+- Used Tailwind utility classes for skip link styling (sr-only/focus:not-sr-only) rather than custom CSS
+- Followed existing inline `useEffect` pattern for page titles per dev notes anti-pattern constraint
+- Used `!important` on animation properties in reduced-motion query to ensure they override shadcn animation utilities
+
 ### File List
 
+- `client/src/components/Layout.tsx` — MODIFIED: Added skip link anchor, added `id="main-content"` and `tabIndex={-1}` to `<main>`
+- `client/src/index.css` — MODIFIED: Extended `prefers-reduced-motion` media query with `animation-duration`, `animation-delay`, `animation-iteration-count`
+- `client/src/pages/Home.tsx` — MODIFIED: Added `document.title = "Katalyst Lexicon"` via useEffect
+- `client/src/pages/not-found.tsx` — MODIFIED: Added `document.title = "Page Not Found — Katalyst Lexicon"` via useEffect
+- `client/src/pages/DesignSystem.tsx` — MODIFIED: Added `document.title = "Design System — Katalyst Lexicon"` via useEffect
+
 ### Testing Summary
+
+- **Test approach**: Playwright e2e testing via Replit run_test
+- **ACs covered**: AC1 (skip link visible on Tab, Enter moves focus), AC2 (skip link visually hidden when not focused), AC3 (page titles for 9+ pages verified), AC4 (title updates on navigation), AC5-6 (reduced motion disables animations — computed styles verified), AC7 (theme toggle instant under reduced motion — covered by CSS rule)
+- **All tests passing**: Yes
+- **LSP Status**: Clean — no errors or warnings in any modified files
+- **Visual Verification**: Playwright screenshots confirmed skip link behavior and page rendering

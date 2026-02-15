@@ -6,8 +6,12 @@ import { TermCard } from "@/components/TermCard";
 import { SearchHero } from "@/components/SearchHero";
 import { Link } from "wouter";
 import { Term } from "@/lib/api";
+import { useEffect } from "react";
 
 export default function Home() {
+  useEffect(() => {
+    document.title = "Katalyst Lexicon";
+  }, []);
   const { data: terms = [], isLoading: termsLoading } = useQuery<Term[]>({
     queryKey: ["/api/terms"],
   });

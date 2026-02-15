@@ -90,6 +90,13 @@ export function Layout({ children }: LayoutProps) {
   return (
     <SpotlightProvider value={spotlightContextValue}>
     <div className="min-h-screen bg-background flex font-sans text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:font-bold focus:text-sm focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        data-testid="skip-link"
+      >
+        Skip to main content
+      </a>
       {/* Sidebar */}
       <aside className={cn(
         "fixed inset-y-0 left-0 z-50 w-72 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static shadow-xl lg:shadow-none",
@@ -210,7 +217,7 @@ export function Layout({ children }: LayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 bg-background relative">
+      <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col min-w-0 bg-background relative outline-none">
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b bg-sidebar sticky top-0 z-30">
           <h1 className="font-header text-xl font-bold text-sidebar-foreground">Katalyst Lexicon</h1>
