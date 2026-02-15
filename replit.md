@@ -142,14 +142,15 @@ Preferred communication style: Simple, everyday language.
 - **drizzle-kit**: Database migration tool.
 
 ### Authentication & Authorization
-- **Auth Provider**: Replit Auth (OIDC) via `server/replit_integrations/auth/`
+- **Auth Provider**: Google OAuth 2.0 (passport-google-oauth20) via `server/replit_integrations/auth/`
 - **Session**: Express sessions backed by PostgreSQL (`sessions` table)
 - **User provisioning**: First user to sign in gets Admin role; subsequent users default to Member
 - **Permissions**: `shared/permissions.ts` defines role-permission matrix (Read: public, Propose: Member+, Review: Approver+, Admin: Admin only)
 - **Middleware**: `server/middleware/auth.ts` provides `requireRole()`, `requirePermission()`, and `optionalAuth` middleware
 - **Frontend hook**: `useAuth()` from `client/src/hooks/use-auth.ts` returns user with role
-- **Login/Logout**: Navigate to `/api/login` and `/api/logout` (no custom forms)
+- **Login/Logout**: Navigate to `/api/login` and `/api/logout` (no custom forms); `/api/login` redirects to Google OAuth consent
 - **Route protection**: All write routes require authentication; admin routes require Admin role; review routes require Approver+ role; read routes for terms/categories/principles are public
+- **Environment variables**: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (secrets), `GOOGLE_CALLBACK_URL` (per-environment), `ALLOWED_EMAIL_DOMAIN` (default: `@katgroupinc.com`, set to `*` in dev)
 
 ### Theming & Accessibility
 - **Dark Mode**: System preference detection + manual toggle + localStorage persistence via `useTheme()` hook (`client/src/hooks/use-theme.ts`)
