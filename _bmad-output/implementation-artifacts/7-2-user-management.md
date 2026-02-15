@@ -1,6 +1,6 @@
 # Story 7.2: User Management
 
-Status: review
+Status: done
 
 ## Story
 
@@ -128,3 +128,13 @@ Implemented User Management story by refactoring the existing Settings.tsx Users
   - AC7: Avatar initials and sort by join date — verified via E2E rendering check
 - **All tests passing**: Yes
 - **LSP Status**: Clean — no errors
+
+### Code Review (2026-02-15)
+- **Reviewer**: Claude 4.6 Opus (Replit Agent)
+- **All 7 ACs**: SATISFIED
+- **Issues found**: 2 MEDIUM
+- **Issues fixed**:
+  - M1: Added `document.title = "System Settings — Katalyst Lexicon"` via useEffect (AR14 compliance)
+  - M2: Added `autoFocus` to AlertDialogCancel on delete user dialog (AR15 compliance — prevents Enter from confirming deletion)
+- **Server-side verified**: Last-admin protection on PATCH and DELETE, self-deletion prevention on DELETE
+- **Permission model**: Uses `canAdmin()` from `shared/permissions.ts` — no hardcoded role checks

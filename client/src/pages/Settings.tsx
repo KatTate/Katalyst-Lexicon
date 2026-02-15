@@ -71,6 +71,11 @@ export default function Settings() {
 
   const isAdmin = authUser?.role ? canAdmin(authUser.role) : false;
 
+  useEffect(() => {
+    document.title = "System Settings — Katalyst Lexicon";
+    return () => { document.title = "Katalyst Lexicon"; };
+  }, []);
+
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
     enabled: isAdmin,
@@ -290,7 +295,7 @@ export default function Settings() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDeleteUserId(null)}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel autoFocus onClick={() => setDeleteUserId(null)}>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={() => {

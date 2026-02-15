@@ -89,7 +89,7 @@ development_status:
   # Reordered: 7.5 first (auth foundation), then 7.2 (users need auth), then 7.1/7.3/7.4 (admin pages)
   epic-7: in-progress
   7-5-role-based-access-enforcement: review
-  7-2-user-management: review
+  7-2-user-management: done
   7-1-category-management: done
   7-3-principles-authoring-admin: review
   7-4-system-settings-and-governance-controls: review
