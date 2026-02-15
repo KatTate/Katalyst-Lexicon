@@ -146,6 +146,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Story 8.1: Dark Mode and Theme System (Feb 2026)
+- Inline script in index.html prevents flash of wrong theme (FOWT) by applying dark class from localStorage before React hydrates
+- Custom `useTheme()` hook in `client/src/hooks/use-theme.ts` manages theme state (localStorage + prefers-color-scheme + toggle)
+- Heading colors fixed from hardcoded `text-kat-black` to semantic `text-foreground` so they adapt in dark mode
+- Text utility classes (text-intro, text-supporting, text-metadata) updated to use semantic tokens
+- Smooth CSS transitions (200ms) on background-color, border-color, color with prefers-reduced-motion: reduce support
+- Dark mode styles added for markdown content (code blocks, blockquotes, links, headings)
+- Theme toggle button (Sun/Moon icons) added to sidebar header (desktop) and mobile header bar
+- StatusBadge dark mode contrast fixed for Draft (dark:text-yellow-300) and In Review (dark:text-kat-mystical) statuses
+
 ### Story 7.5: Role-Based Access Enforcement (Feb 2026)
 - Replit Auth integration wired into server (setupAuth + registerAuthRoutes)
 - Users table updated: firstName/lastName/profileImageUrl/role/createdAt/updatedAt (replaces old name/status schema)

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog, BookOpen, FileEdit, LogOut, LogIn } from "lucide-react";
+import { Search, Grid, Plus, Settings, Menu, Palette, ClipboardCheck, FolderCog, BookOpen, FileEdit, LogOut, LogIn, Sun, Moon } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { Category, Proposal } from "@/lib/api";
 import { SpotlightSearch } from "./SpotlightSearch";
 import { SpotlightProvider } from "./SpotlightContext";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { canReview, canAdmin, canPropose } from "@shared/permissions";
 
 interface LayoutProps {
@@ -34,6 +35,7 @@ export function Layout({ children }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [spotlightOpen, setSpotlightOpen] = useState(false);
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const openSpotlight = useCallback(() => setSpotlightOpen(true), []);
 
@@ -99,9 +101,21 @@ export function Layout({ children }: LayoutProps) {
               Katalyst <span className="text-primary">Lexicon</span>
             </h1>
           </Link>
-          <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wide font-bold">
-            Internal V1.0
-          </p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-bold">
+              Internal V1.0
+            </p>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="h-8 w-8"
+              data-testid="button-theme-toggle"
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto py-6 px-4">
@@ -201,6 +215,16 @@ export function Layout({ children }: LayoutProps) {
         <div className="lg:hidden flex items-center justify-between p-4 border-b bg-sidebar sticky top-0 z-30">
           <h1 className="font-header text-xl font-bold text-sidebar-foreground">Katalyst Lexicon</h1>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="min-h-[44px] min-w-[44px]"
+              data-testid="button-theme-toggle-mobile"
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
             <Button
               variant="ghost"
               size="icon"

@@ -1,6 +1,6 @@
 # Story 8.1: Dark Mode and Theme System
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -135,6 +135,20 @@ Claude 4.6 Opus (via Replit Agent)
 
 ### Completion Notes
 
+Implemented dark mode theme system with system preference detection, manual toggle, localStorage persistence, and FOWT prevention. Fixed heading and text utility classes that used hardcoded brand colors (text-kat-black, text-kat-charcoal) to use semantic tokens (text-foreground, text-muted-foreground) so they automatically adapt in dark mode. Added smooth CSS transitions (200ms) with prefers-reduced-motion respect. Added dark mode styles for markdown content (code blocks, blockquotes, links, headings). Fixed StatusBadge contrast for Draft (dark:text-yellow-300) and In Review (dark:text-kat-mystical) statuses.
+
 ### File List
 
+- `client/index.html` — MODIFIED: Added inline script before #root to apply dark class from localStorage synchronously
+- `client/src/hooks/use-theme.ts` — CREATED: Custom hook for theme management (localStorage + prefers-color-scheme + toggle)
+- `client/src/index.css` — MODIFIED: Fixed heading colors (text-kat-black → text-foreground), fixed text-intro/supporting/metadata utility classes, added CSS transitions with reduced-motion, added dark mode markdown content styles
+- `client/src/components/Layout.tsx` — MODIFIED: Added theme toggle button (Sun/Moon) in sidebar header and mobile header bar
+- `client/src/components/StatusBadge.tsx` — MODIFIED: Added dark mode text color overrides for Draft and In Review statuses
+
 ### Testing Summary
+
+- **Test approach**: End-to-end Playwright testing via run_test tool
+- **ACs covered**: System preference detection on first visit, toggle switching between light/dark, localStorage persistence across reload, desktop sidebar toggle visibility, mobile header toggle visibility, all pages rendering correctly in dark mode (browse with term cards/status badges, principles), smooth transitions
+- **Result**: All 19 test steps passed
+- **LSP Status**: Clean — no errors or warnings in any modified files
+- **Visual Verification**: Screenshots verified across homepage, browse, principles pages in both light and dark modes, and mobile viewport
