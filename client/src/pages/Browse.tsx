@@ -491,7 +491,7 @@ export default function Browse() {
                     data-testid={`category-section-${category.id}`}
                   >
                     <div
-                      className="flex items-center gap-3 mb-6 border-l-4 pl-4 py-2"
+                      className="flex items-center gap-3 mb-6 border-l-4 pl-4 py-2 dark:border-l-[5px]"
                       style={{
                         borderLeftColor: getCategoryBorderColor(
                           category.color

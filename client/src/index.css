@@ -182,39 +182,41 @@
   }
 }
 
-* {
+body,
+body *:not([style*="animation"]):not([data-framer-appear]):not([data-framer-exit]) {
   transition-property: background-color, border-color, color;
   transition-duration: 200ms;
   transition-timing-function: ease-in-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  body,
+  body * {
     transition-duration: 0ms !important;
   }
 }
 
 .dark .prose pre,
 .dark .markdown-content pre {
-  background-color: hsl(27 6% 18%);
-  color: hsl(220 14% 96%);
+  background-color: hsl(var(--card));
+  color: hsl(var(--foreground));
 }
 
 .dark .prose code,
 .dark .markdown-content code {
-  background-color: hsl(27 6% 25%);
-  color: hsl(88 67% 55%);
+  background-color: hsl(var(--muted));
+  color: hsl(var(--primary));
 }
 
 .dark .prose blockquote,
 .dark .markdown-content blockquote {
-  border-left-color: hsl(88 67% 45%);
-  color: hsl(235 11% 84%);
+  border-left-color: hsl(var(--primary));
+  color: hsl(var(--muted-foreground));
 }
 
 .dark .prose a,
 .dark .markdown-content a {
-  color: hsl(88 67% 55%);
+  color: hsl(var(--primary));
 }
 
 .dark .prose h1,
@@ -229,5 +231,5 @@
 .dark .markdown-content h4,
 .dark .markdown-content h5,
 .dark .markdown-content h6 {
-  color: hsl(220 14% 96%);
+  color: hsl(var(--foreground));
 }

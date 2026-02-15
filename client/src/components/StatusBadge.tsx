@@ -14,11 +14,11 @@ const statusConfig: Record<TermStatus, { style: string; Icon: typeof CheckCircle
     Icon: AlertTriangle,
   },
   Draft: {
-    style: "bg-kat-warning/20 text-yellow-800 dark:text-yellow-300 border-kat-warning/30",
+    style: "bg-kat-warning/20 text-kat-black dark:bg-kat-warning/15 dark:text-kat-warning dark:border-kat-warning/40 border-kat-warning/30",
     Icon: Pencil,
   },
   "In Review": {
-    style: "bg-kat-mystical/20 text-kat-charcoal dark:text-kat-mystical border-kat-mystical/30",
+    style: "bg-kat-mystical/20 text-kat-charcoal dark:bg-kat-mystical/15 dark:text-foreground dark:border-kat-mystical/40 border-kat-mystical/30",
     Icon: Clock,
   },
 };

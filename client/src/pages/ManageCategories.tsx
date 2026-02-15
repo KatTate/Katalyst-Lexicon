@@ -63,7 +63,7 @@ function ColorPicker({ value, onChange, testIdPrefix }: { value: string; onChang
           data-testid={`input-category-color`}
         />
         <div
-          className="h-7 w-7 rounded-full border shrink-0"
+          className="h-7 w-7 rounded-full border shrink-0 dark:ring-1 dark:ring-foreground/20"
           style={{ backgroundColor: value }}
         />
       </div>
@@ -320,7 +320,7 @@ export default function ManageCategories() {
                       </div>
 
                       <div
-                        className="h-3 w-3 rounded-full shrink-0"
+                        className="h-3 w-3 rounded-full shrink-0 dark:ring-1 dark:ring-foreground/20"
                         style={{ backgroundColor: category.color }}
                       />
 
