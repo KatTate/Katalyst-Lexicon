@@ -2,13 +2,13 @@ import { db } from "./db";
 import { categories, terms, users, proposals, settings, principles } from "@shared/schema";
 
 const SEED_CATEGORIES = [
-  { name: "Organizational", description: "Definitions and vocabulary related to organizational structure.", color: "bg-primary", sortOrder: 0 },
-  { name: "Planning & Execution", description: "Definitions and vocabulary related to planning & execution.", color: "bg-kat-basque", sortOrder: 1 },
-  { name: "Commercial", description: "Definitions and vocabulary related to commercial operations.", color: "bg-kat-wheat", sortOrder: 2 },
-  { name: "Financial", description: "Definitions and vocabulary related to financial terms.", color: "bg-kat-mystical", sortOrder: 3 },
-  { name: "Cultural", description: "Definitions and vocabulary related to cultural values.", color: "bg-kat-edamame", sortOrder: 4 },
-  { name: "Methodology", description: "Definitions and vocabulary related to methodology.", color: "bg-kat-zeus", sortOrder: 5 },
-  { name: "Systems", description: "Definitions and vocabulary related to systems.", color: "bg-kat-charcoal", sortOrder: 6 },
+  { name: "Organizational", description: "Definitions and vocabulary related to organizational structure.", color: "#78c026", sortOrder: 0 },
+  { name: "Planning & Execution", description: "Definitions and vocabulary related to planning & execution.", color: "#656d12", sortOrder: 1 },
+  { name: "Commercial", description: "Definitions and vocabulary related to commercial operations.", color: "#d9cbaf", sortOrder: 2 },
+  { name: "Financial", description: "Definitions and vocabulary related to financial terms.", color: "#a6a2a9", sortOrder: 3 },
+  { name: "Cultural", description: "Definitions and vocabulary related to cultural values.", color: "#97a687", sortOrder: 4 },
+  { name: "Methodology", description: "Definitions and vocabulary related to methodology.", color: "#a5a092", sortOrder: 5 },
+  { name: "Systems", description: "Definitions and vocabulary related to systems.", color: "#4f524c", sortOrder: 6 },
 ];
 
 const SEED_TERMS = [

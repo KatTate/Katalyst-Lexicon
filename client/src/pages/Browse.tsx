@@ -21,24 +21,25 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-const COLOR_MAP: Record<string, string> = {
-  "bg-primary": "var(--color-primary)",
-  "bg-kat-green": "var(--color-kat-green)",
-  "bg-kat-charcoal": "var(--color-kat-charcoal)",
-  "bg-kat-black": "var(--color-kat-black)",
-  "bg-kat-gray": "var(--color-kat-gray)",
-  "bg-kat-graylight": "var(--color-kat-graylight)",
-  "bg-kat-warning": "var(--color-kat-warning)",
-  "bg-kat-basque": "var(--color-kat-basque)",
-  "bg-kat-edamame": "var(--color-kat-edamame)",
-  "bg-kat-wheat": "var(--color-kat-wheat)",
-  "bg-kat-zeus": "var(--color-kat-zeus)",
-  "bg-kat-gauntlet": "var(--color-kat-gauntlet)",
-  "bg-kat-mystical": "var(--color-kat-mystical)",
+const LEGACY_COLOR_MAP: Record<string, string> = {
+  "bg-primary": "#78c026",
+  "bg-kat-green": "#78c026",
+  "bg-kat-charcoal": "#4f524c",
+  "bg-kat-black": "#1a1a1a",
+  "bg-kat-gray": "#7a7a7a",
+  "bg-kat-graylight": "#d0d0d0",
+  "bg-kat-warning": "#e1d660",
+  "bg-kat-basque": "#656d12",
+  "bg-kat-edamame": "#97a687",
+  "bg-kat-wheat": "#d9cbaf",
+  "bg-kat-zeus": "#a5a092",
+  "bg-kat-gauntlet": "#8b898b",
+  "bg-kat-mystical": "#a6a2a9",
 };
 
-function getCategoryBorderColor(colorClass: string): string {
-  return COLOR_MAP[colorClass] || "var(--color-primary)";
+function getCategoryBorderColor(color: string): string {
+  if (color.startsWith("#")) return color;
+  return LEGACY_COLOR_MAP[color] || "#78c026";
 }
 
 const STATUS_OPTIONS = ["Canonical", "Draft", "In Review", "Deprecated"] as const;

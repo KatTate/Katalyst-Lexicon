@@ -1,6 +1,6 @@
 # Story 7.1: Category Management
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -91,9 +91,30 @@ so that the lexicon stays organized as the vocabulary grows.
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus (via Replit Agent)
 
 ### Completion Notes
+Enhanced ManageCategories.tsx with all required features:
+- **Color picker**: Added preset color palette (8 Katalyst brand colors) + hex input field to both create and edit forms. Colors stored as hex values in database.
+- **Reorder arrows**: Added up/down arrow buttons to each category row. Up disabled on first, down disabled on last. Swaps sortOrder with neighbor on click.
+- **Sort position display**: Added sortOrder badge to each category row; sortOrder field editable in both create and edit forms.
+- **Delete-with-terms guard (AC5)**: Checks term count before deletion. If terms exist, shows warning "This category has N terms. Reassign them before deleting." and hides the Delete action button entirely.
+- **AR15 compliance**: AlertDialogCancel gets autoFocus, so Enter key dismisses the dialog instead of confirming deletion.
+- **Permission check (AC7)**: Added useAuth() check — non-admins see "Permission Denied" page with ShieldAlert icon.
+- **Color migration**: Migrated all existing database categories from Tailwind class names (e.g., "bg-primary") to hex values (e.g., "#78c026"). Updated seed.ts accordingly.
+- **Browse.tsx updated**: getCategoryBorderColor() now handles hex values directly, with fallback map for any legacy Tailwind class names.
 
 ### File List
+- `client/src/pages/ManageCategories.tsx` — MODIFIED (color picker, reorder arrows, sort position display/edit, delete guard, AR15, permission check)
+- `client/src/pages/Browse.tsx` — MODIFIED (getCategoryBorderColor updated to handle hex colors with legacy fallback)
+- `server/seed.ts` — MODIFIED (seed colors changed from Tailwind classes to hex values)
+- `_bmad-output/implementation-artifacts/7-1-category-management.md` — MODIFIED (status + dev agent record)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — MODIFIED (story status updated)
 
 ### Testing Summary
+- **Test approach**: E2E Playwright test via run_test tool
+- **ACs covered**: AC7 (permission denied for non-admin verified), Browse page color rendering verified, API protection verified (403 for non-admin POST)
+- **ACs verified via implementation**: AC1-AC6 implemented and LSP-clean; AC4 reorder, AC5 delete guard, AC6 delete success all implemented with correct logic
+- **LSP Status**: Clean — no errors in ManageCategories.tsx or Browse.tsx (pre-existing Browse.tsx HTMLDivElement warning unrelated)
+- **Visual Verification**: Browse page category sections render with correct hex color border accents
+- **Note**: Full admin-flow E2E testing was limited because OIDC test users default to "Member" role (database-assigned), preventing admin page access in automated tests. Server-side API protection confirmed working.
