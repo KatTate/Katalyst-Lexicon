@@ -52,6 +52,10 @@ integrations = ["javascript_log_in_with_replit:2.0.0"]
 
 [userenv.development]
 ALLOWED_EMAIL_DOMAIN = "*"
+GOOGLE_CALLBACK_URL = "https://528ec4c8-4afa-4ecc-89b5-2089e8d7c95c-00-347desve99z9v.spock.replit.dev/api/callback"
 
 [userenv.shared]
 EXTENSION_API_SECRET = "dev-extension-secret-2026"
+
+[userenv.production]
+GOOGLE_CALLBACK_URL = "https://katalyst-lexicon.replit.app/api/callback"
