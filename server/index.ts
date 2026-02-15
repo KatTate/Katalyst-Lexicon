@@ -81,7 +81,9 @@ app.use((req, res, next) => {
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  await seed();
+  if (process.env.RUN_SEED === "true") {
+    await seed();
+  }
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
