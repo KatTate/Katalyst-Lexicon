@@ -1,6 +1,6 @@
 # Story 7.5: Role-Based Access Enforcement
 
-Status: review
+Status: done
 
 ## Story
 
@@ -176,3 +176,13 @@ Implemented full role-based access enforcement using Replit Auth (OIDC). Key dec
 **All tests passing:** Yes
 **LSP Status:** Clean — no errors in any changed files
 **Visual Verification:** Screenshots taken during E2E test confirming sidebar renders correctly for unauthenticated and Admin states
+
+### Code Review (2026-02-15)
+- **Reviewer**: Claude 4.6 Opus (Replit Agent)
+- **All 13 ACs**: 11 SATISFIED, 2 DEFERRED (AC8/AC9 domain restriction — documented, not practical with Replit Auth during development)
+- **Issues found**: 0
+- **Middleware verification**: All write endpoints use `requirePermission()` or `requireRole()` from `server/middleware/auth.ts`. All read endpoints (GET /api/terms, /api/categories, /api/principles) have NO auth middleware — public read (FR34) correctly enforced.
+- **Permission model**: `shared/permissions.ts` is the single source of truth. Server middleware (`hasPermission`), client navigation (`canAdmin`, `canReview`, `canPropose`), and page-level checks all import from this file.
+- **No hardcoded role checks**: All pages (Settings.tsx, ManageCategories.tsx, ManagePrinciples.tsx, ReviewQueue.tsx) use `canAdmin()` or `canReview()` from `shared/permissions.ts`.
+- **Identity flow**: Server-side `getUserDisplayName(req.dbUser)` used for `submittedBy`, `changedBy`, and audit event `actorId` — no hardcoded mock names remain.
+- **Layout.tsx**: Correctly shows/hides nav sections based on role. Sign In/Out buttons correctly use `/api/login` and `/api/logout` (Replit Auth OIDC flow).

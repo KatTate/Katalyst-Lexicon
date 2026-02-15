@@ -87,8 +87,8 @@ development_status:
 
   # Epic 7: Administration & Governance (no dependencies - can run in parallel)
   # Reordered: 7.5 first (auth foundation), then 7.2 (users need auth), then 7.1/7.3/7.4 (admin pages)
-  epic-7: in-progress
-  7-5-role-based-access-enforcement: review
+  epic-7: done
+  7-5-role-based-access-enforcement: done
   7-2-user-management: done
   7-1-category-management: done
   7-3-principles-authoring-admin: done
