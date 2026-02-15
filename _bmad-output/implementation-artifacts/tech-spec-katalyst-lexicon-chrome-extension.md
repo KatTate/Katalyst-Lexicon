@@ -35,6 +35,7 @@ test_patterns:
 # Tech-Spec: Katalyst Lexicon Chrome Extension
 
 **Created:** 2026-02-15
+**Last Updated:** 2026-02-15 — Combined from duplicate specs, party mode review applied
 
 ## Overview
 
@@ -45,6 +46,19 @@ The Katalyst Lexicon web app contains valuable organizational vocabulary, but te
 ### Solution
 
 Build a Chrome extension (Manifest V3) that brings the full lexicon experience into the browser — quick search via popup, deep browsing via side panel, contextual term proposals via in-page clipper, and ambient term discovery via inline highlighting and hover tooltips. Force-installed across the organization via Google Workspace with zero user configuration required.
+
+### Target Users
+
+Three primary user archetypes interact with the extension (see full personas in [PRD](../../_bmad-output/planning-artifacts/prd-katalyst-lexicon-2026-02-06.md)):
+
+1. **The Casual Looker-Upper** (Member) — Searches terms, sees highlights on web pages, reads definitions via tooltips. Never proposes anything. This is ~80% of extension users. Requires no Chrome Identity sign-in — all read features work without authentication.
+2. **The Active Contributor** (Member) — Proposes new terms via context menu or clipper. Needs Chrome Identity signed in with a `@katgroupinc.com` Google account for write operations.
+3. **The Approver** — Gets badge notifications that proposals are pending, clicks through to the web app to review. Never reviews inside the extension — the extension is a notification channel, not a review tool.
+
+### Success Metrics
+
+- **Adoption:** % of organization with extension installed — measurable via Google Workspace admin console (force-install policy deployment logs).
+- **Engagement:** Extension-originated term searches and proposals vs. web app — measurable in a future iteration by adding a `source` field to search/proposal analytics (out of scope for initial build; noted under Future Considerations).
 
 ### Scope
 
@@ -87,7 +101,7 @@ The following 14 findings were identified during adversarial review. Each has be
 | ID | Severity | Description | Resolution | Spec Section |
 | --- | --- | --- | --- | --- |
 | F1 | Critical | Auth model is spoofable on a publicly-reachable backend. X-Extension-User-Email is forgeable via curl/Postman against replit.app. Need a real auth mechanism. | Added shared secret (`EXTENSION_API_SECRET`) provisioned via managed storage + env var. Backend validates `X-Extension-Secret` header on all write requests. CORS blocks browser-based spoofing; shared secret blocks non-browser spoofing. Defense-in-depth. | Technical Decisions §1, §2, §3; AC-3 |
-| F2 | Critical | AC-7 (context menu "Propose") depends on Tier 2/3 features but is listed as Tier 1. No fallback if clipper/side panel aren't built yet. | Added explicit Tier 1 fallback: if clipper not built, "Propose as Lexicon Term" opens a new tab to `/proposals/new?name=<selected text>` on the web app. No dependency on Tier 2 or 3. | AC-7 |
+| F2 | Critical | AC-7 (context menu "Propose") depends on Tier 2/3 features but is listed as Tier 1. No fallback if clipper/side panel aren't built yet. | Added explicit Tier 1 fallback: if clipper not built, "Propose as Lexicon Term" opens a new tab to `/propose?name=<selected text>` on the web app. The `ProposeTerm` component already reads `?name=` query params and pre-fills the form. No dependency on Tier 2 or 3. No client-side changes needed. | AC-7 |
 | F3 | High | No rate limiting on new endpoints. `GET /api/terms/index` is public, `POST /api/proposals` accepts email headers. No abuse protection. | Added rate limiting guidance: express-rate-limit on `/api/terms/index` (60 req/min/IP) and `/api/proposals` (10 req/min/IP). Shared secret requirement on POST already limits unauthenticated abuse. | Technical Decisions §3; Anti-Patterns; AC-3 |
 | F4 | High | `getTermIndex()` doesn't specify status/visibility filtering. Could leak draft or internal-only terms. | Added explicit filter: `status = 'Canonical'` only. Draft and Deprecated terms excluded. Visibility filter: `IN ('Internal', 'Client-Safe', 'Public')`. | Technical Decisions §5; AC-2 |
 | F5 | High | ETag generation strategy is undefined. Developer left guessing. | Defined strategy: ETag = MD5 hash of `MAX(terms.updatedAt)` + `COUNT(*)` of canonical terms. Single aggregate query, cheap, changes on any term mutation. Weak ETag format: `W/"<md5-hex>"`. | Technical Decisions §5; AC-2 |
@@ -306,7 +320,7 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Given the user clicks "Search Lexicon for '[text]'", then the side panel opens with the search tab pre-filled with the selected text.
 - Given any web page, when the user right-clicks selected text, then "Propose as Lexicon Term" appears in the context menu.
 - Given the user clicks "Propose as Lexicon Term" AND the clipper overlay is built (Tier 3), then the clipper opens with the term name pre-filled.
-- Given the user clicks "Propose as Lexicon Term" AND the clipper is NOT yet built, then a new tab opens to the web app's proposal page (`/proposals/new`) with the term name as a query parameter (`?name=<selected text>`). This is the **Tier 1 self-contained fallback** — no dependency on Tier 2 or Tier 3 features.
+- Given the user clicks "Propose as Lexicon Term" AND the clipper is NOT yet built, then a new tab opens to the web app's proposal page (`/propose`) with the term name as a query parameter (`?name=<selected text>`). The web app's `ProposeTerm` component already reads `?name=` and `?category=` from URL search params and pre-fills the form — no client-side changes needed. This is the **Tier 1 self-contained fallback** — no dependency on Tier 2 or Tier 3 features.
 
 **AC-8: Managed storage provides zero-config API URL**
 - Given the extension is force-installed with a managed policy setting `apiBaseUrl`, when the extension loads, then all API calls use that URL with no user action required.
@@ -356,6 +370,19 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Given any API call fails in the clipper overlay, then the error is displayed inline in the clipper form without closing it.
 
 ## Implementation Guidance
+
+### Prototype Files — Reference Only
+
+Early prototype files are available in `attached_assets/` (manifest, service worker, popup, sidepanel, options, content script, constants, utils, API client, deployment guide). These are **reference material, not production code.** The developer implements from this spec, using the prototype for UI patterns, styling cues, and API client structure. Do not copy prototype files verbatim — they may contain patterns incompatible with the final spec (e.g., in-memory state in the service worker, review queue in the side panel).
+
+### Extension Versioning
+
+The extension version (`version` field in `manifest.json`) is managed **independently** from the web app version. Use [semver](https://semver.org/) starting at `1.0.0` for the initial release. Increment on each Chrome Web Store publish:
+- **Patch** (1.0.x): Bug fixes, styling tweaks, no new features.
+- **Minor** (1.x.0): New features (e.g., adding Tier 2 side panel, Tier 3 clipper).
+- **Major** (x.0.0): Breaking changes to managed storage schema or auth model.
+
+The Google Workspace admin console shows the installed version across the org. No coordination with the web app's `package.json` version is needed — the extension consumes the web app's stable public API.
 
 ### Architecture Patterns to Follow
 
@@ -489,7 +516,7 @@ Each test has explicit pass/fail criteria. Load unpacked extension from `extensi
 | T8 | Highlight per-site | Enable on site A → navigate to site B | Site B highlighting state is independent of site A |
 | T9 | Highlight SPA unwrap | Enable highlights on SPA → trigger navigation that re-renders DOM → toggle OFF | No errors; orphaned spans skipped silently |
 | T10 | Context menu: Search | Select text → right-click → "Search Lexicon for..." | Side panel opens with search tab pre-filled |
-| T11 | Context menu: Propose (Tier 1 fallback) | Select text → right-click → "Propose as Lexicon Term" (before clipper built) | New tab opens to `/proposals/new?name=<text>` |
+| T11 | Context menu: Propose (Tier 1 fallback) | Select text → right-click → "Propose as Lexicon Term" (before clipper built) | New tab opens to `/propose?name=<text>` |
 | T12 | Side panel: Browse | Open side panel → Browse tab | Terms grouped by category with headers and counts |
 | T13 | Side panel: Search | Open side panel → Search tab → type query | Results appear ranked by relevance |
 | T14 | Side panel: Principles | Open side panel → Principles tab | Principles listed with titles, summaries, linked term counts |
@@ -524,9 +551,10 @@ Each test has explicit pass/fail criteria. Load unpacked extension from `extensi
 - Inline editing of terms from the extension (edit button → opens web app in new tab for now)
 - Cross-browser support (Firefox MV3 is maturing but not a priority)
 - Term usage analytics (tracking which terms are most viewed/highlighted)
+- Engagement analytics: add a `source` field (e.g., `"extension"` vs. `"web"`) to search and proposal records to measure extension-originated activity vs. web app activity
 
-**Prototype reference files:**
-- Early prototype files available in `attached_assets/` as reference for UI structure, styling, and API client patterns
+**Prototype reference files** *(see also: "Prototype Files — Reference Only" in Implementation Guidance)*:
+- Early prototype files available in `attached_assets/` as reference for UI structure, styling, and API client patterns — reference only, not production code
 - Deployment guide already drafted in `attached_assets/DEPLOYMENT_1771178370051.md`
 - Extension icons (16, 32, 48, 128px) already available in `attached_assets/`
 - The prototype's review queue code (in sidepanel.js) should be stripped out and replaced with a simple "N proposals pending" notice that links to the web app
