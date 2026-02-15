@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Katalyst Lexicon Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-page">
+    <header class="options-header">
+      <div class="options-header-inner">
+        <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <h1>Katalyst Lexicon Settings</h1>
+      </div>
+    </header>
+
+    <main class="options-main">
+      <div id="managed-notice" class="notice-banner" style="display:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Settings are managed by your organization. Contact your IT admin to change them.</span>
+      </div>
+
+      <section class="options-section">
+        <h2>Connection</h2>
+        <div class="form-group">
+          <label for="api-url">API Base URL</label>
+          <input type="url" id="api-url" placeholder="https://your-katalyst-instance.replit.app" data-testid="input-api-url">
+          <p class="form-help">The URL of your Katalyst Lexicon web application</p>
+        </div>
+        <div class="form-group">
+          <label for="api-secret">Extension API Secret</label>
+          <input type="password" id="api-secret" placeholder="Shared secret for write operations" data-testid="input-api-secret">
+          <p class="form-help">Required for submitting proposals from the extension</p>
+        </div>
+      </section>
+
+      <section class="options-section">
+        <h2>Account</h2>
+        <div class="form-group">
+          <label>Signed-in Email</label>
+          <div id="user-email" class="info-value" data-testid="text-user-email">Checking...</div>
+          <p class="form-help">This email identifies you when submitting proposals</p>
+        </div>
+      </section>
+
+      <section class="options-section">
+        <h2>Notifications</h2>
+        <div class="form-group toggle-group">
+          <label for="notifications-toggle">Proposal Notifications</label>
+          <label class="toggle">
+            <input type="checkbox" id="notifications-toggle" checked data-testid="input-notifications-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button id="save-btn" class="btn btn-primary" data-testid="button-save-settings">Save Settings</button>
+        <button id="test-btn" class="btn btn-secondary" data-testid="button-test-connection">Test Connection</button>
+      </div>
+
+      <div id="status-msg" class="status-msg" style="display:none;" data-testid="text-status-msg"></div>
+    </main>
+  </div>
+  <script src="options.js" type="module"></script>
+</body>
+</html>

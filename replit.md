@@ -98,6 +98,13 @@ Preferred communication style: Simple, everyday language.
 - `client/`: React frontend application.
 - `server/`: Express backend.
 - `shared/`: Code shared between client and server (e.g., schema, types).
+- `extension/`: Chrome Extension (Manifest V3, vanilla JS, no build step).
+  - `shared/`: Constants, utilities, API client shared across extension components.
+  - `popup/`: Action popup (search, quick actions).
+  - `sidepanel/`: Side panel (browse, search, principles, term detail).
+  - `content/`: Content script (highlighting, tooltips, clipper overlay).
+  - `options/`: Options page (API URL config, notifications toggle).
+  - `icons/`: Extension icon assets.
 - `docs/`: Documentation and UX design guides.
 
 ### Build and Deployment
@@ -191,6 +198,16 @@ Preferred communication style: Simple, everyday language.
 - Replit Auth (OIDC) integration with Google sign-in
 - Role-based access enforcement (Member, Approver, Admin)
 - User management, category management, principles authoring, system settings pages
+
+### Chrome Extension (Feb 2026)
+- Manifest V3 Chrome extension in `extension/` directory (vanilla JS, no build step)
+- Backend support: CORS for `chrome-extension://` origins, extension auth middleware (`server/middleware/extensionAuth.ts`)
+- Term index API: `GET /api/terms/index` with ETag caching (Canonical status only)
+- Extension structure: service worker, popup, sidepanel, content script, options page
+- Features: term search, category browsing, principles viewing, term highlighting with tooltips, in-page clipper for proposals
+- Auth: shared secret (EXTENSION_API_SECRET) + Chrome Identity email + optional ALLOWED_EXTENSION_ID validation
+- Managed storage support for zero-config deployment via Google Workspace policies
+- Environment variables: EXTENSION_API_SECRET (required), ALLOWED_EXTENSION_ID (optional), ALLOWED_EMAIL_DOMAIN (default: katgroupinc.com)
 
 ### Epic 6: Review & Approve Workflow (Feb 2026)
 - Proposal review queue, review decisions, audit trail, proposer revision flow

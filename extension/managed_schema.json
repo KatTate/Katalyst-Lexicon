@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "apiBaseUrl": {
+      "title": "API Base URL",
+      "description": "The URL of the Katalyst Lexicon backend (e.g. https://katalyst-lexicon.replit.app)",
+      "type": "string"
+    },
+    "extensionApiSecret": {
+      "title": "Extension API Secret",
+      "description": "Shared secret for authenticating extension write requests to the backend",
+      "type": "string"
+    }
+  }
+}

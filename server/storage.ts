@@ -67,6 +67,9 @@ export interface IStorage {
   unlinkPrincipleFromTerm(principleId: string, termId: string): Promise<boolean>;
   getTermsForPrinciple(principleId: string): Promise<Term[]>;
   getPrinciplesForTerm(termId: string): Promise<Principle[]>;
+
+  getTermIndex(): Promise<{ id: string; name: string; synonyms: string[] }[]>;
+  getTermIndexEtagData(): Promise<{ maxUpdatedAt: Date | null; count: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -372,6 +375,22 @@ export class DatabaseStorage implements IStorage {
     if (links.length === 0) return [];
     const termIds = links.map(l => l.termId);
     return db.select().from(terms).where(inArray(terms.id, termIds));
+  }
+
+  async getTermIndex(): Promise<{ id: string; name: string; synonyms: string[] }[]> {
+    return db.select({
+      id: terms.id,
+      name: terms.name,
+      synonyms: terms.synonyms,
+    }).from(terms).where(eq(terms.status, 'Canonical')).orderBy(asc(terms.name));
+  }
+
+  async getTermIndexEtagData(): Promise<{ maxUpdatedAt: Date | null; count: number }> {
+    const [result] = await db.select({
+      maxUpdatedAt: sql<Date>`MAX(${terms.updatedAt})`,
+      count: sql<number>`COUNT(*)::int`,
+    }).from(terms).where(eq(terms.status, 'Canonical'));
+    return { maxUpdatedAt: result?.maxUpdatedAt || null, count: result?.count || 0 };
   }
 
   async getPrinciplesForTerm(termId: string): Promise<Principle[]> {

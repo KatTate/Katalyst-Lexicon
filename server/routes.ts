@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { requireRole, requirePermission, optionalAuth } from "./middleware/auth";
+import { requireAuthOrExtension, extensionOrSessionAuth } from "./middleware/extensionAuth";
+import crypto from "crypto";
 import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks, proposals, proposalEvents, terms, termVersions } from "@shared/schema";
 import { z } from "zod";
 import { sql, asc, eq, and, or as drizzleOr } from "drizzle-orm";
@@ -27,6 +29,28 @@ export async function registerRoutes(
       res.json(terms);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch terms" });
+    }
+  });
+
+  app.get("/api/terms/index", async (req, res) => {
+    try {
+      const etagData = await storage.getTermIndexEtagData();
+      const maxDate = etagData.maxUpdatedAt ? String(etagData.maxUpdatedAt) : 'none';
+      const etagSource = `${maxDate}-${etagData.count}`;
+      const etag = `W/"${crypto.createHash('md5').update(etagSource).digest('hex')}"`;
+
+      res.setHeader('ETag', etag);
+      res.setHeader('Cache-Control', 'no-cache');
+
+      if (req.headers['if-none-match'] === etag) {
+        return res.status(304).end();
+      }
+
+      const index = await storage.getTermIndex();
+      res.json(index);
+    } catch (error) {
+      console.error("Term index error:", error);
+      res.status(500).json({ error: "Failed to fetch term index" });
     }
   });
 
@@ -175,7 +199,7 @@ export async function registerRoutes(
   });
 
   // ===== PROPOSALS (Read = authenticated, Create = Member+, Review = Approver+) =====
-  app.get("/api/proposals", isAuthenticated, async (req, res) => {
+  app.get("/api/proposals", extensionOrSessionAuth, async (req, res) => {
     try {
       const status = req.query.status as string | undefined;
       const list = status 
@@ -200,7 +224,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/proposals", requirePermission("propose"), async (req: any, res) => {
+  app.post("/api/proposals", requireAuthOrExtension("propose"), async (req: any, res) => {
     try {
       const submittedBy = getUserDisplayName(req.dbUser);
       const parsed = insertProposalSchema.parse({ ...req.body, submittedBy });

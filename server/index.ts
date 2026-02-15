@@ -24,6 +24,22 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+app.use((req, res, next) => {
+  const origin = req.headers.origin || '';
+  const allowedExtId = process.env.ALLOWED_EXTENSION_ID || '';
+  if (origin.startsWith('chrome-extension://')) {
+    if (!allowedExtId || origin === `chrome-extension://${allowedExtId}`) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Extension-User-Email, X-Extension-Id, X-Extension-Secret');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",

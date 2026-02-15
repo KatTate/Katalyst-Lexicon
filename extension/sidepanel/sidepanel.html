@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-left">
+        <svg class="logo-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <span class="header-title">Katalyst Lexicon</span>
+      </div>
+    </header>
+
+    <div id="breadcrumb" class="breadcrumb" style="display:none;"></div>
+
+    <nav class="tab-bar">
+      <button class="tab active" data-tab="browse" data-testid="tab-browse">Browse</button>
+      <button class="tab" data-tab="search" data-testid="tab-search">Search</button>
+      <button class="tab" data-tab="principles" data-testid="tab-principles">Principles</button>
+    </nav>
+
+    <div id="not-configured" class="panel-notice" style="display:none;">
+      <p>API URL not configured.</p>
+      <button id="sp-go-to-options" class="btn btn-primary btn-sm" data-testid="button-sp-options">Open Settings</button>
+    </div>
+
+    <div id="tab-browse" class="tab-content active">
+      <div id="category-list" class="category-list" data-testid="list-categories"></div>
+      <div id="category-terms" style="display:none;">
+        <div id="category-terms-header" class="panel-section-header"></div>
+        <div id="category-terms-list" class="term-list"></div>
+      </div>
+      <div id="browse-loading" class="loading" style="display:none;"><div class="spinner"></div></div>
+    </div>
+
+    <div id="tab-search" class="tab-content" style="display:none;">
+      <div class="search-container">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="sp-search-input" placeholder="Search terms..." data-testid="input-sp-search">
+      </div>
+      <div id="sp-search-results" class="term-list" data-testid="list-sp-search-results"></div>
+      <div id="sp-search-empty" class="empty-state" style="display:none;"><p>No terms found</p></div>
+      <div id="sp-search-loading" class="loading" style="display:none;"><div class="spinner"></div></div>
+    </div>
+
+    <div id="tab-principles" class="tab-content" style="display:none;">
+      <div id="principle-list" class="principle-list" data-testid="list-principles"></div>
+      <div id="principles-empty" class="empty-state" style="display:none;"><p>No principles yet</p></div>
+      <div id="principles-loading" class="loading" style="display:none;"><div class="spinner"></div></div>
+    </div>
+
+    <div id="detail-view" class="detail-view" style="display:none;">
+      <button id="detail-back" class="back-btn" data-testid="button-detail-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div id="detail-content" data-testid="container-detail-content"></div>
+    </div>
+  </div>
+  <script src="sidepanel.js" type="module"></script>
+</body>
+</html>

@@ -136,38 +136,51 @@ The existing backend uses Replit OIDC session cookies (`httpOnly`, `secure`). Th
 
 - **Read operations** (GET terms, categories, principles, search): Already public endpoints, no auth needed. Just need CORS headers.
 - **Write operations** (POST proposals): Use `chrome.identity.getProfileUserInfo()` to get the user's Google Workspace email. Send it as `X-Extension-User-Email` header. Backend validates the domain matches `@katgroupinc.com` and looks up or creates the user.
-- **Extension identification**: Include a custom header `X-Extension-Id` with the extension's ID. The backend can optionally allowlist the extension ID for additional trust.
-- **Trust boundary**: Since the extension is only installable by Workspace users (force-installed via admin console), the trust model is: "if you have the extension, you're a Katalyst team member."
+- **Shared secret for request signing**: A pre-shared secret (`EXTENSION_API_SECRET`) is provisioned via Google Workspace managed storage policy AND set as an env var on the backend. The extension sends it as `X-Extension-Secret` header on write requests. The backend validates it matches. This prevents unauthenticated attackers from forging proposals via curl against the publicly-reachable Replit-hosted backend. The secret is rotatable by the Workspace admin.
+- **Extension identification**: Include a custom header `X-Extension-Id` with the extension's ID. The backend validates it matches an allowlisted value (env var `ALLOWED_EXTENSION_ID`).
+- **Trust boundary**: The backend is publicly reachable on `replit.app`. CORS prevents browser-based spoofing, and the shared secret prevents non-browser spoofing. Together they provide defense-in-depth for an internal tool.
+- **Chrome Identity availability**: `chrome.identity.getProfileUserInfo()` requires the `identity.email` permission in the manifest AND the user must be signed into Chrome with a Google account. If the user is not signed in or has disabled "Allow Chrome sign-in," the API returns empty strings. The extension must detect this and show a clear message: "Sign in to Chrome with your @katgroupinc.com account to propose terms." Read-only features (search, highlighting) continue working without identity.
 
 **2. CORS Configuration**
 
 Add CORS middleware to `server/index.ts` that allows:
 - Origin: `chrome-extension://<EXTENSION_ID>` (pin to published extension ID in production; use wildcard `chrome-extension://*` only during development)
 - Methods: GET, POST
-- Headers: Content-Type, X-Extension-User-Email, X-Extension-Id
+- Headers: Content-Type, X-Extension-User-Email, X-Extension-Id, X-Extension-Secret
 - No credentials needed (extension doesn't use cookies)
-- **Security note:** CORS only prevents browser-originated cross-origin requests. The `X-Extension-User-Email` header is spoofable via non-browser HTTP clients (curl, Postman). This is acceptable for an internal tool behind a corporate network with force-installed extension, but the tradeoff should be documented.
+- **Security note:** CORS prevents browser-based cross-origin attacks. The shared secret (`X-Extension-Secret`) prevents non-browser attacks (curl, Postman). Together they provide defense-in-depth for the publicly-reachable backend.
 
 **3. Extension Auth Middleware**
 
 New middleware in `server/middleware/extensionAuth.ts` that:
-- Checks for `X-Extension-User-Email` header
+- Checks for `X-Extension-User-Email` AND `X-Extension-Secret` headers
+- Validates the shared secret matches `EXTENSION_API_SECRET` env var
 - Validates email domain against `ALLOWED_EMAIL_DOMAIN`
-- Looks up user by email in the database (creates if not found, with "Member" role)
+- Looks up user by email in the database (creates if not found, with "Member" role). If user already exists (e.g., created via web app OIDC), uses existing record and role — never resets role to "Member"
 - **Must reuse the existing `upsertUser` pattern** from `replitAuth.ts` to prevent duplicate user records when someone uses both the web app and extension
 - Attaches `req.dbUser` for downstream route handlers
 - Used as an alternative to `isAuthenticated` for extension-originated requests
 
+**Combined middleware `requireAuthOrExtension(permission)`:**
+- Tries OIDC session auth first (existing `isAuthenticated` check)
+- If no OIDC session, falls back to extension auth (email + secret headers)
+- If both are present, OIDC session takes precedence (it's the stronger auth)
+- Checks the resolved user's permission against the required permission
+- Used on `POST /api/proposals` and `GET /api/proposals` to support both web app and extension callers
+
 **4. Managed Storage for Zero-Config**
 
-- `extension/managed_schema.json` defines `apiBaseUrl` as a managed property
-- Manifest references it via `"storage": { "managed_schema": "managed_schema.json" }`
+- `extension/managed_schema.json` defines `apiBaseUrl` and `extensionApiSecret` as managed properties
+- Manifest references it via `"storage": { "managed_schema": "managed_schema.json" }` and must include the `"identity.email"` permission
 - Options page reads `chrome.storage.managed` first, falls back to `chrome.storage.sync`
-- Google Workspace admin sets the value: `{"apiBaseUrl": {"Value": "https://katalyst-lexicon.replit.app"}}`
+- Google Workspace admin sets: `{"apiBaseUrl": {"Value": "https://katalyst-lexicon.replit.app"}, "extensionApiSecret": {"Value": "<shared-secret>"}}`
+- The shared secret is read from managed storage and sent as `X-Extension-Secret` header on write requests
 
 **5. Term Index Cache for Highlighting**
 
 - New backend endpoint: `GET /api/terms/index` returns `[{id, name, synonyms}]` — lightweight (~1KB for 100 terms)
+- **Filtering**: Only returns terms with `status = 'Canonical'` and `visibility IN ('Internal', 'Client-Safe', 'Public')`. Draft and Deprecated terms are excluded. This prevents leaking unpublished vocabulary to extension users.
+- **ETag generation**: Compute ETag as a hash of `MAX(terms.updatedAt)` concatenated with `COUNT(*)` of matching terms. This is cheap (single aggregate query), changes when any term is added/updated/deleted, and avoids hashing the full response body. Format: `W/"<md5-hex>"` (weak ETag).
 - **ETag/If-None-Match support** on this endpoint for conditional requests — saves bandwidth when lexicon hasn't changed (which is most of the time)
 - Service worker fetches on install/update, then every 30 minutes via `chrome.alarms`
 - Stored in `chrome.storage.local` as `{termIndex: [...], lastUpdated: timestamp, etag: string}`
@@ -216,15 +229,18 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Given a Chrome extension making a preflight OPTIONS request, when the request includes `Access-Control-Request-Headers: X-Extension-User-Email`, then the response includes the header in `Access-Control-Allow-Headers`.
 
 **AC-2: Backend `/api/terms/index` endpoint returns lightweight term index**
-- Given terms exist in the database, when a GET request is made to `/api/terms/index`, then the response is a JSON array of objects with only `id`, `name`, and `synonyms` fields.
+- Given terms exist in the database, when a GET request is made to `/api/terms/index`, then the response is a JSON array of objects with only `id`, `name`, and `synonyms` fields, filtered to only include terms with `status = 'Canonical'` (no Draft/Deprecated terms).
+- Given the response is served, then it includes an `ETag` header computed from `MAX(updated_at)` + `COUNT(*)` of canonical terms (weak ETag format: `W/"<md5>"`) .
 - Given the same term data, when the request includes `If-None-Match` matching the current ETag, then the response is `304 Not Modified` with no body.
 - Given term data has changed since the last ETag, when the request includes an outdated `If-None-Match`, then the response is `200 OK` with the updated index and a new `ETag` header.
 
-**AC-3: Extension auth middleware authenticates via email header**
-- Given a POST request to `/api/proposals` with `X-Extension-User-Email: user@katgroupinc.com`, when the user exists in the database, then `req.dbUser` is populated with that user and the route handler executes normally.
-- Given a POST request with `X-Extension-User-Email: user@katgroupinc.com`, when the user does NOT exist in the database, then a new user is created with role "Member" and `req.dbUser` is populated.
-- Given a POST request with `X-Extension-User-Email: user@otherdomain.com`, then the response is `403 Forbidden` with an appropriate error message.
-- Given a POST request with no `X-Extension-User-Email` header, then the middleware falls through to the existing OIDC session auth (no disruption to web app).
+**AC-3: Extension auth middleware authenticates via email + shared secret**
+- Given a POST request to `/api/proposals` with valid `X-Extension-User-Email: user@katgroupinc.com` AND valid `X-Extension-Secret` matching the `EXTENSION_API_SECRET` env var, when the user exists in the database, then `req.dbUser` is populated with that user's existing record (preserving their current role) and the route handler executes normally.
+- Given valid headers and the user does NOT exist in the database, then a new user is created with role "Member" and `req.dbUser` is populated.
+- Given a POST request with `X-Extension-User-Email: user@otherdomain.com` (invalid domain), then the response is `403 Forbidden` with an appropriate error message.
+- Given a POST request with a missing or incorrect `X-Extension-Secret`, then the response is `403 Forbidden` (even if the email is valid).
+- Given a POST request with no `X-Extension-User-Email` header and no `X-Extension-Secret` header, then the middleware falls through to the existing OIDC session auth (no disruption to web app).
+- Given the user is not signed into Chrome (empty email from `chrome.identity.getProfileUserInfo()`), when they attempt to submit a proposal, then the extension shows "Sign in to Chrome with your @katgroupinc.com account to propose terms" and does not send the request.
 
 **AC-4: Popup search returns results from the API**
 - Given the extension popup is open and the user types "brand" into the search field, when at least 2 characters are entered, then matching terms appear as a list below the search input within 500ms.
@@ -246,7 +262,8 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Given any web page, when the user right-clicks selected text, then "Search Lexicon for '[selected text]'" appears in the context menu.
 - Given the user clicks "Search Lexicon for '[text]'", then the side panel opens with the search tab pre-filled with the selected text.
 - Given any web page, when the user right-clicks selected text, then "Propose as Lexicon Term" appears in the context menu.
-- Given the user clicks "Propose as Lexicon Term", then the clipper overlay (Tier 3) opens with the term name pre-filled, OR (if clipper not yet built) the side panel opens to a "propose" form.
+- Given the user clicks "Propose as Lexicon Term" AND the clipper overlay is built (Tier 3), then the clipper opens with the term name pre-filled.
+- Given the user clicks "Propose as Lexicon Term" AND the clipper is NOT yet built, then a new tab opens to the web app's proposal page (`/proposals/new`) with the term name as a query parameter (`?name=<selected text>`). This is the **Tier 1 self-contained fallback** — no dependency on Tier 2 or Tier 3 features.
 
 **AC-8: Managed storage provides zero-config API URL**
 - Given the extension is force-installed with a managed policy setting `apiBaseUrl`, when the extension loads, then all API calls use that URL with no user action required.
@@ -422,7 +439,7 @@ The review queue was removed from the extension scope. Approvers use the full we
 **Known limitations:**
 - Highlighting does not work inside `<iframe>` elements (content scripts don't automatically inject into iframes; would need `"all_frames": true` in manifest which has performance implications)
 - Highlighting does not work inside closed Shadow DOM roots (by design — no access)
-- Extension auth relies on domain validation only — there is no cryptographic proof that the email comes from Chrome Identity API vs. a forged header (acceptable for internal tool, documented tradeoff)
+- Extension auth relies on domain validation + shared secret. The shared secret prevents casual spoofing, but is not cryptographically tied to the Chrome Identity API response. A compromised secret would allow forged proposals. Mitigated by: secret is admin-rotatable via Workspace policy, and proposals go through a review queue before becoming canonical terms.
 - The proposals endpoint requires auth for polling — if the user has not been auto-provisioned, notification polling silently fails and badge stays at 0
 
 **Future considerations (out of scope):**

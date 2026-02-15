@@ -52,3 +52,6 @@ integrations = ["javascript_log_in_with_replit:2.0.0"]
 
 [userenv.development]
 ALLOWED_EMAIL_DOMAIN = "*"
+
+[userenv.shared]
+EXTENSION_API_SECRET = "dev-extension-secret-2026"
