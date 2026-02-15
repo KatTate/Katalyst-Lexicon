@@ -30,7 +30,7 @@ A comprehensive accessibility audit was performed on the Katalyst Lexicon applic
 | Severity | Found | Fixed | Remaining |
 |----------|-------|-------|-----------|
 | Critical | 28 | 28 | 0 |
-| Major | 14 | 14 | 0 |
+| Major | 15 | 15 | 0 |
 | Minor | 5 | 0 | 5 (documented below) |
 
 ---
@@ -94,7 +94,7 @@ These tokens automatically resolve to appropriate colors in both light and dark 
 
 **Description:** Mobile navigation overlay was not keyboard-accessible and had no ARIA role.
 
-**Fix:** Added `role="button"`, `tabIndex={0}`, `aria-label`, and keyboard event handler (`Enter`/`Space`) to the overlay div in `Layout.tsx`.
+**Fix:** Added `aria-hidden="true"` to the overlay div in `Layout.tsx` to prevent it from being a keyboard trap. The mobile menu button already toggles menu visibility; the overlay is purely visual decoration.
 
 ### M3: Filter Buttons Missing aria-pressed (WCAG 4.1.2)
 
@@ -125,6 +125,12 @@ These tokens automatically resolve to appropriate colors in both light and dark 
 **Description:** `in_review` status badge style used `text-kat-charcoal` which fails in dark mode.
 
 **Fix:** Updated to `text-foreground` in `ReviewQueue.tsx` and `MyProposals.tsx`.
+
+### M8: StatusBadge Component Light-Mode Hardcoded Colors (WCAG 1.4.3)
+
+**Description:** StatusBadge Draft style used `text-kat-black` and In Review style used `text-kat-charcoal` as light-mode base colors. While dark mode overrides existed, the light-mode values were hardcoded custom colors rather than semantic tokens.
+
+**Fix:** Replaced `text-kat-black` with `text-foreground` in Draft style, and `text-kat-charcoal` with `text-foreground` in In Review style in `StatusBadge.tsx`. Dark mode overrides preserved.
 
 ---
 

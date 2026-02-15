@@ -258,10 +258,7 @@ export function Layout({ children }: LayoutProps) {
         <div 
           className="fixed inset-0 z-40 bg-black/50 lg:hidden backdrop-blur-sm transition-opacity"
           onClick={() => setIsMobileMenuOpen(false)}
-          aria-label="Close navigation menu"
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsMobileMenuOpen(false); }}
+          aria-hidden="true"
         />
       )}
 

@@ -1,6 +1,6 @@
 # Story 8.4: WCAG 2.1 AA Compliance Audit
 
-Status: in-progress
+Status: review
 
 ## Story
 
