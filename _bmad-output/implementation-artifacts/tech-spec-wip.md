@@ -80,6 +80,27 @@ Build a Chrome extension (Manifest V3) that brings the full lexicon experience i
 - Mobile browser support
 - Firefox or other browser support
 
+## Adversarial Review Findings (F1–F14)
+
+The following 14 findings were identified during adversarial review. Each has been resolved inline in the spec sections noted below.
+
+| ID | Severity | Description | Resolution | Spec Section |
+| --- | --- | --- | --- | --- |
+| F1 | Critical | Auth model is spoofable on a publicly-reachable backend. X-Extension-User-Email is forgeable via curl/Postman against replit.app. Need a real auth mechanism. | Added shared secret (`EXTENSION_API_SECRET`) provisioned via managed storage + env var. Backend validates `X-Extension-Secret` header on all write requests. CORS blocks browser-based spoofing; shared secret blocks non-browser spoofing. Defense-in-depth. | Technical Decisions §1, §2, §3; AC-3 |
+| F2 | Critical | AC-7 (context menu "Propose") depends on Tier 2/3 features but is listed as Tier 1. No fallback if clipper/side panel aren't built yet. | Added explicit Tier 1 fallback: if clipper not built, "Propose as Lexicon Term" opens a new tab to `/proposals/new?name=<selected text>` on the web app. No dependency on Tier 2 or 3. | AC-7 |
+| F3 | High | No rate limiting on new endpoints. `GET /api/terms/index` is public, `POST /api/proposals` accepts email headers. No abuse protection. | Added rate limiting guidance: express-rate-limit on `/api/terms/index` (60 req/min/IP) and `/api/proposals` (10 req/min/IP). Shared secret requirement on POST already limits unauthenticated abuse. | Technical Decisions §3; Anti-Patterns; AC-3 |
+| F4 | High | `getTermIndex()` doesn't specify status/visibility filtering. Could leak draft or internal-only terms. | Added explicit filter: `status = 'Canonical'` only. Draft and Deprecated terms excluded. Visibility filter: `IN ('Internal', 'Client-Safe', 'Public')`. | Technical Decisions §5; AC-2 |
+| F5 | High | ETag generation strategy is undefined. Developer left guessing. | Defined strategy: ETag = MD5 hash of `MAX(terms.updatedAt)` + `COUNT(*)` of canonical terms. Single aggregate query, cheap, changes on any term mutation. Weak ETag format: `W/"<md5-hex>"`. | Technical Decisions §5; AC-2 |
+| F6 | High | `chrome.identity.getProfileUserInfo()` requires `identity.email` permission (not listed) and returns empty string if user hasn't signed into Chrome. No error handling. | Added `identity.email` to manifest permissions. Added empty-string detection with user-facing message: "Sign in to Chrome with your @katgroupinc.com account to propose terms." Read-only features remain available. | Technical Decisions §1, §4; AC-3 |
+| F7 | Medium | 100ms scan performance claim is unsubstantiated. No measurement methodology or test. | Reframed as a target, not a claim. Added measurement guidance: use `performance.now()` before/after TreeWalker scan, log to console in dev mode. If >200ms on a 1000-node page, investigate. No hard enforcement — the 2-second rescan cap is the real guardrail. | Performance Constraints; Testing Guidance |
+| F8 | Medium | Content styles injection mechanism is unspecified. Highlights in main DOM, clipper/tooltips in Shadow DOM — unclear how one CSS file serves both. | Clarified dual injection strategy: `content-styles.css` is declared in manifest `content_scripts[].css` for main-DOM highlights. For Shadow DOM UI (tooltips, clipper), the same styles are programmatically injected via `<style>` element inside the shadow root. Two entry points, one source file. | Technical Decisions §6; File Change Summary |
+| F9 | Medium | No error handling specified for API failures in extension UI. No defined error/offline states. | Added error/offline state requirements for all extension UIs. Popup: inline error banner + cached results fallback. Side panel: full-page error state with retry button. Content script: silent degradation (use cached term index, skip highlighting if none). Service worker: retry with exponential backoff (max 3 retries). | AC-4, AC-5, AC-9, AC-10; new AC-15 |
+| F10 | Medium | `requireAuthOrExtension()` has no AC, no file assignment, no conflict resolution for dual identity. | Added explicit AC-3 sub-bullet for OIDC-takes-precedence rule. Added file assignment in File Change Summary. Added conflict resolution: if both OIDC session and extension headers present, OIDC session identity wins, extension headers are ignored. | Technical Decisions §3; AC-3; File Change Summary |
+| F11 | Medium | Notification polling interval is literally "N minutes" — N is never defined. | Defined: 15 minutes (`CHECK_PROPOSALS` alarm). Added to constants as `ALARM_INTERVALS.CHECK_PROPOSALS = 15`. | Technical Decisions §7; AC-13 |
+| F12 | Low | Term index size estimate (~1KB/100 terms) is hand-wavy. 5MB memory cap doesn't account for highlight span DOM overhead. | Revised estimate: ~3KB for 100 terms (JSON with names + synonym arrays). 5MB cap revised to cover term index JSON (~50KB ceiling for 1000+ terms) + highlight span DOM overhead (~2 bytes per span × number of highlights). Practical ceiling is well under 5MB for any reasonable lexicon size. | Performance Constraints |
+| F13 | Low | No automated tests for the extension. Backend gets curl tests; the extension gets "load it and click around." | Added structured manual test checklist with pass/fail criteria. Noted that Chrome extension UIs cannot be tested via Playwright (chrome-extension:// protocol limitation). Backend endpoints covering extension auth are testable via curl/API integration tests. | Testing Guidance |
+| F14 | Low | AC-5 highlight unwrap assumes static DOM. SPAs may re-render between highlight and toggle-off, breaking unwrap. | Added resilient unwrap strategy: when toggling off, query all `.kl-highlight` spans and unwrap. If a span is no longer in the DOM (SPA re-render removed it), skip it silently. If new DOM content appeared without highlights, that's correct behavior. No error on orphaned references. | AC-5; Technical Decisions §6 |
+
 ## Context for Development
 
 ### Codebase Patterns
@@ -150,10 +171,11 @@ Add CORS middleware to `server/index.ts` that allows:
 - No credentials needed (extension doesn't use cookies)
 - **Security note:** CORS prevents browser-based cross-origin attacks. The shared secret (`X-Extension-Secret`) prevents non-browser attacks (curl, Postman). Together they provide defense-in-depth for the publicly-reachable backend.
 
-**3. Extension Auth Middleware**
+**3. Extension Auth Middleware** *(addresses F1, F3, F10)*
 
 New middleware in `server/middleware/extensionAuth.ts` that:
 - Checks for `X-Extension-User-Email` AND `X-Extension-Secret` headers
+- Validates `X-Extension-Id` header against `ALLOWED_EXTENSION_ID` env var (if set; optional but recommended in production)
 - Validates the shared secret matches `EXTENSION_API_SECRET` env var
 - Validates email domain against `ALLOWED_EMAIL_DOMAIN`
 - Looks up user by email in the database (creates if not found, with "Member" role). If user already exists (e.g., created via web app OIDC), uses existing record and role — never resets role to "Member"
@@ -161,12 +183,19 @@ New middleware in `server/middleware/extensionAuth.ts` that:
 - Attaches `req.dbUser` for downstream route handlers
 - Used as an alternative to `isAuthenticated` for extension-originated requests
 
-**Combined middleware `requireAuthOrExtension(permission)`:**
+**Combined middleware `requireAuthOrExtension(permission)`:** *(addresses F10)*
 - Tries OIDC session auth first (existing `isAuthenticated` check)
 - If no OIDC session, falls back to extension auth (email + secret headers)
-- If both are present, OIDC session takes precedence (it's the stronger auth)
+- **Conflict resolution:** If both OIDC session AND extension email headers are present, OIDC session identity wins and extension headers are ignored. This prevents identity confusion when a user has both an active web session and the extension installed.
 - Checks the resolved user's permission against the required permission
 - Used on `POST /api/proposals` and `GET /api/proposals` to support both web app and extension callers
+
+**Rate limiting:** *(addresses F3)*
+- Add `express-rate-limit` middleware on extension-facing endpoints:
+  - `GET /api/terms/index`: 60 requests/minute per IP (term index is cached client-side, so frequent hits indicate abuse)
+  - `POST /api/proposals`: 10 requests/minute per IP (legitimate users submit proposals infrequently)
+- The shared secret requirement on POST already limits unauthenticated abuse, but rate limiting provides defense against a compromised secret or brute-force attempts
+- Use the existing `express-rate-limit` package (already available in the Node.js ecosystem, no custom code needed)
 
 **4. Managed Storage for Zero-Config**
 
@@ -187,12 +216,17 @@ New middleware in `server/middleware/extensionAuth.ts` that:
 - Content script reads from `chrome.storage.local` on page load
 - Matching uses case-insensitive word-boundary matching to avoid partial matches
 
-**6. Content Script Architecture**
+**6. Content Script Architecture** *(addresses F7, F8, F14)*
 
 Single content script handles three responsibilities:
 - **Term highlighting**: Scans visible text, wraps matches in `<span class="kl-highlight">`, shows tooltip on hover
 - **Clipper overlay**: Shadow DOM form for proposing terms, triggered by context menu or popup button
 - **Message listener**: Responds to service worker messages (SHOW_CLIPPER, GET_SELECTION)
+
+**CSS injection strategy:** *(addresses F8)*
+- `content-styles.css` is declared in `manifest.json` under `content_scripts[].css` — this injects highlight styles (`kl-highlight`, `kl-tooltip`) into the main page DOM automatically
+- For Shadow DOM UI (clipper overlay, tooltips that need isolation), the same CSS content is programmatically injected as a `<style>` element inside each shadow root: `shadowRoot.innerHTML = '<style>' + CONTENT_STYLES + '</style>' + uiHtml`
+- Two injection entry points, one source file. The manifest handles main-DOM injection; the content script handles Shadow DOM injection.
 
 Performance guardrails:
 - Use `TreeWalker` to traverse only text nodes
@@ -201,6 +235,13 @@ Performance guardrails:
 - Scan only visible viewport using `IntersectionObserver`
 - Debounce rescans on scroll/DOM mutations (500ms) with a **hard cap of 1 scan per 2 seconds** to prevent CPU burn on mutation-heavy SPAs (Slack, Google Docs)
 - Per-site toggle stored in `chrome.storage.sync` keyed by hostname
+- **Scan timing measurement** *(addresses F7)*: In development mode, wrap TreeWalker scan in `performance.now()` calls and log duration to console. Target: <200ms for pages with <1000 text nodes. The 2-second rescan cap is the real guardrail — the 200ms target is for profiling, not enforcement.
+
+**Highlight unwrap resilience:** *(addresses F14)*
+- When toggling highlights OFF, query all `.kl-highlight` spans via `document.querySelectorAll('.kl-highlight')` and unwrap each (replace span with its text content)
+- If a span is no longer in the DOM (SPA re-rendered and removed it), skip it silently — no error
+- If new DOM content appeared without highlights after a SPA re-render, that's correct behavior (new content was never highlighted)
+- Use `try/catch` around each unwrap operation to handle edge cases where parentNode is null
 
 **CRITICAL: MV3 Service Worker Lifecycle**
 - Chrome kills MV3 service workers after ~30 seconds of inactivity
@@ -208,11 +249,11 @@ Performance guardrails:
 - Alarms, message listeners, and context menu handlers re-register on service worker activation
 - The prototype may have in-memory state patterns — these must be converted to `chrome.storage`
 
-**7. Notification Strategy**
+**7. Notification Strategy** *(addresses F11)*
 
-- Service worker polls `GET /api/proposals?status=pending` every N minutes via `chrome.alarms`
+- Service worker polls `GET /api/proposals?status=pending` every **15 minutes** via `chrome.alarms` (alarm name: `CHECK_PROPOSALS`, interval defined in `shared/constants.js` as `ALARM_INTERVALS.CHECK_PROPOSALS = 15`)
 - Sets badge count on extension icon
-- Desktop notification when new proposals appear (comparing to last known count)
+- Desktop notification when new proposals appear (comparing to last known count stored in `chrome.storage.local`)
 - Clicking notification opens the web app review page in a new tab (not the extension side panel)
 - Notifications only work if the extension has obtained the user's email (for authenticated request to proposals endpoint)
 
@@ -242,16 +283,18 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Given a POST request with no `X-Extension-User-Email` header and no `X-Extension-Secret` header, then the middleware falls through to the existing OIDC session auth (no disruption to web app).
 - Given the user is not signed into Chrome (empty email from `chrome.identity.getProfileUserInfo()`), when they attempt to submit a proposal, then the extension shows "Sign in to Chrome with your @katgroupinc.com account to propose terms" and does not send the request.
 
-**AC-4: Popup search returns results from the API**
+**AC-4: Popup search returns results from the API** *(F9 error handling added)*
 - Given the extension popup is open and the user types "brand" into the search field, when at least 2 characters are entered, then matching terms appear as a list below the search input within 500ms.
 - Given the popup shows search results, when the user clicks a term, then the side panel opens showing the full term detail.
 - Given the popup is open, when the user has not typed anything, then the popup shows recently viewed terms (from `chrome.storage.local`) or an empty state message.
+- Given the API is unreachable or returns an error, then the popup displays an inline error banner (e.g., "Unable to reach Katalyst Lexicon. Check your connection.") and falls back to showing cached recent terms if available.
 
-**AC-5: Highlighting toggle works per-site**
+**AC-5: Highlighting toggle works per-site** *(F14 resilience added)*
 - Given the popup is open, when the user toggles "Enable Highlighting" ON, then the content script scans the current page and highlights matching terms with a visible background color.
 - Given highlighting is enabled, when the user hovers over a highlighted term, then a tooltip appears showing the term's definition, category, and a "View full details" link.
 - Given highlighting is enabled on `example.com`, when the user navigates to `other.com`, then highlighting state is independent — it respects the per-site toggle stored in `chrome.storage.sync`.
-- Given the user toggles highlighting OFF, then all `<span class="kl-highlight">` elements on the page are unwrapped (restored to original text nodes) without losing page content.
+- Given the user toggles highlighting OFF, then all `.kl-highlight` spans on the page are unwrapped (restored to original text nodes) without losing page content. If the SPA has re-rendered and some spans are no longer in the DOM, the unwrap skips them silently (no error). Each unwrap is wrapped in `try/catch` for resilience.
+- Given the term index cache is empty or unavailable (API unreachable, no cached data), when highlighting is toggled ON, then the content script does nothing (no scan, no error) and waits for the next term index refresh.
 
 **AC-6: Term highlighting matches correctly and performs safely**
 - Given a page containing the text "We use Brand Voice in all communications", when "Brand Voice" is a term in the index, then "Brand Voice" is highlighted but not partial matches like "Brand" alone (unless "Brand" is also a separate term).
@@ -269,18 +312,20 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Given the extension is force-installed with a managed policy setting `apiBaseUrl`, when the extension loads, then all API calls use that URL with no user action required.
 - Given no managed policy is set, when the extension loads, then it falls back to `chrome.storage.sync` (set via options page) or a hardcoded default.
 
-**AC-9: Service worker manages term index cache**
+**AC-9: Service worker manages term index cache** *(F9 error handling added)*
 - Given the extension is installed, when the `onInstalled` event fires, then the service worker fetches `/api/terms/index` and stores the result in `chrome.storage.local`.
 - Given the `REFRESH_TERM_INDEX` alarm fires (every 30 minutes), when the service worker is alive, then it fetches `/api/terms/index` with `If-None-Match` and only updates storage if data changed (200 response).
 - Given the service worker was killed and restarted, then it re-registers alarms and message listeners without losing cached data (data is in `chrome.storage.local`, not in-memory).
+- Given the API is unreachable during a term index fetch (network error, 5xx, timeout), then the service worker retries with exponential backoff (delays: 1min, 5min, 15min, max 3 retries). Cached data in `chrome.storage.local` remains valid and is used by the content script for highlighting until the next successful refresh.
 
 ### Tier 2 — Ship If Time
 
-**AC-10: Side panel shows Browse, Search, and Principles tabs**
+**AC-10: Side panel shows Browse, Search, and Principles tabs** *(F9 error handling added)*
 - Given the side panel is open, when the user clicks the "Browse" tab, then all terms are displayed grouped by category with category headers and counts.
 - Given the side panel is open, when the user clicks the "Search" tab and types a query, then results appear from the `/api/terms/search` endpoint, ranked by relevance.
 - Given the side panel is open, when the user clicks the "Principles" tab, then all published principles are displayed with their titles, summaries, and linked term counts.
 - Given the user clicks a term in any tab, then the side panel navigates to a detail view showing all term fields (definition, why it exists, when to use, when not to use, good/bad examples, synonyms, category, status, version).
+- Given the API is unreachable or returns an error while loading any tab, then the side panel displays a full-page error state with the message "Unable to connect to Katalyst Lexicon" and a "Retry" button.
 
 **AC-11: Options page allows manual API URL configuration**
 - Given the options page is open, when the user enters a new API URL and clicks Save, then the URL is stored in `chrome.storage.sync` and used for subsequent API calls.
@@ -294,10 +339,21 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Given the API returns a validation error, then the clipper displays the error inline without closing.
 - Given the user clicks Cancel or presses Escape, then the clipper overlay closes without submitting.
 
-**AC-13: Notification polling alerts approvers**
-- Given the user's email is available (via `chrome.identity`), when the `CHECK_PROPOSALS` alarm fires, then the service worker fetches `GET /api/proposals?status=pending` with auth headers.
+**AC-13: Notification polling alerts approvers** *(F11 interval defined)*
+- Given the user's email is available (via `chrome.identity`), when the `CHECK_PROPOSALS` alarm fires (every 15 minutes), then the service worker fetches `GET /api/proposals?status=pending` with auth headers.
 - Given there are N pending proposals and the last known count was less than N, then a Chrome notification is shown: "N proposals need review" and the badge shows the count.
 - Given the user clicks the notification, then a new tab opens to the web app's review page.
+
+**AC-14: Extension ID validation** *(F1 defense-in-depth)*
+- Given the `ALLOWED_EXTENSION_ID` env var is set on the backend, when a request arrives with `X-Extension-Id` header that does not match, then the response is `403 Forbidden` with error "Unrecognized extension".
+- Given `ALLOWED_EXTENSION_ID` is not set, then the `X-Extension-Id` header is accepted but not validated (development mode).
+
+**AC-15: Error and offline resilience across all extension UIs** *(addresses F9)*
+- Given the API is unreachable, when the popup opens, then it shows an inline error banner and falls back to cached recent terms.
+- Given the API is unreachable, when the side panel opens, then it shows a full-page error state with a "Retry" button.
+- Given the API is unreachable, when the content script attempts highlighting, then it silently uses the cached term index from `chrome.storage.local`. If no cache exists, highlighting is a no-op (no error shown to user).
+- Given the service worker fails to fetch the term index, then it retries with exponential backoff (1min, 5min, 15min) up to 3 times before giving up until the next scheduled alarm.
+- Given any API call fails in the clipper overlay, then the error is displayed inline in the clipper form without closing it.
 
 ## Implementation Guidance
 
@@ -332,6 +388,7 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Scan the DOM more than once per 2 seconds, even if MutationObserver fires continuously.
 - Use `chrome.identity.getAuthToken()` — we're using `getProfileUserInfo()` which doesn't require OAuth setup.
 - Add a `cors` npm package. The CORS middleware is 10 lines of custom code — no dependency needed.
+- Skip rate limiting on extension-facing endpoints. *(F3)* Use `express-rate-limit` — it's the only new backend dependency.
 - Modify the existing OIDC auth flow. The extension auth middleware is additive, not a replacement.
 - Use `eval()`, `new Function()`, or inline scripts in the extension — MV3 CSP forbids them.
 - Build a review queue in the extension. Approvers use the full web app.
@@ -342,11 +399,11 @@ The review queue was removed from the extension scope. Approvers use the full we
 - `client/` — the web app frontend is unchanged
 - `server/seed.ts` — no seed data changes needed
 
-**Performance constraints:**
+**Performance constraints:** *(F7 and F12 clarified)*
 - Popup must render search results within 500ms of typing.
 - Term index cache refresh must use conditional requests (ETag) to minimize bandwidth.
-- Content script highlighting scan must complete within 100ms for pages with <1000 text nodes.
-- Content script must not increase page memory usage by more than 5MB (term index + highlight spans).
+- Content script highlighting scan target: <200ms for pages with <1000 text nodes. This is a **profiling target**, not a hard enforcement — measure with `performance.now()` in dev mode and log to console. The 2-second rescan cap (via debounce) is the real guardrail against CPU burn.
+- **Memory budget** *(F12)*: Term index JSON is ~3KB for 100 terms (name + synonyms array per entry). At 1000+ terms, the index would be ~50KB — well within reason. Each highlight `<span>` adds ~50 bytes of DOM overhead. For a page with 500 highlights, that's ~25KB. Combined ceiling is well under 5MB for any realistic lexicon and page. The 5MB cap remains as a sanity check but is not expected to be a constraint.
 
 ### File Change Summary
 
@@ -390,7 +447,7 @@ The review queue was removed from the extension scope. Approvers use the full we
 ### Dependencies
 
 **Backend:**
-- No new npm packages required. CORS middleware is custom code (~10 lines). Extension auth uses existing `storage` and `db` imports.
+- One new npm package: `express-rate-limit` for rate limiting extension-facing endpoints *(F3)*. CORS middleware is custom code (~10 lines). Extension auth uses existing `storage` and `db` imports.
 
 **Extension:**
 - No external dependencies. Pure vanilla JS/HTML/CSS using Chrome extension APIs.
@@ -406,28 +463,48 @@ The review queue was removed from the extension scope. Approvers use the full we
 - Chrome Web Store developer account (for publishing, even unlisted)
 - Published extension ID (for pinning CORS origin in production)
 
-### Testing Guidance
+### Testing Guidance *(F7 measurement added, F13 structured checklist added)*
 
-**Backend endpoint testing (automated):**
-- Test `GET /api/terms/index` returns correct shape `[{id, name, synonyms}]`
+**Backend endpoint testing (automated via curl/API tests):**
+- Test `GET /api/terms/index` returns correct shape `[{id, name, synonyms}]` with only Canonical terms (no Draft/Deprecated)
 - Test ETag: first request gets 200 + ETag header; same ETag in `If-None-Match` gets 304; after a term update, same ETag gets 200 with new data
 - Test CORS: request with `Origin: chrome-extension://testid` gets appropriate `Access-Control-Allow-Origin` response header
-- Test extension auth: request with valid `X-Extension-User-Email` + valid domain creates user and succeeds; invalid domain gets 403; missing header falls through to OIDC check
+- Test extension auth: request with valid `X-Extension-User-Email` + valid `X-Extension-Secret` + valid domain creates user and succeeds; invalid domain gets 403; missing/wrong secret gets 403; missing headers falls through to OIDC check
+- Test rate limiting: send 61 rapid requests to `/api/terms/index` from same IP, verify 429 response after threshold
+- Test `X-Extension-Id` validation: set `ALLOWED_EXTENSION_ID` env var, send request with mismatched `X-Extension-Id` header, verify 403
 
-**Extension testing (manual + structured):**
-- Load unpacked extension from `extension/` directory in `chrome://extensions` (enable Developer Mode)
-- **Popup test:** Open popup, type search query, verify results appear. Click result, verify side panel opens with detail.
-- **Highlighting test:** Toggle highlighting on. Navigate to a page with known term text. Verify terms are highlighted. Hover to see tooltip. Toggle off, verify highlights removed.
-- **Context menu test:** Select text on any page, right-click, verify "Search Lexicon for..." and "Propose as Lexicon Term" appear. Click "Search" and verify side panel opens.
-- **Side panel test:** Open side panel. Switch between Browse, Search, Principles tabs. Click a term. Verify detail view renders all fields.
-- **Managed storage test:** Set `apiBaseUrl` via `chrome.storage.managed` (requires enterprise policy or dev override). Verify extension uses the configured URL.
-- **Service worker lifecycle test:** Open extension, wait 60 seconds (idle timeout), then trigger an action. Verify it still works (state recovered from `chrome.storage`).
+**Extension testing (manual structured checklist — Chrome extension UIs cannot be tested via Playwright):** *(addresses F13)*
+
+Each test has explicit pass/fail criteria. Load unpacked extension from `extension/` directory in `chrome://extensions` (enable Developer Mode).
+
+| # | Test | Steps | Pass Criteria |
+| --- | --- | --- | --- |
+| T1 | Popup search | Open popup → type "brand" → wait 500ms | Results list appears with matching terms |
+| T2 | Popup → side panel | Click a result in popup | Side panel opens showing term detail |
+| T3 | Popup empty state | Open popup without typing | Shows "recently viewed" or empty state message |
+| T4 | Popup error state | Disconnect network → open popup → type query | Error banner shown, cached recent terms displayed if available |
+| T5 | Highlight ON | Toggle highlighting ON in popup → navigate to page with known term | Term text highlighted with background color |
+| T6 | Highlight tooltip | Hover over highlighted term | Tooltip shows definition, category, "View full details" link |
+| T7 | Highlight OFF | Toggle highlighting OFF | All highlight spans removed, text restored |
+| T8 | Highlight per-site | Enable on site A → navigate to site B | Site B highlighting state is independent of site A |
+| T9 | Highlight SPA unwrap | Enable highlights on SPA → trigger navigation that re-renders DOM → toggle OFF | No errors; orphaned spans skipped silently |
+| T10 | Context menu: Search | Select text → right-click → "Search Lexicon for..." | Side panel opens with search tab pre-filled |
+| T11 | Context menu: Propose (Tier 1 fallback) | Select text → right-click → "Propose as Lexicon Term" (before clipper built) | New tab opens to `/proposals/new?name=<text>` |
+| T12 | Side panel: Browse | Open side panel → Browse tab | Terms grouped by category with headers and counts |
+| T13 | Side panel: Search | Open side panel → Search tab → type query | Results appear ranked by relevance |
+| T14 | Side panel: Principles | Open side panel → Principles tab | Principles listed with titles, summaries, linked term counts |
+| T15 | Side panel: error state | Disconnect network → open side panel | Error state with "Retry" button shown |
+| T16 | Options: managed | Set managed policy with apiBaseUrl | Options page shows managed value, read-only |
+| T17 | Options: manual | Enter API URL → click Save → reload extension | API calls use new URL |
+| T18 | Service worker lifecycle | Open extension → wait 60s → trigger search | Results appear (state recovered from chrome.storage) |
+| T19 | Performance profiling | Open console → enable highlighting on large page | Console logs scan duration; should be <200ms for <1000 text nodes |
 
 **Edge case testing:**
-- Pages with heavy mutations (Gmail, Slack) — verify no CPU spike, highlighting still works
+- Pages with heavy mutations (Gmail, Slack) — verify no CPU spike, highlighting still works, rescans capped at 1 per 2 seconds
 - Pages with Shadow DOM components — verify no errors, foreign Shadow DOMs are skipped
-- Empty term index — verify highlighting gracefully does nothing
+- Empty term index — verify highlighting gracefully does nothing (no scan, no error)
 - API server unreachable — verify extension shows offline state, cached data still works for highlighting
+- SPA page re-render between highlight and toggle-off — verify no errors on unwrap
 
 ### Notes
 

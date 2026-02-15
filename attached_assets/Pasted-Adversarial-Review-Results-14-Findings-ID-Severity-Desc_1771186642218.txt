@@ -1,0 +1,17 @@
+Adversarial Review Results — 14 Findings
+
+ID	Severity	Description
+F1	Critical	Auth model is spoofable on a publicly-reachable backend. The spec acknowledges X-Extension-User-Email is forgeable, but the backend is hosted on replit.app (public internet), not behind a VPN. Any attacker who discovers the URL can forge proposals and auto-provision as a Member. Need either network restrictions or a real auth mechanism (signed JWT, shared secret via managed storage).
+F2	Critical	AC-7 (context menu "Propose") depends on Tier 2/3 features but is listed as Tier 1. If neither the clipper (Tier 3) nor side panel (Tier 2) are built yet, clicking "Propose as Lexicon Term" has no defined fallback. Tier 1 ACs must be self-contained.
+F3	High	No rate limiting on new endpoints. GET /api/terms/index is public, POST /api/proposals accepts email headers. No abuse protection mentioned.
+F4	High	getTermIndex() doesn't specify status/visibility filtering. Could leak draft or internal-only terms to all extension users.
+F5	High	ETag generation strategy is undefined. Body hash vs. timestamp vs. change counter — each has different trade-offs. Developer left guessing.
+F6	High	chrome.identity.getProfileUserInfo() requires identity.email permission (not listed) and returns empty string if user hasn't signed into Chrome. No error handling for this scenario.
+F7	Medium	100ms scan performance claim is unsubstantiated. No measurement methodology, no test for it, no definition of "complete."
+F8	Medium	Content styles injection mechanism is unspecified. Highlights are in main DOM, clipper/tooltips are in Shadow DOM — how one CSS file serves both is unclear.
+F9	Medium	No error handling specified for API failures in extension UI. Popup and side panel have no defined error/offline states.
+F10	Medium	requireAuthOrExtension() middleware has no AC, no file assignment, no conflict resolution. What if both OIDC session and email header are present with different identities?
+F11	Medium	Notification polling interval is literally "N minutes" — N is never defined.
+F12	Low	Term index size estimate (~1KB/100 terms) is hand-wavy. 5MB memory cap doesn't account for highlight span DOM overhead.
+F13	Low	No automated tests for the extension. Backend gets curl tests; the extension — the entire point — gets "load it and click around."
+F14	Low	AC-5 highlight unwrap assumes static DOM. SPAs may re-render between highlight and toggle-off, breaking unwrap.
