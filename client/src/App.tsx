@@ -15,6 +15,7 @@ import ManageCategories from "@/pages/ManageCategories";
 import Settings from "@/pages/Settings";
 import BrowsePrinciples from "@/pages/BrowsePrinciples";
 import PrincipleDetail from "@/pages/PrincipleDetail";
+import ManagePrinciples from "@/pages/ManagePrinciples";
 
 function Router() {
   return (
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/principles" component={BrowsePrinciples} />
       <Route path="/principle/:slug" component={PrincipleDetail} />
+      <Route path="/manage-principles" component={ManagePrinciples} />
       <Route component={NotFound} />
     </Switch>
   );

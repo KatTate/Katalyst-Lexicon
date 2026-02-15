@@ -1,6 +1,6 @@
 # Story 7.3: Principles Authoring (Admin)
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -105,9 +105,26 @@ so that the team can reference the thinking behind our vocabulary.
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus (Replit Agent)
 
 ### Completion Notes
+Implemented admin-only principles authoring page with full CRUD, markdown preview, term linking via search, and archive flow. Key decisions:
+- Fixed POST /api/principles to set `owner` from `req.dbUser` server-side (was previously expected in body)
+- Added slug uniqueness enforcement in the POST route — auto-appends numeric suffix if slug exists
+- Term linking only available in Edit mode (principle must be saved first to have an ID)
+- Archive uses AlertDialog with Cancel button auto-focused (Enter does NOT confirm per dev notes)
+- Reused same ReactMarkdown + rehype-sanitize setup as PrincipleDetail.tsx for markdown preview
+- Used Tabs component for Edit/Preview toggle on markdown body
 
 ### File List
+- `client/src/pages/ManagePrinciples.tsx` — CREATE — Admin principles authoring page with CRUD, markdown preview, and term linker
+- `client/src/App.tsx` — MODIFY — Added route `/manage-principles` → ManagePrinciples
+- `client/src/components/Layout.tsx` — MODIFY — Added "Manage Principles" nav link in admin section
+- `client/src/lib/api.ts` — MODIFY — Added `linkTerm` and `unlinkTerm` methods to `api.principles`
+- `server/routes.ts` — MODIFY — Set `owner` from `req.dbUser` in POST /api/principles, added slug uniqueness loop
 
 ### Testing Summary
+- **Approach**: E2E Playwright test covering the full create → preview → save → edit/link term → archive workflow
+- **ACs covered**: AC1 (create form fields), AC2 (markdown preview), AC3 (save success), AC4 (term linking with search/chips), AC5 (archive with confirmation), AC6 (permission denied for non-admins), AC7 (principles list with all fields), AC8 (slug uniqueness handled server-side)
+- **All tests passing**: Yes
+- **LSP Status**: Clean — no errors or warnings

@@ -641,10 +641,19 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/principles", requirePermission("admin"), async (req, res) => {
+  app.post("/api/principles", requirePermission("admin"), async (req: any, res) => {
     try {
-      const parsed = insertPrincipleSchema.parse(req.body);
-      const principle = await storage.createPrinciple(parsed);
+      const owner = getUserDisplayName(req.dbUser);
+      const parsed = insertPrincipleSchema.parse({ ...req.body, owner });
+
+      let slug = parsed.slug;
+      let suffix = 2;
+      while (await storage.getPrincipleBySlug(slug)) {
+        slug = `${parsed.slug}-${suffix}`;
+        suffix++;
+      }
+
+      const principle = await storage.createPrinciple({ ...parsed, slug });
       res.status(201).json(principle);
     } catch (error) {
       if (error instanceof z.ZodError) {

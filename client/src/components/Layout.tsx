@@ -142,6 +142,7 @@ export function Layout({ children }: LayoutProps) {
                 Administration
               </p>
               <NavItem href="/categories" icon={FolderCog} label="Manage Categories" />
+              <NavItem href="/manage-principles" icon={BookOpen} label="Manage Principles" />
               <NavItem href="/settings" icon={Settings} label="System Settings" />
               <NavItem href="/design" icon={Palette} label="Design System" />
             </div>

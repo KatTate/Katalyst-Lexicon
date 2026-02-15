@@ -158,5 +158,7 @@ export const api = {
     create: (data: Partial<Principle>) => fetchJson<Principle>("POST", "/api/principles", data),
     update: (id: string, data: Partial<Principle>) => fetchJson<Principle>("PATCH", `/api/principles/${id}`, data),
     delete: (id: string) => fetchJson<void>("DELETE", `/api/principles/${id}`),
+    linkTerm: (principleId: string, termId: string) => fetchJson<any>("POST", `/api/principles/${principleId}/terms`, { termId }),
+    unlinkTerm: (principleId: string, termId: string) => fetchJson<void>("DELETE", `/api/principles/${principleId}/terms/${termId}`),
   },
 };
