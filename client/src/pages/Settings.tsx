@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   Settings as SettingsIcon, Users, Shield, Bell, 
-  Globe, Save, Trash2, MoreVertical, Loader2, ShieldAlert
+  Globe, Trash2, MoreVertical, Loader2, ShieldAlert, Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -130,24 +130,21 @@ export default function Settings() {
     },
   });
 
-  const saveSettingsMutation = useMutation({
-    mutationFn: (settingsData: { key: string; value: boolean }[]) => api.settings.saveBatch(settingsData),
+  const saveSettingMutation = useMutation({
+    mutationFn: ({ key, value }: { key: string; value: boolean }) => api.settings.save(key, value),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-      toast({ title: "Settings Saved", description: "Your settings have been updated." });
+      toast({ title: "Setting Saved", description: "Your setting has been updated." });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
+    onError: (_error: any, variables: { key: string; value: boolean }) => {
+      setLocalSettings(prev => ({ ...prev, [variables.key]: !variables.value }));
+      toast({ title: "Error", description: "Failed to save setting.", variant: "destructive" });
     },
   });
 
   const handleToggle = (key: string, value: boolean) => {
     setLocalSettings(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleSaveAll = () => {
-    const settingsData = Object.entries(localSettings).map(([key, value]) => ({ key, value }));
-    saveSettingsMutation.mutate(settingsData);
+    saveSettingMutation.mutate({ key, value });
   };
 
   if (authLoading) {
@@ -195,9 +192,9 @@ export default function Settings() {
               <Users className="h-4 w-4" />
               Users & Roles
             </TabsTrigger>
-            <TabsTrigger value="permissions" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="tab-permissions">
+            <TabsTrigger value="governance" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="tab-governance">
               <Shield className="h-4 w-4" />
-              Permissions
+              Governance
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="tab-notifications">
               <Bell className="h-4 w-4" />
@@ -334,8 +331,8 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* Permissions Tab */}
-          <TabsContent value="permissions" className="space-y-6">
+          {/* Governance Tab */}
+          <TabsContent value="governance" className="space-y-6" data-testid="section-governance">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-header">Governance Rules</CardTitle>
@@ -380,7 +377,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
+          <TabsContent value="notifications" className="space-y-6" data-testid="section-notifications">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-header">Email Notifications</CardTitle>
@@ -420,12 +417,18 @@ export default function Settings() {
                     data-testid="switch-changes-requested-alerts"
                   />
                 </div>
+                <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800" data-testid="text-notifications-coming-soon">
+                  <Info className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Notification delivery is coming soon — these settings will take effect when notifications are enabled.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Visibility Tab */}
-          <TabsContent value="visibility" className="space-y-6">
+          <TabsContent value="visibility" className="space-y-6" data-testid="section-visibility">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-header">Public Access</CardTitle>
@@ -475,17 +478,6 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end mt-8">
-          <Button 
-            className="bg-primary text-white font-bold gap-2"
-            onClick={handleSaveAll}
-            disabled={saveSettingsMutation.isPending}
-            data-testid="button-save-settings"
-          >
-            {saveSettingsMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save All Settings
-          </Button>
-        </div>
       </div>
     </Layout>
   );
