@@ -1,6 +1,6 @@
 # Story 7.5: Role-Based Access Enforcement
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -132,9 +132,47 @@ so that only authorized users can propose, review, and administer the lexicon.
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus (Replit Agent)
 
 ### Completion Notes
+Implemented full role-based access enforcement using Replit Auth (OIDC). Key decisions:
+- Extended auth integration's users table with `role` column (Admin/Approver/Member) rather than maintaining separate users table
+- Created shared permissions utility (`shared/permissions.ts`) as single source of truth for role-permission matrix, used by both server middleware and client navigation
+- First OIDC-authenticated user gets Admin role (checks for existing Admin users, not total user count, to work correctly with seeded reference data)
+- Domain restriction (AC8/AC9 for @katgroupinc.com) deferred — Replit Auth OIDC doesn't support domain filtering during development
+- Seeded users demoted from Admin to Approver so first real OIDC user correctly bootstraps as Admin
 
 ### File List
+**Created:**
+- `shared/permissions.ts` — Role permission matrix (single source of truth)
+- `server/middleware/auth.ts` — requireRole(), requirePermission(), optionalAuth middleware
+- `server/replit_integrations/auth/` — Auth module (OIDC setup, session storage, routes) via integration
+- `shared/models/auth.ts` — Auth Drizzle schema (users + sessions tables) via integration
+- `client/src/hooks/use-auth.ts` — React hook for auth state via integration
+
+**Modified:**
+- `server/index.ts` — Wired setupAuth() + registerAuthRoutes() before other routes
+- `server/routes.ts` — Added requirePermission/requireRole middleware to all write endpoints; replaced hardcoded user strings with getUserDisplayName(req.dbUser)
+- `shared/schema.ts` — Re-exported auth models; removed old users table definition
+- `client/src/components/Layout.tsx` — Replaced MOCK_CURRENT_USER with useAuth() hook; filter nav by role permissions; added Sign In/Out UI with user identity display
+- `client/src/pages/ReviewQueue.tsx` — Replaced MOCK_CURRENT_USER with useAuth() hook; added permission denied state
+- `client/src/pages/ProposeTerm.tsx` — Removed client-side submittedBy (server-side only now)
+- `client/src/pages/MyProposals.tsx` — Filters by authenticated user's display name
+- `server/seed.ts` — Changed Sarah Jenkins from Admin to Approver for first-user bootstrap
+- `replit.md` — Updated with auth architecture documentation
 
 ### Testing Summary
+**Test approach:** E2E testing via Playwright (run_test tool) + manual API verification
+**ACs covered by tests:**
+- AC1: 401 on unauthenticated write ops (POST /api/proposals, POST /api/settings) ✅
+- AC5: Public read access (GET /api/terms, GET /api/categories return 200 without auth) ✅
+- AC6: Nav filtering by role (Admin sees all sections after login) ✅
+- AC7: Unauthenticated nav (Sign In shown, no propose/review/admin) ✅
+- AC10: First admin bootstrap (first OIDC user gets Admin role) ✅
+- AC11: User identity display (name + role shown in sidebar) ✅
+- AC12/AC13: Verified via code inspection — getUserDisplayName(req.dbUser) used for submittedBy and changedBy
+- AC2/AC3/AC4: Verified via code inspection — requirePermission("admin") on all admin endpoints, requirePermission("review") on review endpoints
+- AC8/AC9: DEFERRED — domain restriction not practical with Replit Auth during development
+**All tests passing:** Yes
+**LSP Status:** Clean — no errors in any changed files
+**Visual Verification:** Screenshots taken during E2E test confirming sidebar renders correctly for unauthenticated and Admin states
