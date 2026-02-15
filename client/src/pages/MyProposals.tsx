@@ -58,7 +58,7 @@ export default function MyProposals() {
 
   const statusStyles: Record<string, string> = {
     pending: "bg-kat-warning/20 text-yellow-800 border-kat-warning/30",
-    in_review: "bg-kat-mystical/20 text-kat-charcoal border-kat-mystical/30",
+    in_review: "bg-kat-mystical/20 text-foreground border-kat-mystical/30",
     changes_requested: "bg-amber-100 text-amber-800 border-amber-300",
     approved: "bg-primary/10 text-primary border-primary/20",
     rejected: "bg-muted text-muted-foreground border-border",
@@ -90,7 +90,7 @@ export default function MyProposals() {
     <Layout>
       <div className="max-w-3xl mx-auto p-6 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-header font-bold text-kat-black">My Proposals</h1>
+          <h1 className="text-2xl font-header font-bold text-foreground">My Proposals</h1>
           <p className="text-sm text-muted-foreground mt-1">Track the status of your submitted proposals</p>
         </div>
 
@@ -131,7 +131,7 @@ export default function MyProposals() {
                           {statusLabels[proposal.status] || proposal.status}
                         </Badge>
                       </div>
-                      <h3 className="font-header font-bold text-kat-black">{proposal.termName}</h3>
+                      <h3 className="font-header font-bold text-foreground">{proposal.termName}</h3>
                       <p className="text-xs text-muted-foreground mb-1">{proposal.category}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />

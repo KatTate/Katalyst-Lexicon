@@ -168,7 +168,7 @@ export default function Settings() {
         <div className="max-w-5xl mx-auto px-6 py-20" data-testid="permission-denied">
           <div className="text-center space-y-4">
             <ShieldAlert className="h-16 w-16 text-muted-foreground mx-auto" />
-            <h1 className="text-2xl font-header font-bold text-kat-black">Permission Denied</h1>
+            <h1 className="text-2xl font-header font-bold text-foreground">Permission Denied</h1>
             <p className="text-muted-foreground max-w-md mx-auto">
               You don't have permission to access system settings. Only administrators can manage users and configure the system.
             </p>
@@ -182,7 +182,7 @@ export default function Settings() {
     <Layout>
       <div className="max-w-5xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-header font-bold text-kat-black flex items-center gap-3">
+          <h1 className="text-3xl font-header font-bold text-foreground flex items-center gap-3">
             <SettingsIcon className="h-8 w-8 text-primary" />
             System Settings
           </h1>
@@ -234,7 +234,7 @@ export default function Settings() {
                         </Avatar>
                         
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-kat-black">{getUserDisplayName(user)}</h3>
+                          <h3 className="font-bold text-foreground">{getUserDisplayName(user)}</h3>
                           {user.email && (
                             <p className="text-sm text-muted-foreground">{user.email}</p>
                           )}

@@ -181,7 +181,7 @@ function MarkdownPreview({ content }: { content: string }) {
     return <p className="text-muted-foreground italic text-sm">Nothing to preview yet...</p>;
   }
   return (
-    <div className="prose prose-sm max-w-none text-kat-charcoal leading-relaxed font-sans border rounded-md p-4 min-h-[200px] bg-muted/20">
+    <div className="prose prose-sm max-w-none text-foreground/80 leading-relaxed font-sans border rounded-md p-4 min-h-[200px] bg-muted/20">
       <ReactMarkdown
         rehypePlugins={[rehypeSanitize]}
         components={{
@@ -340,7 +340,7 @@ export default function ManagePrinciples() {
       <Layout>
         <div className="max-w-4xl mx-auto px-6 py-24 text-center" data-testid="permission-denied">
           <ShieldAlert className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-header font-bold text-kat-black mb-2">Permission Denied</h1>
+          <h1 className="text-2xl font-header font-bold text-foreground mb-2">Permission Denied</h1>
           <p className="text-muted-foreground">You need admin access to manage principles.</p>
         </div>
       </Layout>
@@ -362,7 +362,7 @@ export default function ManagePrinciples() {
       <div className="max-w-5xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-header font-bold text-kat-black">Manage Principles</h1>
+            <h1 className="text-3xl font-header font-bold text-foreground">Manage Principles</h1>
             <p className="text-muted-foreground mt-2">
               Create, edit, and archive organizational principles. Link them to terms for context.
             </p>
@@ -380,7 +380,7 @@ export default function ManagePrinciples() {
         {principles.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg bg-muted/20">
             <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <h2 className="text-lg font-header font-bold text-kat-black mb-2">No principles yet</h2>
+            <h2 className="text-lg font-header font-bold text-foreground mb-2">No principles yet</h2>
             <p className="text-muted-foreground mb-4">Create your first organizational principle to get started.</p>
             <Button onClick={handleOpenCreate} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -409,7 +409,7 @@ export default function ManagePrinciples() {
                 >
                   <div className="min-w-0">
                     <h3 className={cn(
-                      "font-header font-bold text-kat-black truncate",
+                      "font-header font-bold text-foreground truncate",
                       p.status === "Archived" && "line-through"
                     )}>
                       {p.title}

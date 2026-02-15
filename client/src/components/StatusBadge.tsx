@@ -36,8 +36,9 @@ export function StatusBadge({ status, className }: { status: TermStatus; classNa
         className
       )}
       data-testid={`badge-status-${status.toLowerCase().replace(" ", "-")}`}
+      aria-label={`Status: ${status}`}
     >
-      <Icon className="h-3 w-3" />
+      <Icon className="h-3 w-3" aria-hidden="true" />
       {status}
     </Badge>
   );

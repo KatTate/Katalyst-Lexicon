@@ -41,7 +41,7 @@ function TermCardContent({ term, highlightQuery, variant = "card" }: TermCardPro
       <div className={cn("flex items-start justify-between", !isInline && "mb-4")}>
         <div className="space-y-1 min-w-0 flex-1 mr-2">
           <h3 className={cn(
-            isInline ? "text-sm font-header font-bold leading-tight text-kat-black" : "text-lg font-header font-bold leading-tight group-hover:text-primary transition-colors text-kat-black",
+            isInline ? "text-sm font-header font-bold leading-tight text-foreground" : "text-lg font-header font-bold leading-tight group-hover:text-primary transition-colors text-foreground",
             isDeprecated && "line-through decoration-muted-foreground/50 text-muted-foreground"
           )}>
             <HighlightText text={term.name} query={highlightQuery} />
@@ -54,7 +54,7 @@ function TermCardContent({ term, highlightQuery, variant = "card" }: TermCardPro
       </div>
 
       <p className={cn(
-        "text-kat-charcoal line-clamp-2 leading-relaxed font-sans",
+        "text-foreground/80 line-clamp-2 leading-relaxed font-sans",
         isInline ? "text-sm mt-1 mb-2" : "text-base mb-5 flex-1"
       )}>
         <HighlightText text={term.definition} query={highlightQuery} />

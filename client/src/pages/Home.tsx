@@ -35,7 +35,7 @@ export default function Home() {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  <h2 className="text-2xl font-header font-bold text-kat-black">Recently Updated</h2>
+                  <h2 className="text-2xl font-header font-bold text-foreground">Recently Updated</h2>
                 </div>
                 <Link href="/browse">
                   <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary font-medium" data-testid="button-view-all-updates">View all</Button>
@@ -57,10 +57,10 @@ export default function Home() {
               )}
             </section>
 
-            <section className="bg-white rounded-2xl p-8 md:p-12 border border-border shadow-sm">
+            <section className="bg-card rounded-2xl p-8 md:p-12 border border-border shadow-sm">
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="space-y-4 max-w-xl">
-                  <h2 className="text-2xl font-header font-bold text-kat-black">Contribute to the Lexicon</h2>
+                  <h2 className="text-2xl font-header font-bold text-foreground">Contribute to the Lexicon</h2>
                   <p className="text-muted-foreground text-lg">
                     Spot an ambiguity? Need to define a new project phase?
                     Submit a draft term for review by the governance committee.

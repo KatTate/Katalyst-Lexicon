@@ -47,7 +47,7 @@ export function TierSection({
       >
         <div className="flex items-center gap-3">
           {icon && <span className="text-muted-foreground shrink-0">{icon}</span>}
-          <h2 className="font-header font-bold text-base text-kat-charcoal">{title}</h2>
+          <h2 className="font-header font-bold text-base text-foreground">{title}</h2>
           {badge}
         </div>
         <ChevronDown

@@ -203,8 +203,8 @@ export function Layout({ children }: LayoutProps) {
                 <p className="text-sm font-bold text-sidebar-foreground truncate" data-testid="text-username">{getUserDisplayName(user)}</p>
                 <p className="text-xs text-muted-foreground truncate" data-testid="text-user-role">{user.role}</p>
               </div>
-              <a href="/api/logout" data-testid="button-logout">
-                <LogOut className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer" />
+              <a href="/api/logout" data-testid="button-logout" aria-label="Log out">
+                <LogOut className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-pointer" aria-hidden="true" />
               </a>
             </div>
           ) : (
@@ -242,7 +242,7 @@ export function Layout({ children }: LayoutProps) {
             >
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="min-h-[44px] min-w-[44px]" data-testid="button-mobile-menu">
+            <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="min-h-[44px] min-w-[44px]" data-testid="button-mobile-menu" aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"} aria-expanded={isMobileMenuOpen}>
               <Menu className="h-5 w-5" />
             </Button>
           </div>
@@ -258,6 +258,10 @@ export function Layout({ children }: LayoutProps) {
         <div 
           className="fixed inset-0 z-40 bg-black/50 lg:hidden backdrop-blur-sm transition-opacity"
           onClick={() => setIsMobileMenuOpen(false)}
+          aria-label="Close navigation menu"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsMobileMenuOpen(false); }}
         />
       )}
 

@@ -133,7 +133,7 @@ export function SearchHero() {
     return (
       <div className="relative" data-testid="search-hero">
         <div className="text-center max-w-2xl mx-auto mb-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <h1 className="text-3xl font-header font-bold text-kat-black tracking-tight">
+          <h1 className="text-3xl font-header font-bold text-foreground tracking-tight">
             The Canonical Source of Truth
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed font-sans max-w-xl mx-auto">
@@ -156,7 +156,7 @@ export function SearchHero() {
   return (
     <div className="relative" data-testid="search-hero">
       <div className="text-center max-w-2xl mx-auto mb-16 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <h1 className="text-4xl md:text-5xl font-header font-bold text-kat-black tracking-tight">
+        <h1 className="text-4xl md:text-5xl font-header font-bold text-foreground tracking-tight">
           The Canonical Source of Truth
         </h1>
         <p className="text-lg text-muted-foreground leading-relaxed font-sans max-w-xl mx-auto">

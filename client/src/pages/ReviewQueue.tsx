@@ -41,7 +41,7 @@ function DiffField({ label, oldValue, newValue, testId }: { label: string; oldVa
           </div>
         </div>
       ) : (
-        <p className="text-kat-charcoal text-sm">{newValue}</p>
+        <p className="text-foreground/80 text-sm">{newValue}</p>
       )}
     </div>
   );
@@ -126,7 +126,7 @@ export default function ReviewQueue() {
       <Layout>
         <div className="p-8 max-w-2xl mx-auto text-center" data-testid="permission-denied-review">
           <ClipboardCheck className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-          <h2 className="text-xl font-header font-bold text-kat-charcoal mb-2">Access Restricted</h2>
+          <h2 className="text-xl font-header font-bold text-foreground mb-2">Access Restricted</h2>
           <p className="text-muted-foreground">You don't have permission to review proposals.</p>
         </div>
       </Layout>
@@ -231,7 +231,7 @@ export default function ReviewQueue() {
   const StatusBadge = ({ status }: { status: Proposal['status'] }) => {
     const styles: Record<string, string> = {
       'pending': "bg-kat-warning/20 text-yellow-800 border-kat-warning/30",
-      'in_review': "bg-kat-mystical/20 text-kat-charcoal border-kat-mystical/30",
+      'in_review': "bg-kat-mystical/20 text-foreground border-kat-mystical/30",
       'changes_requested': "bg-destructive/10 text-destructive border-destructive/20",
       'approved': "bg-primary/10 text-primary border-primary/20",
       'rejected': "bg-muted text-muted-foreground border-border",
@@ -277,9 +277,9 @@ export default function ReviewQueue() {
       <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] lg:h-screen">
         
         {/* Left Panel - Queue List */}
-        <div className="w-full lg:w-[400px] border-r border-border bg-white flex flex-col">
+        <div className="w-full lg:w-[400px] border-r border-border bg-card flex flex-col">
           <div className="p-6 border-b border-border">
-            <h1 className="text-2xl font-header font-bold text-kat-black">Review Queue</h1>
+            <h1 className="text-2xl font-header font-bold text-foreground">Review Queue</h1>
             <p className="text-sm text-muted-foreground mt-1">Approve or request changes on proposed terms</p>
           </div>
 
@@ -314,7 +314,7 @@ export default function ReviewQueue() {
                       "p-4 rounded-lg border cursor-pointer transition-all hover:shadow-sm",
                       selectedItem?.id === item.id 
                         ? "border-primary bg-primary/5 shadow-sm" 
-                        : "border-border bg-white hover:border-primary/50"
+                        : "border-border bg-card hover:border-primary/50"
                     )}
                     data-testid={`proposal-card-${item.id}`}
                     aria-label={`${item.type === 'new' ? 'New' : 'Edit'} proposal: ${item.termName}`}
@@ -331,7 +331,7 @@ export default function ReviewQueue() {
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <h3 className="font-header font-bold text-kat-black mb-1">{item.termName}</h3>
+                    <h3 className="font-header font-bold text-foreground mb-1">{item.termName}</h3>
                     <p className="text-xs text-muted-foreground mb-2">{item.category}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -365,7 +365,7 @@ export default function ReviewQueue() {
                     </Badge>
                     <StatusBadge status={selectedItem.status} />
                   </div>
-                  <h2 className="text-3xl font-header font-bold text-kat-black" data-testid="text-proposal-name">{selectedItem.termName}</h2>
+                  <h2 className="text-3xl font-header font-bold text-foreground" data-testid="text-proposal-name">{selectedItem.termName}</h2>
                   <p className="text-sm text-muted-foreground">{selectedItem.category}</p>
                 </div>
                 {selectedItem.termId && (
@@ -389,7 +389,7 @@ export default function ReviewQueue() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-kat-charcoal" data-testid="text-changes-summary">{selectedItem.changesSummary}</p>
+                  <p className="text-foreground/80" data-testid="text-changes-summary">{selectedItem.changesSummary}</p>
                 </CardContent>
               </Card>
 
@@ -463,27 +463,27 @@ export default function ReviewQueue() {
                   <CardContent className="space-y-6">
                     <div data-testid="section-definition">
                       <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Definition</h4>
-                      <p className="text-kat-charcoal">{selectedItem.definition}</p>
+                      <p className="text-foreground/80">{selectedItem.definition}</p>
                     </div>
 
                     {selectedItem.whyExists && (
                       <div data-testid="section-why-exists">
                         <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Why This Term Exists</h4>
-                        <p className="text-kat-charcoal">{selectedItem.whyExists}</p>
+                        <p className="text-foreground/80">{selectedItem.whyExists}</p>
                       </div>
                     )}
 
                     {selectedItem.usedWhen && (
                       <div data-testid="section-used-when">
                         <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Used When</h4>
-                        <p className="text-kat-charcoal">{selectedItem.usedWhen}</p>
+                        <p className="text-foreground/80">{selectedItem.usedWhen}</p>
                       </div>
                     )}
 
                     {selectedItem.notUsedWhen && (
                       <div data-testid="section-not-used-when">
                         <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Not Used When</h4>
-                        <p className="text-kat-charcoal">{selectedItem.notUsedWhen}</p>
+                        <p className="text-foreground/80">{selectedItem.notUsedWhen}</p>
                       </div>
                     )}
 
@@ -492,7 +492,7 @@ export default function ReviewQueue() {
                         <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Good Examples</h4>
                         <ul className="list-disc list-inside space-y-1">
                           {selectedItem.examplesGood.map((ex, i) => (
-                            <li key={i} className="text-kat-charcoal text-sm">{ex}</li>
+                            <li key={i} className="text-foreground/80 text-sm">{ex}</li>
                           ))}
                         </ul>
                       </div>
@@ -503,7 +503,7 @@ export default function ReviewQueue() {
                         <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-2">Bad Examples</h4>
                         <ul className="list-disc list-inside space-y-1">
                           {selectedItem.examplesBad.map((ex, i) => (
-                            <li key={i} className="text-kat-charcoal text-sm">{ex}</li>
+                            <li key={i} className="text-foreground/80 text-sm">{ex}</li>
                           ))}
                         </ul>
                       </div>
@@ -536,7 +536,7 @@ export default function ReviewQueue() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-bold text-kat-black">{selectedItem.submittedBy}</p>
+                      <p className="font-bold text-foreground">{selectedItem.submittedBy}</p>
                       <p className="text-sm text-muted-foreground">Submitted {formatDate(selectedItem.submittedAt)}</p>
                     </div>
                   </div>
@@ -586,7 +586,7 @@ export default function ReviewQueue() {
                                   <div className="h-2 w-2 rounded-full bg-current" />
                                 </div>
                                 <div className="flex-1 min-w-0 pb-1">
-                                  <p className="text-sm font-medium text-kat-charcoal">
+                                  <p className="text-sm font-medium text-foreground/80">
                                     {style.label} by {event.actorId}
                                   </p>
                                   <p className="text-xs text-muted-foreground" title={formatAbsoluteDate(event.timestamp)}>
@@ -610,7 +610,7 @@ export default function ReviewQueue() {
 
               {/* Review Actions */}
               {selectedItem.status !== 'approved' && selectedItem.status !== 'rejected' && (
-                <Card className="border-primary/20 bg-white shadow-sm">
+                <Card className="border-primary/20 bg-card shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-header">Review Actions</CardTitle>
                     <CardDescription>Add a comment and take action on this proposal</CardDescription>

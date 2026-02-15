@@ -25,8 +25,8 @@ function PrincipleCardContent({ principle, linkedTermCount, variant = "card" }: 
         <h3
           className={cn(
             isInline
-              ? "text-sm font-header font-bold leading-tight text-kat-black"
-              : "text-lg font-header font-bold leading-tight group-hover:text-primary transition-colors text-kat-charcoal"
+              ? "text-sm font-header font-bold leading-tight text-foreground"
+              : "text-lg font-header font-bold leading-tight group-hover:text-primary transition-colors text-foreground"
           )}
           data-testid={`text-title-${principle.id}`}
         >

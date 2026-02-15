@@ -180,7 +180,7 @@ export default function ManageCategories() {
       <Layout>
         <div className="max-w-4xl mx-auto px-6 py-24 text-center" data-testid="permission-denied">
           <ShieldAlert className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-header font-bold text-kat-black mb-2">Permission Denied</h1>
+          <h1 className="text-2xl font-header font-bold text-foreground mb-2">Permission Denied</h1>
           <p className="text-muted-foreground">You need admin access to manage categories.</p>
         </div>
       </Layout>
@@ -192,7 +192,7 @@ export default function ManageCategories() {
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-header font-bold text-kat-black">Manage Categories</h1>
+            <h1 className="text-3xl font-header font-bold text-foreground">Manage Categories</h1>
             <p className="text-muted-foreground mt-2">
               Organize the Lexicon by adding, editing, or reordering domain categories.
             </p>
@@ -374,7 +374,7 @@ export default function ManageCategories() {
                           </div>
                         ) : (
                           <>
-                            <h3 className="font-header font-bold text-kat-black">{category.name}</h3>
+                            <h3 className="font-header font-bold text-foreground">{category.name}</h3>
                             <p className="text-sm text-muted-foreground truncate">{category.description}</p>
                           </>
                         )}

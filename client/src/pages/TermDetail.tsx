@@ -147,7 +147,7 @@ export default function TermDetail() {
                   </span>
                 </div>
                 <h1 className={cn(
-                  "text-4xl md:text-5xl font-header font-bold text-kat-black tracking-tight",
+                  "text-4xl md:text-5xl font-header font-bold text-foreground tracking-tight",
                   isDeprecated && "line-through decoration-destructive/30 text-muted-foreground"
                 )} data-testid="text-term-name">
                   {term.name}
@@ -171,7 +171,7 @@ export default function TermDetail() {
             </div>
 
             {/* Definition */}
-            <div className="prose prose-lg max-w-none text-kat-charcoal leading-relaxed font-sans">
+            <div className="prose prose-lg max-w-none text-foreground/80 leading-relaxed font-sans">
               <p className="text-lg" data-testid="text-term-definition">{term.definition}</p>
             </div>
           </div>
@@ -179,12 +179,12 @@ export default function TermDetail() {
           {/* Why it exists + Synonyms */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-8 border-b border-border">
             <div className="flex items-start gap-3">
-              <div className="mt-1 p-1.5 bg-kat-graylight text-kat-charcoal rounded-md shrink-0">
+              <div className="mt-1 p-1.5 bg-kat-graylight text-foreground/80 rounded-md shrink-0">
                 <Info className="h-4 w-4" />
               </div>
               <div>
                 <h2 className="font-bold text-sm text-muted-foreground uppercase tracking-wide mb-1">Why it exists</h2>
-                <p className="text-base text-kat-charcoal" data-testid="text-term-why-exists">{term.whyExists}</p>
+                <p className="text-base text-foreground/80" data-testid="text-term-why-exists">{term.whyExists}</p>
               </div>
             </div>
 
@@ -209,7 +209,7 @@ export default function TermDetail() {
                 <CheckCircle2 className="h-5 w-5" />
                 When to use
               </h2>
-              <p className="text-kat-charcoal" data-testid="text-term-used-when">{term.usedWhen}</p>
+              <p className="text-foreground/80" data-testid="text-term-used-when">{term.usedWhen}</p>
             </div>
 
             <div className="space-y-4">
@@ -217,7 +217,7 @@ export default function TermDetail() {
                 <AlertTriangle className="h-5 w-5" />
                 When NOT to use
               </h2>
-              <p className="text-kat-charcoal" data-testid="text-term-not-used-when">{term.notUsedWhen}</p>
+              <p className="text-foreground/80" data-testid="text-term-not-used-when">{term.notUsedWhen}</p>
             </div>
           </div>
 
@@ -261,7 +261,7 @@ export default function TermDetail() {
                       </h3>
                       <ul className="space-y-3">
                         {term.examplesGood.map((ex, i) => (
-                          <li key={i} className="bg-green-50/50 p-4 rounded-md text-sm border-l-4 border-kat-green text-kat-charcoal italic" data-testid={`text-example-good-${i}`}>
+                          <li key={i} className="bg-green-50/50 dark:bg-green-950/30 p-4 rounded-md text-sm border-l-4 border-kat-green text-foreground/80 italic" data-testid={`text-example-good-${i}`}>
                             "{ex}"
                           </li>
                         ))}
@@ -277,7 +277,7 @@ export default function TermDetail() {
                       </h3>
                       <ul className="space-y-3">
                         {term.examplesBad.map((ex, i) => (
-                          <li key={i} className="bg-red-50/50 p-4 rounded-md text-sm border-l-4 border-destructive text-kat-charcoal/80 line-through decoration-destructive/30 italic" data-testid={`text-example-bad-${i}`}>
+                          <li key={i} className="bg-red-50/50 dark:bg-red-950/30 p-4 rounded-md text-sm border-l-4 border-destructive text-foreground/70 line-through decoration-destructive/30 italic" data-testid={`text-example-bad-${i}`}>
                             "{ex}"
                           </li>
                         ))}
@@ -413,7 +413,7 @@ export default function TermDetail() {
                     <span className="text-sm font-bold text-green-700">Good examples</span>
                     <ul className="mt-1 space-y-1">
                       {((snapshotVersion.snapshotJson as any)?.examplesGood || []).map((ex: string, i: number) => (
-                        <li key={i} className="text-sm text-kat-charcoal bg-green-50 p-2 rounded border-l-2 border-green-500">"{ex}"</li>
+                        <li key={i} className="text-sm text-foreground/80 bg-green-50 dark:bg-green-950/30 p-2 rounded border-l-2 border-green-500">"{ex}"</li>
                       ))}
                     </ul>
                   </div>
@@ -423,7 +423,7 @@ export default function TermDetail() {
                     <span className="text-sm font-bold text-red-700">Bad examples</span>
                     <ul className="mt-1 space-y-1">
                       {((snapshotVersion.snapshotJson as any)?.examplesBad || []).map((ex: string, i: number) => (
-                        <li key={i} className="text-sm text-kat-charcoal/80 bg-red-50 p-2 rounded border-l-2 border-red-500 line-through">"{ex}"</li>
+                        <li key={i} className="text-sm text-foreground/70 bg-red-50 dark:bg-red-950/30 p-2 rounded border-l-2 border-red-500 line-through">"{ex}"</li>
                       ))}
                     </ul>
                   </div>
@@ -443,7 +443,7 @@ function SnapshotField({ label, value }: { label: string; value?: string }) {
   return (
     <div>
       <span className="text-sm font-bold text-muted-foreground uppercase tracking-wide">{label}</span>
-      <p className="text-sm text-kat-charcoal mt-0.5">{value}</p>
+      <p className="text-sm text-foreground/80 mt-0.5">{value}</p>
     </div>
   );
 }

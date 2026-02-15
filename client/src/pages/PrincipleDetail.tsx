@@ -74,7 +74,7 @@ export default function PrincipleDetail() {
               </div>
               <h1
                 className={cn(
-                  "text-4xl md:text-5xl font-header font-bold text-kat-black tracking-tight",
+                  "text-4xl md:text-5xl font-header font-bold text-foreground tracking-tight",
                   isArchived && "line-through decoration-muted-foreground/30 text-muted-foreground"
                 )}
                 data-testid="text-principle-title"
@@ -91,7 +91,7 @@ export default function PrincipleDetail() {
             </div>
           )}
 
-          <p className="text-lg text-kat-charcoal" data-testid="text-principle-summary">
+          <p className="text-lg text-foreground/80" data-testid="text-principle-summary">
             {principle.summary}
           </p>
         </div>
@@ -99,7 +99,7 @@ export default function PrincipleDetail() {
         {principle.body && (
           <div className="py-8 border-b border-border">
             <div
-              className="prose prose-lg max-w-none text-kat-charcoal leading-relaxed font-sans"
+              className="prose prose-lg max-w-none text-foreground/80 leading-relaxed font-sans"
               data-testid="text-principle-body"
             >
               <ReactMarkdown
