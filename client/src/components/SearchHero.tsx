@@ -175,7 +175,7 @@ export function SearchHero() {
           <Input
             ref={inputRef}
             data-testid="search-input"
-            className="pl-11 h-14 text-lg bg-white shadow-sm border-border rounded-xl focus-visible:ring-primary focus-visible:border-primary font-sans"
+            className="pl-11 h-14 text-lg bg-card shadow-sm border-border rounded-xl focus-visible:ring-primary focus-visible:border-primary font-sans"
             placeholder="Search terms, definitions, synonyms..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -214,7 +214,7 @@ export function SearchHero() {
           id={listboxId}
           role="listbox"
           aria-label="Search results"
-          className="absolute left-1/2 -translate-x-1/2 w-full max-w-xl bg-white border border-border rounded-xl shadow-lg z-50 max-h-[60vh] overflow-y-auto"
+          className="absolute left-1/2 -translate-x-1/2 w-full max-w-xl bg-card border border-border rounded-xl shadow-lg z-50 max-h-[60vh] overflow-y-auto"
           style={{ top: "calc(100% - 3.5rem)" }}
           data-testid="search-results"
         >

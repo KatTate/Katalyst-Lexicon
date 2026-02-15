@@ -5,7 +5,7 @@ type PrincipleStatus = "Published" | "Draft" | "Archived";
 
 const styles: Record<PrincipleStatus, string> = {
   Published: "bg-primary/10 text-primary border-primary/20",
-  Draft: "bg-kat-warning/20 text-yellow-800 border-kat-warning/30",
+  Draft: "bg-kat-warning/20 text-yellow-800 dark:text-yellow-300 border-kat-warning/30",
   Archived: "bg-muted text-muted-foreground border-border",
 };
 

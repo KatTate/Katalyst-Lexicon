@@ -31,12 +31,12 @@ function DiffField({ label, oldValue, newValue, testId }: { label: string; oldVa
       <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wide">{label}</h4>
       {changed ? (
         <div className="space-y-2">
-          <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-900">
-            <span className="font-bold text-red-600 text-xs uppercase mr-2">Current:</span>
+          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded p-3 text-sm text-red-900 dark:text-red-300">
+            <span className="font-bold text-red-600 dark:text-red-400 text-xs uppercase mr-2">Current:</span>
             {oldValue || <span className="italic text-muted-foreground">empty</span>}
           </div>
-          <div className="bg-green-50 border border-green-200 rounded p-3 text-sm text-green-900">
-            <span className="font-bold text-green-600 text-xs uppercase mr-2">Proposed:</span>
+          <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded p-3 text-sm text-green-900 dark:text-green-300">
+            <span className="font-bold text-green-600 dark:text-green-400 text-xs uppercase mr-2">Proposed:</span>
             {newValue || <span className="italic text-muted-foreground">empty</span>}
           </div>
         </div>
@@ -66,21 +66,21 @@ function DiffArrayField({ label, oldValue, newValue, testId }: { label: string; 
       {changed ? (
         <div className="space-y-2">
           {removed.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded p-3">
-              <span className="font-bold text-red-600 text-xs uppercase mr-2">Removed:</span>
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded p-3">
+              <span className="font-bold text-red-600 dark:text-red-400 text-xs uppercase mr-2">Removed:</span>
               <div className="flex flex-wrap gap-1 mt-1">
                 {removed.map((v, i) => (
-                  <Badge key={i} variant="outline" className="text-xs border-red-300 text-red-800 line-through">{v}</Badge>
+                  <Badge key={i} variant="outline" className="text-xs border-red-300 dark:border-red-700 text-red-800 dark:text-red-300 line-through">{v}</Badge>
                 ))}
               </div>
             </div>
           )}
           {added.length > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded p-3">
-              <span className="font-bold text-green-600 text-xs uppercase mr-2">Added:</span>
+            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded p-3">
+              <span className="font-bold text-green-600 dark:text-green-400 text-xs uppercase mr-2">Added:</span>
               <div className="flex flex-wrap gap-1 mt-1">
                 {added.map((v, i) => (
-                  <Badge key={i} variant="outline" className="text-xs border-green-300 text-green-800">{v}</Badge>
+                  <Badge key={i} variant="outline" className="text-xs border-green-300 dark:border-green-700 text-green-800 dark:text-green-300">{v}</Badge>
                 ))}
               </div>
             </div>
@@ -230,12 +230,12 @@ export default function ReviewQueue() {
 
   const StatusBadge = ({ status }: { status: Proposal['status'] }) => {
     const styles: Record<string, string> = {
-      'pending': "bg-kat-warning/20 text-yellow-800 border-kat-warning/30",
+      'pending': "bg-kat-warning/20 text-yellow-800 dark:text-yellow-300 border-kat-warning/30",
       'in_review': "bg-kat-mystical/20 text-foreground border-kat-mystical/30",
       'changes_requested': "bg-destructive/10 text-destructive border-destructive/20",
       'approved': "bg-primary/10 text-primary border-primary/20",
       'rejected': "bg-muted text-muted-foreground border-border",
-      'withdrawn': "bg-gray-100 text-gray-600 border-gray-300",
+      'withdrawn': "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600",
     };
     const labels: Record<string, string> = {
       'pending': "Pending",
@@ -323,7 +323,7 @@ export default function ReviewQueue() {
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className={cn(
                           "text-[10px] font-bold uppercase",
-                          item.type === 'new' ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-800 border-amber-300"
+                          item.type === 'new' ? "bg-primary/10 text-primary" : "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"
                         )}>
                           {item.type === 'new' ? 'New' : 'Edit'}
                         </Badge>
@@ -359,7 +359,7 @@ export default function ReviewQueue() {
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className={cn(
                       "text-xs font-bold uppercase",
-                      selectedItem.type === 'new' ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-800 border-amber-300"
+                      selectedItem.type === 'new' ? "bg-primary/10 text-primary" : "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"
                     )}>
                       {selectedItem.type === 'new' ? 'New Term Proposal' : 'Edit Proposal'}
                     </Badge>
@@ -395,7 +395,7 @@ export default function ReviewQueue() {
 
               {/* Edit Proposal: Diff View */}
               {isEditProposal && (
-                <Card className="mb-6 border-amber-200 bg-amber-50/30">
+                <Card className="mb-6 border-amber-200 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20">
                   <CardHeader>
                     <CardTitle className="text-lg font-header">Proposed Changes</CardTitle>
                     <CardDescription>Comparing current term with proposed edits. Changed fields are highlighted.</CardDescription>
@@ -557,12 +557,12 @@ export default function ReviewQueue() {
                 }];
 
                 const eventStyles: Record<string, { icon: string; color: string; label: string }> = {
-                  submitted: { icon: "blue", color: "text-blue-600 bg-blue-100 border-blue-300", label: "Submitted" },
-                  changes_requested: { icon: "amber", color: "text-amber-600 bg-amber-100 border-amber-300", label: "Changes requested" },
-                  resubmitted: { icon: "blue", color: "text-blue-600 bg-blue-100 border-blue-300", label: "Resubmitted" },
-                  approved: { icon: "green", color: "text-green-600 bg-green-100 border-green-300", label: "Approved" },
-                  rejected: { icon: "red", color: "text-red-600 bg-red-100 border-red-300", label: "Rejected" },
-                  withdrawn: { icon: "gray", color: "text-gray-600 bg-gray-100 border-gray-300", label: "Withdrawn" },
+                  submitted: { icon: "blue", color: "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700", label: "Submitted" },
+                  changes_requested: { icon: "amber", color: "text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700", label: "Changes requested" },
+                  resubmitted: { icon: "blue", color: "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700", label: "Resubmitted" },
+                  approved: { icon: "green", color: "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700", label: "Approved" },
+                  rejected: { icon: "red", color: "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700", label: "Rejected" },
+                  withdrawn: { icon: "gray", color: "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600", label: "Withdrawn" },
                 };
 
                 return (
@@ -635,7 +635,7 @@ export default function ReviewQueue() {
                       </Button>
                       <Button
                         variant="outline"
-                        className="flex-1 border-kat-warning text-yellow-800 hover:bg-kat-warning/10 font-bold gap-2"
+                        className="flex-1 border-kat-warning text-yellow-800 dark:text-yellow-300 hover:bg-kat-warning/10 font-bold gap-2"
                         onClick={() => {
                           if (!comment.trim()) {
                             toast({ title: "Feedback required", description: "Please add feedback explaining what changes are needed.", variant: "destructive" });

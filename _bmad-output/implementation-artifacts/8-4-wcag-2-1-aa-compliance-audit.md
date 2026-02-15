@@ -129,10 +129,26 @@ so that we can confirm WCAG 2.1 AA compliance and fix any gaps before launch.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude 4.6 Opus (Replit Agent)
 
 ### Completion Notes
 
+Story 8.4 WCAG 2.1 AA compliance audit completed. Initial automated + manual audit identified 48 issues (28 Critical, 15 Major, 5 Minor). All Critical and Major issues resolved. An adversarial code review (CR pass) identified 4 additional HIGH and 3 MEDIUM issues related to dark mode contrast violations missed in the initial audit — all HIGH issues fixed (SearchHero bg-white, DiffField dark mode, yellow/amber text dark variants, Settings tab bg-white). AC7 viewport testing at 375px/768px/1280px noted as gap — automated axe-core tests run at default viewport only; documented in audit report as follow-up.
+
 ### File List
 
+- `client/src/components/SearchHero.tsx` — bg-white → bg-card on input and dropdown
+- `client/src/pages/ReviewQueue.tsx` — DiffField/DiffArrayField dark mode variants, status badge dark variants, audit trail event styles dark variants, amber/yellow text dark variants
+- `client/src/pages/MyProposals.tsx` — Status badge dark variants, edit badge dark variants, feedback banner dark variants
+- `client/src/components/PrincipleStatusBadge.tsx` — Draft status text-yellow-800 dark variant
+- `client/src/pages/Settings.tsx` — TabsTrigger bg-white → bg-background
+- `tests/e2e/accessibility.spec.ts` — axe-core automated WCAG 2.1 AA tests
+- `_bmad-output/implementation-artifacts/accessibility-audit.md` — Full audit report
+
 ### Testing Summary
+
+- axe-core automated scanning: All pages pass with 0 Critical/Serious violations
+- Dark mode scanning: All pages scanned, contrast violations fixed
+- Keyboard navigation: Verified for SearchHero combobox, dialogs, tab navigation
+- ARIA attributes: Verified for SearchHero, StatusBadge, dialogs, skip links
+- Viewport testing: Default viewport (1280x720) automated; 375px/768px manual verification documented as gap

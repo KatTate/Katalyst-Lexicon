@@ -193,19 +193,19 @@ export default function Settings() {
 
         <Tabs defaultValue="users" className="space-y-8">
           <TabsList className="bg-muted/50 p-1">
-            <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="tab-users">
+            <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm" data-testid="tab-users">
               <Users className="h-4 w-4" />
               Users & Roles
             </TabsTrigger>
-            <TabsTrigger value="governance" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="tab-governance">
+            <TabsTrigger value="governance" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm" data-testid="tab-governance">
               <Shield className="h-4 w-4" />
               Governance
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="tab-notifications">
+            <TabsTrigger value="notifications" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm" data-testid="tab-notifications">
               <Bell className="h-4 w-4" />
               Notifications
             </TabsTrigger>
-            <TabsTrigger value="visibility" className="gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm" data-testid="tab-visibility">
+            <TabsTrigger value="visibility" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm" data-testid="tab-visibility">
               <Globe className="h-4 w-4" />
               Visibility
             </TabsTrigger>

@@ -246,3 +246,23 @@ Following the code-level fixes above, a comprehensive QA automation pass was per
 ### Verification Confirms All Fixes Applied Successfully
 
 The QA automation confirms that all 28 Critical and 15 Major issues from the initial audit have been successfully remediated. The application now passes automated WCAG 2.1 AA compliance scanning across all pages in both light and dark modes.
+
+---
+
+## Addendum: Adversarial Code Review Findings (CR Pass)
+
+An adversarial code review identified additional dark mode contrast issues missed in the initial audit. All HIGH issues have been fixed.
+
+### Additional Issues Found and Fixed
+
+| # | Severity | Component | Issue | Fix |
+|---|----------|-----------|-------|-----|
+| CR-H1 | HIGH | SearchHero.tsx | `bg-white` on search input and dropdown — white box on dark background | Changed to `bg-card` |
+| CR-H2 | HIGH | ReviewQueue.tsx | DiffField/DiffArrayField used `bg-red-50 text-red-900`, `bg-green-50 text-green-900` without dark variants | Added `dark:bg-red-950/30 dark:text-red-300`, `dark:bg-green-950/30 dark:text-green-300` |
+| CR-H3 | HIGH | Multiple | `text-yellow-800` and `text-amber-800` nearly invisible in dark mode across ReviewQueue, MyProposals, PrincipleStatusBadge | Added `dark:text-yellow-300` / `dark:text-amber-300` throughout |
+| CR-H4 | HIGH | Settings.tsx | `data-[state=active]:bg-white` on TabsTriggers — white tab on dark background | Changed to `data-[state=active]:bg-background` |
+
+### Known Gaps (Follow-up)
+
+- **AC7 Viewport Testing:** Automated axe-core tests run at default viewport (1280x720) only. AC7 requires testing at 375px, 768px, and 1280px viewports with touch target verification (44x44px minimum). This should be added as multi-viewport test passes in `accessibility.spec.ts`.
+- **Mobile Spotlight ARIA:** Mobile spotlight search focus trapping and ARIA compliance not verified via automated tests at mobile viewport.

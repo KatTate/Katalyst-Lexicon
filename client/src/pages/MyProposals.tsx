@@ -57,12 +57,12 @@ export default function MyProposals() {
   });
 
   const statusStyles: Record<string, string> = {
-    pending: "bg-kat-warning/20 text-yellow-800 border-kat-warning/30",
+    pending: "bg-kat-warning/20 text-yellow-800 dark:text-yellow-300 border-kat-warning/30",
     in_review: "bg-kat-mystical/20 text-foreground border-kat-mystical/30",
-    changes_requested: "bg-amber-100 text-amber-800 border-amber-300",
+    changes_requested: "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700",
     approved: "bg-primary/10 text-primary border-primary/20",
     rejected: "bg-muted text-muted-foreground border-border",
-    withdrawn: "bg-gray-100 text-gray-600 border-gray-300",
+    withdrawn: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600",
   };
 
   const statusLabels: Record<string, string> = {
@@ -116,7 +116,7 @@ export default function MyProposals() {
                 key={proposal.id}
                 className={cn(
                   "transition-all hover:shadow-sm",
-                  proposal.status === "changes_requested" && "border-amber-300 bg-amber-50/30"
+                  proposal.status === "changes_requested" && "border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20"
                 )}
                 data-testid={`my-proposal-${proposal.id}`}
               >
@@ -124,7 +124,7 @@ export default function MyProposals() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className={cn("text-[10px] font-bold uppercase", proposal.type === 'new' ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-800 border-amber-300")}>
+                        <Badge variant="outline" className={cn("text-[10px] font-bold uppercase", proposal.type === 'new' ? "bg-primary/10 text-primary" : "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700")}>
                           {proposal.type === 'new' ? 'New' : 'Edit'}
                         </Badge>
                         <Badge variant="outline" className={cn("text-[10px] font-bold uppercase tracking-wide", statusStyles[proposal.status])}>
@@ -140,9 +140,9 @@ export default function MyProposals() {
 
                       {/* Show reviewer feedback for changes_requested */}
                       {proposal.status === "changes_requested" && proposal.reviewComment && (
-                        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded text-sm" data-testid="feedback-banner">
-                          <p className="font-bold text-amber-800 text-xs uppercase mb-1">Reviewer feedback</p>
-                          <p className="text-amber-900">{proposal.reviewComment}</p>
+                        <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-700 rounded text-sm" data-testid="feedback-banner">
+                          <p className="font-bold text-amber-800 dark:text-amber-300 text-xs uppercase mb-1">Reviewer feedback</p>
+                          <p className="text-amber-900 dark:text-amber-200">{proposal.reviewComment}</p>
                         </div>
                       )}
                     </div>
