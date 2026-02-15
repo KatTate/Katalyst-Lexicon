@@ -148,7 +148,14 @@ Implemented dark mode theme system with system preference detection, manual togg
 ### Testing Summary
 
 - **Test approach**: End-to-end Playwright testing via run_test tool
-- **ACs covered**: System preference detection on first visit, toggle switching between light/dark, localStorage persistence across reload, desktop sidebar toggle visibility, mobile header toggle visibility, all pages rendering correctly in dark mode (browse with term cards/status badges, principles), smooth transitions
-- **Result**: All 19 test steps passed
-- **LSP Status**: Clean — no errors or warnings in any modified files
-- **Visual Verification**: Screenshots verified across homepage, browse, principles pages in both light and dark modes, and mobile viewport
+- **Test files created/modified**: None (Playwright e2e tests run via platform run_test tool, not persisted as test files)
+- **ACs covered by tests**: System preference detection on first visit, toggle switching between light/dark, localStorage persistence across reload, desktop sidebar toggle visibility, mobile header toggle visibility, all pages rendering correctly in dark mode (browse with term cards/status badges, principles), smooth transitions, mobile toggle
+- **All tests passing**: Yes — all 19 e2e test steps passed; no existing regression tests to run (tests/api/ directory does not exist)
+
+### LSP Status
+
+Clean — no errors or warnings in any modified files (use-theme.ts, Layout.tsx, StatusBadge.tsx, index.css, index.html)
+
+### Visual Verification
+
+Screenshots taken and verified across homepage (/), browse categories (/browse), and principles (/principles) pages in both light and dark modes. Mobile viewport (400x720) also verified. All UI elements render correctly in both themes.
