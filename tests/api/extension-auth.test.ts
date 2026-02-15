@@ -37,13 +37,14 @@ describe('Extension Auth Middleware', () => {
     expect(res.body.error).toMatch(/sign in/i);
   });
 
-  it('POST /api/proposals - returns 403 with missing secret', async () => {
+  it('POST /api/proposals - returns 401 with empty secret (not recognized as extension request)', async () => {
     const res = await request
       .post('/api/proposals')
       .set('X-Extension-User-Email', VALID_EMAIL)
       .set('X-Extension-Secret', '')
       .send(proposalPayload);
-    expect([401, 403]).toContain(res.status);
+    expect(res.status).toBe(401);
+    expect(res.body.error).toMatch(/sign in/i);
   });
 
   it('POST /api/proposals - returns 403 with wrong secret', async () => {

@@ -175,7 +175,7 @@
 | Scenario | Expected | Result |
 |----------|----------|--------|
 | No auth headers | 401 | ✅ Pass |
-| Missing secret | 401/403 | ✅ Pass |
+| Empty secret (not recognized as ext request) | 401 | ✅ Pass |
 | Wrong secret | 403 | ✅ Pass |
 | Wrong email domain | 403 | ✅ Pass |
 | Valid extension auth | 201 | ✅ Pass |
