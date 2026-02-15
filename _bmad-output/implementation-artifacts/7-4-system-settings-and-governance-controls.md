@@ -1,6 +1,6 @@
 # Story 7.4: System Settings and Governance Controls
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -88,9 +88,25 @@ so that I can tailor the lexicon's rules to our team's needs.
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude 4.6 Opus (Replit Agent)
 
 ### Completion Notes
+Implemented all 6 acceptance criteria for Story 7.4. Key changes:
+- Renamed "Permissions" tab to "Governance" (AC1, AC2)
+- Converted batch-save to individual auto-save on each toggle with optimistic UI and rollback on error (AC5)
+- Added "Notification delivery is coming soon" info note below Notifications toggles (AC3)
+- Verified Visibility section toggles present (AC4)
+- Removed "Save All Settings" button
+- Added section-level data-testid attributes (section-governance, section-notifications, section-visibility)
+- Permission denied check was already implemented from Story 7.5 (AC6) — verified working
+- Users & Roles tab left untouched per anti-pattern constraint
 
 ### File List
+- `client/src/pages/Settings.tsx` — MODIFIED (renamed tab, auto-save mutation, coming soon note, removed Save All button, added section data-testids)
 
 ### Testing Summary
+- **Approach**: Playwright E2E via run_test tool
+- **ACs covered**: AC1 (tabs structure), AC2 (governance toggles), AC3 (notifications + coming soon note), AC4 (visibility toggles), AC5 (auto-save on toggle + persistence after reload), AC6 (permission denied for non-admin)
+- **All tests passing**: Yes
+- **LSP Status**: Clean — no errors or warnings
+- **Visual Verification**: Screenshots taken during Playwright tests confirmed correct rendering
