@@ -1,0 +1,100 @@
+/* ── Katalyst Lexicon Extension — Options Page ─────────────────────
+   Design System: Montserrat (headers) + Roboto (body) + Roboto Mono (mono)
+   Brand tokens from index.css of the Katalyst Lexicon app
+   ──────────────────────────────────────────────────────────────────── */
+
+:root {
+  --kat-green: #78BF26;
+  --kat-green-dark: #6AAD1E;
+  --kat-green-light: #E8F5D4;
+  --kat-charcoal: #50534C;
+  --kat-black: #3D3936;
+  --kat-gray: #D0D1DB;
+  --kat-graylight: #F5F6F8;
+  --kat-gauntlet: #8C898C;
+  --kat-destructive: #EF4444;
+  --border: var(--kat-gray);
+  --radius: 8px;
+  --font-header: 'Montserrat', sans-serif;
+  --font-body: 'Roboto', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body); font-size: 14px;
+  color: var(--kat-charcoal); background: var(--kat-graylight); min-height: 100vh;
+}
+
+.container { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
+
+.page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.page-header .logo-icon { color: var(--kat-green); }
+.page-header h1 {
+  font-family: var(--font-header); font-size: 20px; font-weight: 700;
+  color: var(--kat-black); letter-spacing: -0.01em;
+}
+.subtitle { font-size: 13px; color: var(--kat-gauntlet); }
+
+.card {
+  background: #FFF; border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; margin-bottom: 16px;
+}
+.card h2 {
+  font-family: var(--font-header); font-size: 15px; font-weight: 700;
+  color: var(--kat-black); margin-bottom: 16px;
+}
+
+.field { margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block; font-size: 13px; font-weight: 500;
+  color: var(--kat-charcoal); margin-bottom: 6px;
+}
+.field input[type="url"], .field input[type="number"] {
+  width: 100%; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 13px; font-family: var(--font-body); outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field input:focus {
+  border-color: var(--kat-green);
+  box-shadow: 0 0 0 3px rgba(120,191,38,.15);
+}
+.field input[type="number"] { width: 80px; }
+.field-hint { font-size: 12px; color: var(--kat-gauntlet); margin-top: 4px; }
+.field-row { display: flex; align-items: center; gap: 12px; }
+
+.toggle-label { display: flex !important; align-items: center; gap: 8px; cursor: pointer; }
+.toggle-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--kat-green); }
+
+.status-text { font-size: 13px; font-weight: 500; }
+.status-text.success { color: var(--kat-green); }
+.status-text.error { color: var(--kat-destructive); }
+.status-text.loading { color: var(--kat-gauntlet); }
+
+.about-text { font-size: 13px; color: var(--kat-gauntlet); margin-bottom: 4px; }
+.actions { margin-top: 8px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500; font-family: var(--font-body);
+  cursor: pointer; border: none; transition: background .15s;
+}
+.btn-primary { background: var(--kat-green); color: #fff; }
+.btn-primary:hover { background: var(--kat-green-dark); }
+.btn-secondary { background: var(--kat-graylight); color: var(--kat-charcoal); border: 1px solid var(--border); }
+.btn-secondary:hover { background: #EAEAED; }
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  padding: 10px 20px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500; font-family: var(--font-body);
+  box-shadow: 0 4px 12px rgba(0,0,0,.15); z-index: 100;
+  animation: fadeIn .2s ease;
+}
+.toast.success { background: var(--kat-green); color: #fff; }
+.toast.error { background: var(--kat-destructive); color: #fff; }
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }

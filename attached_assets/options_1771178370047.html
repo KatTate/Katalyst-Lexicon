@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="page-header">
+      <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <div>
+        <h1>Katalyst Lexicon</h1>
+        <p class="subtitle">Extension Settings</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>Connection</h2>
+      <div class="field">
+        <label for="api-url">API Base URL</label>
+        <input type="url" id="api-url" placeholder="https://your-app.replit.app">
+        <p class="field-hint">The URL of your Katalyst Lexicon Replit instance (e.g. https://katalyst-lexicon.replit.app)</p>
+      </div>
+      <div class="field-row">
+        <button id="test-btn" class="btn btn-secondary">Test Connection</button>
+        <span id="test-status" class="status-text"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Notifications</h2>
+      <div class="field">
+        <label class="toggle-label">
+          <input type="checkbox" id="notifications-enabled" checked>
+          <span>Enable notifications for new proposals</span>
+        </label>
+      </div>
+      <div class="field">
+        <label for="notification-interval">Check interval (minutes)</label>
+        <input type="number" id="notification-interval" min="1" max="60" value="2">
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>About</h2>
+      <p class="about-text">Version <span id="version"></span></p>
+      <p class="about-text">Connects your browser to the Katalyst organizational glossary.</p>
+    </section>
+
+    <div class="actions">
+      <button id="save-btn" class="btn btn-primary">Save Settings</button>
+    </div>
+
+    <div id="toast" class="toast" style="display:none;"></div>
+  </div>
+  <script src="options.js" type="module"></script>
+</body>
+</html>
