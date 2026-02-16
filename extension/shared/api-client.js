@@ -83,29 +83,32 @@ async function apiRequest(method, path, body, options = {}) {
     throw new Error(text || `HTTP ${response.status}`);
   }
 
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    throw new Error('Server returned non-JSON response. Check your API URL.');
+  }
+
   const result = {};
   const etag = response.headers.get('etag');
   if (etag) result.etag = etag;
-
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    result.data = await response.json();
-  }
+  result.data = await response.json();
   return result;
 }
 
+function listData(r) { return Array.isArray(r.data) ? r.data : []; }
+
 export const api = {
   terms: {
-    list: () => apiRequest('GET', '/api/terms').then(r => r.data),
-    search: (query) => apiRequest('GET', `/api/terms/search?q=${encodeURIComponent(query)}`).then(r => r.data),
+    list: () => apiRequest('GET', '/api/terms').then(listData),
+    search: (query) => apiRequest('GET', `/api/terms/search?q=${encodeURIComponent(query)}`).then(listData),
     get: (id) => apiRequest('GET', `/api/terms/${id}`).then(r => r.data),
-    getVersions: (id) => apiRequest('GET', `/api/terms/${id}/versions`).then(r => r.data),
-    getPrinciples: (id) => apiRequest('GET', `/api/terms/${id}/principles`).then(r => r.data),
-    getByCategory: (category) => apiRequest('GET', `/api/terms/category/${encodeURIComponent(category)}`).then(r => r.data),
+    getVersions: (id) => apiRequest('GET', `/api/terms/${id}/versions`).then(listData),
+    getPrinciples: (id) => apiRequest('GET', `/api/terms/${id}/principles`).then(listData),
+    getByCategory: (category) => apiRequest('GET', `/api/terms/category/${encodeURIComponent(category)}`).then(listData),
     getIndex: (etag) => apiRequest('GET', '/api/terms/index', null, { etag }),
   },
   categories: {
-    list: () => apiRequest('GET', '/api/categories').then(r => r.data),
+    list: () => apiRequest('GET', '/api/categories').then(listData),
   },
   proposals: {
     list: (status) => apiRequest('GET', `/api/proposals${status ? `?status=${status}` : ''}`, null, { withAuth: true }).then(r => r.data),
@@ -115,9 +118,9 @@ export const api = {
     requestChanges: (id, comment) => apiRequest('POST', `/api/proposals/${id}/request-changes`, { reviewComment: comment }, { withAuth: true }).then(r => r.data),
   },
   principles: {
-    list: () => apiRequest('GET', '/api/principles').then(r => r.data),
+    list: () => apiRequest('GET', '/api/principles').then(listData),
     get: (id) => apiRequest('GET', `/api/principles/${id}`).then(r => r.data),
-    getTerms: (id) => apiRequest('GET', `/api/principles/${id}/terms`).then(r => r.data),
+    getTerms: (id) => apiRequest('GET', `/api/principles/${id}/terms`).then(listData),
   },
 };
 

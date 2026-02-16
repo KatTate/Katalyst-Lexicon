@@ -168,9 +168,10 @@ async function loadInitialData() {
       sendMsg({ type: MSG.GET_TERMS }),
       sendMsg({ type: MSG.GET_CATEGORIES }),
     ]);
-    categories = cats;
+    categories = Array.isArray(cats) ? cats : [];
     hide('loading');
-    const recent = terms.slice(0, DEFAULTS.RECENT_TERMS_COUNT);
+    const termList = Array.isArray(terms) ? terms : [];
+    const recent = termList.slice(0, DEFAULTS.RECENT_TERMS_COUNT);
     renderTermList('recent-list', recent);
   } catch (err) {
     hide('loading');

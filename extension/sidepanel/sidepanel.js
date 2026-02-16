@@ -80,7 +80,8 @@ async function loadBrowse() {
 
   loading.style.display = '';
   try {
-    categories = await sendMsg({ type: MSG.GET_CATEGORIES });
+    const result = await sendMsg({ type: MSG.GET_CATEGORIES });
+    categories = Array.isArray(result) ? result : [];
     loading.style.display = 'none';
     renderCategories(container, categories);
   } catch (err) {
@@ -127,8 +128,8 @@ async function loadCategoryTerms(cat) {
   list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
   try {
-    const terms = await sendMsg({ type: MSG.GET_TERMS_BY_CATEGORY, payload: { category: cat.name } });
-    renderTermList(list, terms);
+    const raw = await sendMsg({ type: MSG.GET_TERMS_BY_CATEGORY, payload: { category: cat.name } });
+    renderTermList(list, Array.isArray(raw) ? raw : []);
   } catch (err) {
     renderErrorState(list, err, () => loadCategoryTerms(cat));
   }
@@ -154,7 +155,8 @@ async function doSearch(query) {
   show('sp-search-loading');
 
   try {
-    const terms = await sendMsg({ type: MSG.SEARCH_TERMS, payload: { query } });
+    const rawTerms = await sendMsg({ type: MSG.SEARCH_TERMS, payload: { query } });
+    const terms = Array.isArray(rawTerms) ? rawTerms : [];
     hide('sp-search-loading');
 
     if (terms.length === 0) {
@@ -176,7 +178,8 @@ async function loadPrinciples() {
   show('principles-loading');
 
   try {
-    const principles = await sendMsg({ type: MSG.GET_PRINCIPLES });
+    const raw = await sendMsg({ type: MSG.GET_PRINCIPLES });
+    const principles = Array.isArray(raw) ? raw : [];
     hide('principles-loading');
 
     if (principles.length === 0) {
@@ -228,7 +231,8 @@ async function showPrincipleDetail(principle) {
   `;
 
   try {
-    const terms = await sendMsg({ type: MSG.GET_PRINCIPLE_TERMS, payload: { id: principle.id } });
+    const rawPTerms = await sendMsg({ type: MSG.GET_PRINCIPLE_TERMS, payload: { id: principle.id } });
+    const terms = Array.isArray(rawPTerms) ? rawPTerms : [];
     if (terms.length > 0) {
       html += `<div class="detail-section"><div class="detail-section-title">Related Terms</div><div id="p-terms-list" class="term-list"></div></div>`;
     }
