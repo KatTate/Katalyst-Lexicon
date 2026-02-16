@@ -30,6 +30,24 @@ class AuthStorage implements IAuthStorage {
       return user;
     }
 
+    if (userData.email) {
+      const [existingByEmail] = await db.select().from(users).where(eq(users.email, userData.email));
+      if (existingByEmail) {
+        const [user] = await db
+          .update(users)
+          .set({
+            id: userData.id,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            profileImageUrl: userData.profileImageUrl,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.email, userData.email))
+          .returning();
+        return user;
+      }
+    }
+
     const [{ adminCount }] = await db.select({ adminCount: sql<number>`count(*)::int` }).from(users).where(eq(users.role, "Admin"));
     const role = adminCount === 0 ? ("Admin" as const) : ("Member" as const);
 

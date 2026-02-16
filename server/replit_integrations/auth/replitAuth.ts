@@ -109,9 +109,21 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate("google", {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/?auth_error=domain",
+    passport.authenticate("google", (err: any, user: any, info: any) => {
+      if (err) {
+        console.error("Auth callback error:", err.message || err);
+        return res.redirect("/?auth_error=server");
+      }
+      if (!user) {
+        return res.redirect("/?auth_error=domain");
+      }
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error("Login error:", loginErr.message || loginErr);
+          return res.redirect("/?auth_error=server");
+        }
+        return res.redirect("/");
+      });
     })(req, res, next);
   });
 
