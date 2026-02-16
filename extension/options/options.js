@@ -86,9 +86,29 @@ async function testConnection() {
     return;
   }
 
+  let secret = '';
+  if (isManaged) {
+    secret = await new Promise((resolve) => {
+      chrome.storage.managed.get('extensionApiSecret', (m) => {
+        resolve(m?.extensionApiSecret || '');
+      });
+    });
+  } else {
+    secret = document.getElementById('api-secret').value.trim();
+  }
+
+  const headers = {};
+  if (secret) {
+    headers['X-Extension-Secret'] = secret;
+  }
+  const extId = chrome.runtime.id;
+  if (extId) {
+    headers['X-Extension-Id'] = extId;
+  }
+
   showStatus('Testing connection...', 'info');
   try {
-    const resp = await fetch(`${url}/api/terms/index`);
+    const resp = await fetch(`${url}/api/terms/index`, { headers });
     if (resp.ok || resp.status === 304) {
       const data = await resp.json().catch(() => []);
       showStatus(`Connected! Found ${data.length || 0} terms in index.`, 'success');
