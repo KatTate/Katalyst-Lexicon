@@ -7,7 +7,7 @@ export const STORAGE_KEYS = {
   TERM_INDEX: 'termIndex',
   TERM_INDEX_ETAG: 'termIndexEtag',
   TERM_INDEX_UPDATED: 'termIndexUpdated',
-  HIGHLIGHTING_SITES: 'highlightingSites',
+  HIGHLIGHTING_DISABLED_SITES: 'highlightingDisabledSites',
   RECENT_TERMS: 'recentTerms',
   USER_EMAIL: 'userEmail',
 };

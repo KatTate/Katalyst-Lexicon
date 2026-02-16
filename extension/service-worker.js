@@ -117,20 +117,24 @@ async function handleMessage(message) {
     case MSG.TOGGLE_HIGHLIGHTING: {
       const hostname = p.hostname;
       if (!hostname) return { enabled: false };
-      const data = await chrome.storage.sync.get({ [STORAGE_KEYS.HIGHLIGHTING_SITES]: {} });
-      const sites = data[STORAGE_KEYS.HIGHLIGHTING_SITES] || {};
-      const newState = !sites[hostname];
-      sites[hostname] = newState;
-      await chrome.storage.sync.set({ [STORAGE_KEYS.HIGHLIGHTING_SITES]: sites });
-      return { enabled: newState };
+      const data = await chrome.storage.sync.get({ [STORAGE_KEYS.HIGHLIGHTING_DISABLED_SITES]: {} });
+      const disabledSites = data[STORAGE_KEYS.HIGHLIGHTING_DISABLED_SITES] || {};
+      const isCurrentlyEnabled = !disabledSites[hostname];
+      if (isCurrentlyEnabled) {
+        disabledSites[hostname] = true;
+      } else {
+        delete disabledSites[hostname];
+      }
+      await chrome.storage.sync.set({ [STORAGE_KEYS.HIGHLIGHTING_DISABLED_SITES]: disabledSites });
+      return { enabled: !isCurrentlyEnabled };
     }
 
     case MSG.GET_HIGHLIGHTING_STATE: {
       const hostname = p.hostname;
       if (!hostname) return { enabled: false };
-      const data = await chrome.storage.sync.get({ [STORAGE_KEYS.HIGHLIGHTING_SITES]: {} });
-      const sites = data[STORAGE_KEYS.HIGHLIGHTING_SITES] || {};
-      return { enabled: !!sites[hostname] };
+      const data = await chrome.storage.sync.get({ [STORAGE_KEYS.HIGHLIGHTING_DISABLED_SITES]: {} });
+      const disabledSites = data[STORAGE_KEYS.HIGHLIGHTING_DISABLED_SITES] || {};
+      return { enabled: !disabledSites[hostname] };
     }
 
     case MSG.GET_USER_EMAIL: {
