@@ -47,16 +47,18 @@ async function apiRequest(method, path, body, options = {}) {
 
   const headers = { 'Content-Type': 'application/json' };
 
+  if (config.secret) {
+    headers['X-Extension-Secret'] = config.secret;
+    headers['X-Extension-Id'] = chrome.runtime.id;
+  }
+
   if (options.withAuth) {
     const email = await getUserEmail();
     if (!email) {
       throw new Error('Sign in to Chrome with your @katgroupinc.com account to use this feature.');
     }
     headers['X-Extension-User-Email'] = email;
-    headers['X-Extension-Id'] = chrome.runtime.id;
-    if (config.secret) {
-      headers['X-Extension-Secret'] = config.secret;
-    } else {
+    if (!config.secret) {
       throw new Error('Extension API secret not configured. Check settings or contact your IT admin.');
     }
   }

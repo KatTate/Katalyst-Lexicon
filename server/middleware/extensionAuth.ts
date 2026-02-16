@@ -8,6 +8,10 @@ function isExtensionRequest(req: any): boolean {
   return !!(req.headers['x-extension-user-email'] && req.headers['x-extension-secret']);
 }
 
+function isExtensionReadRequest(req: any): boolean {
+  return !!req.headers['x-extension-secret'];
+}
+
 async function resolveExtensionUser(req: any, res: any): Promise<any | null> {
   const email = req.headers['x-extension-user-email'] as string;
   const secret = req.headers['x-extension-secret'] as string;
@@ -98,6 +102,23 @@ export const sessionOrExtensionRead: RequestHandler = async (req: any, res, next
     const dbUser = await resolveExtensionUser(req, res);
     if (!dbUser) return;
     req.dbUser = dbUser;
+    return next();
+  }
+
+  if (isExtensionReadRequest(req)) {
+    const secret = req.headers['x-extension-secret'] as string;
+    const expectedSecret = process.env.EXTENSION_API_SECRET;
+    const allowedExtId = process.env.ALLOWED_EXTENSION_ID;
+    const extensionId = req.headers['x-extension-id'] as string;
+
+    if (allowedExtId && extensionId && extensionId !== allowedExtId) {
+      return res.status(403).json({ error: "Unrecognized extension" });
+    }
+
+    if (!expectedSecret || secret !== expectedSecret) {
+      return res.status(403).json({ error: "Invalid extension secret" });
+    }
+
     return next();
   }
 
