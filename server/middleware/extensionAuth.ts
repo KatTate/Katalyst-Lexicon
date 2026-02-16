@@ -88,3 +88,18 @@ export const extensionOrSessionAuth: RequestHandler = async (req: any, res, next
 
   return res.status(401).json({ error: "Please sign in" });
 };
+
+export const sessionOrExtensionRead: RequestHandler = async (req: any, res, next) => {
+  if (req.isAuthenticated?.() && (req.user as any)?.claims?.sub) {
+    return next();
+  }
+
+  if (isExtensionRequest(req)) {
+    const dbUser = await resolveExtensionUser(req, res);
+    if (!dbUser) return;
+    req.dbUser = dbUser;
+    return next();
+  }
+
+  return res.status(401).json({ error: "Please sign in" });
+};

@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { requireRole, requirePermission, optionalAuth } from "./middleware/auth";
-import { requireAuthOrExtension, extensionOrSessionAuth } from "./middleware/extensionAuth";
+import { requireAuthOrExtension, extensionOrSessionAuth, sessionOrExtensionRead } from "./middleware/extensionAuth";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 import { insertTermSchema, insertCategorySchema, insertProposalSchema, insertUserSchema, insertSettingSchema, insertPrincipleSchema, principles, principleTermLinks, proposals, proposalEvents, terms, termVersions } from "@shared/schema";
@@ -39,8 +39,8 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  // ===== TERMS (Read = public, Write = Admin) =====
-  app.get("/api/terms", async (req, res) => {
+  // ===== TERMS (Read = authenticated or extension, Write = Admin) =====
+  app.get("/api/terms", sessionOrExtensionRead, async (req, res) => {
     try {
       const terms = await storage.getTerms();
       res.json(terms);
@@ -49,7 +49,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/terms/index", termIndexLimiter, async (req, res) => {
+  app.get("/api/terms/index", sessionOrExtensionRead, termIndexLimiter, async (req, res) => {
     try {
       const etagData = await storage.getTermIndexEtagData();
       const maxDate = etagData.maxUpdatedAt ? String(etagData.maxUpdatedAt) : 'none';
@@ -71,7 +71,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/terms/search", async (req, res) => {
+  app.get("/api/terms/search", sessionOrExtensionRead, async (req, res) => {
     try {
       const query = req.query.q as string;
       if (!query || query.trim().length < 2) {
@@ -84,7 +84,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/terms/:id", async (req, res) => {
+  app.get("/api/terms/:id", sessionOrExtensionRead, async (req, res) => {
     try {
       const term = await storage.getTerm(req.params.id);
       if (!term) {
@@ -96,7 +96,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/terms/:id/versions", async (req, res) => {
+  app.get("/api/terms/:id/versions", sessionOrExtensionRead, async (req, res) => {
     try {
       const versions = await storage.getTermVersions(req.params.id);
       res.json(versions);
@@ -105,7 +105,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/terms/category/:category", async (req, res) => {
+  app.get("/api/terms/category/:category", sessionOrExtensionRead, async (req, res) => {
     try {
       const terms = await storage.getTermsByCategory(decodeURIComponent(req.params.category));
       res.json(terms);
@@ -156,8 +156,8 @@ export async function registerRoutes(
     }
   });
 
-  // ===== CATEGORIES (Read = public, Write = Admin) =====
-  app.get("/api/categories", async (req, res) => {
+  // ===== CATEGORIES (Read = authenticated or extension, Write = Admin) =====
+  app.get("/api/categories", sessionOrExtensionRead, async (req, res) => {
     try {
       const cats = await storage.getCategories();
       res.json(cats);
@@ -166,7 +166,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/categories/:id", async (req, res) => {
+  app.get("/api/categories/:id", sessionOrExtensionRead, async (req, res) => {
     try {
       const category = await storage.getCategory(req.params.id);
       if (!category) {
@@ -688,8 +688,8 @@ export async function registerRoutes(
     }
   });
 
-  // ===== PRINCIPLES (Read = public, Write = Admin) =====
-  app.get("/api/principles", async (req, res) => {
+  // ===== PRINCIPLES (Read = authenticated or extension, Write = Admin) =====
+  app.get("/api/principles", sessionOrExtensionRead, async (req, res) => {
     try {
       const list = await storage.getPrinciplesWithCounts();
       res.json(list);
@@ -698,7 +698,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/principles/:id", async (req, res) => {
+  app.get("/api/principles/:id", sessionOrExtensionRead, async (req, res) => {
     try {
       const principle = await storage.getPrinciple(req.params.id);
       if (!principle) {
@@ -760,7 +760,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/principles/:id/terms", async (req, res) => {
+  app.get("/api/principles/:id/terms", sessionOrExtensionRead, async (req, res) => {
     try {
       const terms = await storage.getTermsForPrinciple(req.params.id);
       res.json(terms);
@@ -788,7 +788,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/terms/:id/principles", async (req, res) => {
+  app.get("/api/terms/:id/principles", sessionOrExtensionRead, async (req, res) => {
     try {
       const principles = await storage.getPrinciplesForTerm(req.params.id);
       res.json(principles);
