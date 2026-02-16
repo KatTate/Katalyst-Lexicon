@@ -65,12 +65,21 @@ function setupListeners() {
   document.getElementById('test-btn').addEventListener('click', testConnection);
 }
 
+function normalizeUrl(raw) {
+  let url = (raw || '').trim().replace(/\/$/, '');
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  return url;
+}
+
 async function saveSettings() {
   if (!isManaged) {
-    const url = document.getElementById('api-url').value.trim().replace(/\/$/, '');
+    const url = normalizeUrl(document.getElementById('api-url').value);
     const secret = document.getElementById('api-secret').value.trim();
     await syncSet(STORAGE_KEYS.API_BASE_URL, url);
     await syncSet(STORAGE_KEYS.EXTENSION_API_SECRET, secret);
+    document.getElementById('api-url').value = url;
   }
 
   const notif = document.getElementById('notifications-toggle').checked;
@@ -80,7 +89,7 @@ async function saveSettings() {
 }
 
 async function testConnection() {
-  const url = document.getElementById('api-url').value.trim().replace(/\/$/, '');
+  const url = normalizeUrl(document.getElementById('api-url').value);
   if (!url) {
     showStatus('Please enter an API URL first', 'error');
     return;

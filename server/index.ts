@@ -32,8 +32,13 @@ app.use((req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Extension-User-Email, X-Extension-Id, X-Extension-Secret');
+  const appDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPL_SLUG || '';
+  if (appDomain && origin && (origin.includes('.replit.app') || origin.includes('.replit.dev'))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Extension-User-Email, X-Extension-Id, X-Extension-Secret, If-None-Match');
+  res.setHeader('Access-Control-Expose-Headers', 'ETag');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
   }

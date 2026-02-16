@@ -1,5 +1,13 @@
 import { STORAGE_KEYS } from './constants.js';
 
+function normalizeUrl(raw) {
+  let url = (raw || '').trim().replace(/\/$/, '');
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  return url;
+}
+
 async function getConfig() {
   return new Promise((resolve) => {
     chrome.storage.managed.get(null, (managed) => {
@@ -9,14 +17,14 @@ async function getConfig() {
           [STORAGE_KEYS.EXTENSION_API_SECRET]: '',
         }, (sync) => {
           resolve({
-            baseUrl: (sync[STORAGE_KEYS.API_BASE_URL] || '').replace(/\/$/, ''),
+            baseUrl: normalizeUrl(sync[STORAGE_KEYS.API_BASE_URL]),
             secret: sync[STORAGE_KEYS.EXTENSION_API_SECRET] || '',
           });
         });
         return;
       }
       resolve({
-        baseUrl: (managed.apiBaseUrl || '').replace(/\/$/, ''),
+        baseUrl: normalizeUrl(managed.apiBaseUrl),
         secret: managed.extensionApiSecret || '',
       });
     });

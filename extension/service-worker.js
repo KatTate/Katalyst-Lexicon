@@ -211,10 +211,18 @@ async function openProposeInWebApp(termName) {
   }
 }
 
+function normalizeUrl(raw) {
+  let url = (raw || '').trim().replace(/\/$/, '');
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  return url;
+}
+
 async function getBaseUrl() {
   const config = await chrome.storage.managed.get('apiBaseUrl').catch(() => ({}));
   const syncData = await chrome.storage.sync.get({ [STORAGE_KEYS.API_BASE_URL]: '' });
-  return config?.apiBaseUrl || syncData[STORAGE_KEYS.API_BASE_URL] || '';
+  return normalizeUrl(config?.apiBaseUrl || syncData[STORAGE_KEYS.API_BASE_URL] || '');
 }
 
 async function refreshTermIndex(retryCount = 0) {
