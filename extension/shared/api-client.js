@@ -67,7 +67,7 @@ async function apiRequest(method, path, body, options = {}) {
     headers['If-None-Match'] = options.etag;
   }
 
-  const fetchOptions = { method, headers };
+  const fetchOptions = { method, headers, credentials: 'omit', redirect: 'follow' };
   if (body) {
     fetchOptions.body = JSON.stringify(body);
   }

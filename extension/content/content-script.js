@@ -496,6 +496,19 @@
   async function enableHighlighting() {
     highlightEnabled = true;
     termIndex = await getTermIndex();
+    if (termIndex.length === 0) {
+      await new Promise((r) => setTimeout(r, 2000));
+      try {
+        await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage({ type: 'REFRESH_TERM_INDEX' }, (resp) => {
+            if (chrome.runtime.lastError) { reject(chrome.runtime.lastError); return; }
+            resolve(resp);
+          });
+        });
+      } catch {}
+      await new Promise((r) => setTimeout(r, 1000));
+      termIndex = await getTermIndex();
+    }
     if (termIndex.length > 0) {
       scanAndHighlight();
       setupTooltip();
