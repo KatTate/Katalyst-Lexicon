@@ -1,0 +1,208 @@
+2026-02-15 18:20:00.49
+72441785
+User
+at /home/runner/workspace/dist/index.cjs:64:13326
+2026-02-15 18:20:00.49
+72441785
+User
+at async Strategy._verify (/home/runner/workspace/dist/index.cjs:81:6397)
+2026-02-15 18:20:00.49
+72441785
+User
+at async eM (/home/runner/workspace/dist/index.cjs:81:5560)
+2026-02-15 18:20:00.49
+72441785
+User
+at async /home/runner/workspace/dist/index.cjs:76:101496
+2026-02-15 18:20:00.49
+72441785
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-02-15 18:20:00.49
+72441785
+User
+at async nh.upsertUser (/home/runner/workspace/dist/index.cjs:81:5024)
+2026-02-15 18:20:00.50
+72441785
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-02-15 18:20:00.60
+72441785
+System
+main done, exiting
+2026-02-15 18:20:03.49
+72441785
+System
+starting up user application
+2026-02-15 18:20:03.49
+72441785
+System
+metasidecar: loaded enterprise status from environment is_enterprise=false
+2026-02-15 18:20:03.50
+72441785
+System
+forwarding local port 5000 to external port 80 (mapped as 1104)
+2026-02-15 18:20:03.86
+72441785
+User
+12:20:03 AM [express] serving on port 5000
+2026-02-15 18:20:04.82
+72441785
+User
+at passBackControl (/home/runner/workspace/node_modules/oauth/lib/oauth2.js:132:9)
+2026-02-15 18:20:04.82
+72441785
+User
+at IncomingMessage.emit (node:events:536:35)
+2026-02-15 18:20:04.82
+72441785
+User
+at endReadableNT (node:internal/streams/readable:1698:12)
+2026-02-15 18:20:04.82
+72441785
+User
+at /home/runner/workspace/node_modules/oauth/lib/oauth2.js:196:18
+2026-02-15 18:20:04.82
+72441785
+User
+at /home/runner/workspace/node_modules/passport-oauth2/lib/strategy.js:177:45
+2026-02-15 18:20:04.82
+72441785
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+2026-02-15 18:20:04.82
+72441785
+User
+at OAuth2Strategy._createOAuthError (/home/runner/workspace/node_modules/passport-oauth2/lib/strategy.js:420:16)
+2026-02-15 18:20:04.82
+72441785
+User
+at OAuth2Strategy.parseErrorResponse (/home/runner/workspace/node_modules/passport-oauth2/lib/strategy.js:373:12)
+2026-02-15 18:20:04.82
+72441785
+User
+TokenError: Bad Request
+2026-02-15 18:20:04.82
+72441785
+User
+at IncomingMessage. (/home/runner/workspace/node_modules/oauth/lib/oauth2.js:157:7)
+2026-02-15 18:20:04.82
+72441785
+System
+system: received signal terminated
+2026-02-15 18:20:04.84
+72441785
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-02-15 18:20:04.88
+72441785
+System
+main done, exiting
+2026-02-15 18:20:07.17
+72441785
+System
+starting up user application
+2026-02-15 18:20:07.18
+72441785
+System
+metasidecar: loaded enterprise status from environment is_enterprise=false
+2026-02-15 18:20:07.18
+72441785
+System
+forwarding local port 5000 to external port 80 (mapped as 1104)
+2026-02-15 18:20:07.45
+72441785
+User
+12:20:07 AM [express] serving on port 5000
+2026-02-15 18:20:22.80
+72441785
+User
+12:20:22 AM [express] GET /api/auth/user 401 in 358ms :: {"message":"Unauthorized"}
+2026-02-15 18:20:22.85
+72441785
+User
+12:20:22 AM [express] GET /api/categories 304 in 406ms :: [{"id":"d324c313-90ca-47a3-bc0b-98f306e50c40","name":"How & Why We Work","description":"Terms related to how & why we work.","color":"#97a687","sortOrder":1},{"id":"d2b2810c-7761-4db5-b58b-25b5e3d25a6a","name":"Execution & Accountability","description":"Terms related to execution & accountability.","color":"#78c026","sortOrder":8},{"id":"7fcf3812-f6cd-4856-ad53-a610c7883a3f","name":"Planning & Strategy","description":"Terms related to planning & strategy.","color":"#656d12","sortOrder":9},{"id":"5f6ba79a-4ac0-4cfa-9988-3661d7ca6b67","name":"Meetings & Rhythm","description":"Terms related to meetings & rhythm.","color":"#a5a092","sortOrder":10},{"id":"f6aaa142-354c-40a4-816a-7c1defb3899c","name":"Financial & Metrics","description":"Terms related to financial & metrics.","color":"#a6a2a9","sortOrder":11},{"id":"83d6ec94-7112-469f-983e-df48f155dc62","name":"Client & Franchise","description":"Terms related to client & franchise.","color":"#d9cbaf","sortOrder":12},{"id":"27311155-e0e5-420e-b229-c67bdb13e637","name":"Caution Terms","description":"Terms related to caution terms.","color":"#8b898b","sortOrder":13}]
+2026-02-15 18:20:22.86
+72441785
+User
+12:20:22 AM [express] GET /api/terms 304 in 413ms :: [{"id":"3d067c2d-1a53-4639-abc3-37761425ab77","name":"Commitment","category":"Planning & Strategy","definition":"Reviewer approved definition","whyExists":"To establish a culture where agreements are taken seriously, tracked transparently, and followed through on consistently.","usedWhen":"Anytime someone agrees to deliver a specific outcome by a specific date.","notUsedWhen":"Describing general aspirations, interests, or things you 'might get to.' If there's no owner and deadline, it's not a commitment.","examplesGood":["'I have a commitment to deliver the client forecast by Wednesday.'","'Let's review all open commitments before the weekly meeting.'"],"examplesBad":["'I'll try to get to it.' (That's not a commitment.)","'We're committed to excellence.' (Slogan, not a trackable commitment.)"],"synonyms":[],"status":"Canonical","visibility":"Internal","owner":"Lexicon Import","version":1,"updatedAt":"2026-02-15T22:44:33.890Z"}]
+2026-02-15 18:20:25.71
+72441785
+User
+12:20:25 AM [express] GET /api/principles 200 in 146ms :: []
+2026-02-15 18:20:39.46
+72441785
+User
+12:20:39 AM [express] GET /api/terms/search 200 in 707ms :: []
+2026-02-15 18:20:47.21
+72441785
+User
+12:20:47 AM [express] POST /api/proposals 401 in 93ms :: {"error":"Please sign in"}
+2026-02-15 18:20:59.09
+72441785
+User
+12:20:59 AM [express] GET /api/login 302 in 368ms
+2026-02-15 18:21:02.75
+72441785
+User
+at async nh.upsertUser (/home/runner/workspace/dist/index.cjs:81:5024)
+2026-02-15 18:21:02.75
+72441785
+User
+at async eM (/home/runner/workspace/dist/index.cjs:81:5560)
+2026-02-15 18:21:02.75
+72441785
+User
+at /home/runner/workspace/dist/index.cjs:64:13326
+2026-02-15 18:21:02.75
+72441785
+User
+at async Strategy._verify (/home/runner/workspace/dist/index.cjs:81:6397)
+2026-02-15 18:21:02.75
+72441785
+User
+error: duplicate key value violates unique constraint "users_email_unique"
+2026-02-15 18:21:02.75
+72441785
+User
+at async /home/runner/workspace/dist/index.cjs:76:101496
+2026-02-15 18:21:02.75
+72441785
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-02-15 18:21:02.75
+72441785
+System
+system: received signal terminated
+2026-02-15 18:21:02.77
+72441785
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-02-15 18:21:02.87
+72441785
+System
+main done, exiting
+2026-02-15 18:21:02.87
+72441785
+System
+main done, exiting
+2026-02-15 18:21:02.87
+72441785
+System
+main done, exiting
+2026-02-15 18:21:05.66
+72441785
+System
+starting up user application
+2026-02-15 18:21:05.66
+72441785
+System
+metasidecar: loaded enterprise status from environment is_enterprise=false
+2026-02-15 18:21:05.66
+72441785
+System
+forwarding local port 5000 to external port 80 (mapped as 1104)
+2026-02-15 18:21:06.05
+72441785
+User
+12:21:05 AM [express] serving on port 5000
