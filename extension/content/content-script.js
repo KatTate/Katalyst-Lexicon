@@ -22,7 +22,7 @@
           resolve(resp);
         });
       });
-      return response || [];
+      return Array.isArray(response) ? response : [];
     } catch { return []; }
   }
 
@@ -233,7 +233,7 @@
           resolve(resp);
         });
       });
-      return response || [];
+      return Array.isArray(response) ? response : [];
     } catch { return []; }
   }
 
